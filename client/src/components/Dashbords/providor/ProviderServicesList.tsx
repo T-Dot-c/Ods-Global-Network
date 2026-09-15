@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Edit, X, Image as ImageIcon } from "lucide-react";
+import { Edit, X, Image as ImageIcon, RefreshCw } from "lucide-react";
 import BASE_URL from "../../../api/api";
 
 /** Contract returned by GET /api/services/provider/:providerId/services */
@@ -154,13 +154,13 @@ const EditServiceModal = ({ service, isOpen, onClose, onUpdate }: EditServiceMod
               step="0.1"
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green focus:border-transparent"
+              className="w-full border border-[#E8E8E8] rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#BE9B49] focus:border-[#BE9B49] outline-none"
               placeholder="Enter discount percentage (0-100)"
             />
             <p className="text-xs text-gray-500 mt-1">
               Current price: {formatCurrency(service.price)}
               {discountedPrice !== null && (
-                <span className="text-green font-semibold ml-2">
+                <span className="font-bold ml-2" style={{ color: "#0F285B" }}>
                   After discount: {formatCurrency(discountedPrice)}
                 </span>
               )}
@@ -177,7 +177,7 @@ const EditServiceModal = ({ service, isOpen, onClose, onUpdate }: EditServiceMod
                   <img
                     src={imagePreview}
                     alt="Service preview"
-                    className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                    className="w-32 h-32 object-cover rounded-lg border border-[#E8E8E8]"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/placeholder.png";
                     }}
@@ -185,7 +185,7 @@ const EditServiceModal = ({ service, isOpen, onClose, onUpdate }: EditServiceMod
                 </div>
               )}
               <div className="flex-1">
-                <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green transition-colors">
+                <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-[#E8E8E8] rounded-lg cursor-pointer hover:border-[#BE9B49] transition-colors">
                   <ImageIcon className="w-5 h-5 text-gray-500 mr-2" />
                   <span className="text-sm text-gray-600">
                     {imageFile ? imageFile.name : "Choose new image"}
@@ -204,18 +204,18 @@ const EditServiceModal = ({ service, isOpen, onClose, onUpdate }: EditServiceMod
             </div>
           </div>
 
-          <div className="flex items-center justify-end space-x-4 pt-4 border-t">
+          <div className="flex items-center justify-end space-x-4 pt-4 border-t border-[#E8E8E8]">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 border border-[#E8E8E8] rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-green text-white rounded-lg hover:bg-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-md bg-gradient-to-r from-[#EDC45B] to-[#8D7338] text-[#0F285B] hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? "Updating..." : "Update Service"}
@@ -321,25 +321,29 @@ const ProviderServicesList = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">My Services</h2>
+        <h2 className="text-2xl font-bold" style={{ color: "#0F285B" }}>
+          My Services
+        </h2>
         <button
           onClick={fetchServices}
-          className="px-4 py-2 bg-green text-white rounded-lg hover:bg-green/90 transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 rounded-xl font-semibold text-xs transition shadow-sm hover:brightness-105 text-[#0F285B]"
+          style={{ background: "linear-gradient(135deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%)" }}
         >
-          Refresh
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Refresh</span>
         </button>
       </div>
 
       {services.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-600">You haven&apos;t added any services yet.</p>
+        <div className="bg-[#FAF8F5] border border-dashed border-[#E8E8E8] rounded-2xl p-10 text-center">
+          <p className="text-gray-500 font-medium">You haven&apos;t added any services yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service) => (
             <div
               key={service.id}
-              className="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              className="bg-white border border-[#E8E8E8] rounded-2xl shadow-sm overflow-hidden hover:shadow-md hover:border-[#BE9B49] transition-all"
             >
               <div className="relative">
                 {service.imageUrl ? (
@@ -352,46 +356,50 @@ const ProviderServicesList = () => {
                     }}
                   />
                 ) : (
-                  <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                  <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
                     <ImageIcon className="w-12 h-12 text-gray-400" />
                   </div>
                 )}
                 <span
-                  className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
+                  className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                     service.status === "approved"
-                      ? "bg-green-100 text-green-800"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : service.status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
+                      ? "bg-[#FAF0D7] text-[#8D7338] border border-[#BE9B49]/30"
+                      : "bg-slate-50 text-slate-700 border border-slate-200"
                   }`}
                 >
                   {service.status}
                 </span>
               </div>
 
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{service.title}</h3>
-                <p className="text-sm text-gray-600 mb-2">{service.category}</p>
+              <div className="p-5">
+                <h3 className="text-lg font-bold mb-1" style={{ color: "#0F285B" }}>
+                  {service.title}
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">{service.category}</p>
 
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E8E8E8]">
                   <div>
-                    <p className="text-sm text-gray-500">Price</p>
-                    <p className="text-lg font-bold text-green">{formatCurrency(service.price)}</p>
+                    <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Price</p>
+                    <p className="text-lg font-bold" style={{ color: "#0F285B" }}>
+                      {formatCurrency(service.price)}
+                    </p>
                   </div>
                   {service.discount > 0 && (
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">Discount</p>
-                      <p className="text-lg font-bold text-red-600">{service.discount}% OFF</p>
+                      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Discount</p>
+                      <p className="text-sm font-bold text-amber-600">{service.discount}% OFF</p>
                     </div>
                   )}
                 </div>
 
                 <button
                   onClick={() => setEditingService(service)}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green text-white rounded-lg hover:bg-green/90 transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm border border-[#0F285B] text-[#0F285B] hover:bg-[#0F285B] hover:text-white"
                 >
                   <Edit className="w-4 h-4" />
-                  <span>Edit Discount & Image</span>
+                  <span>Edit Discount &amp; Image</span>
                 </button>
               </div>
             </div>

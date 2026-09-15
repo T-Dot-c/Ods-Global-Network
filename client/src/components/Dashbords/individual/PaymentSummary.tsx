@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 import { CreditCard, DollarSign, Calendar, TrendingUp, Receipt } from "lucide-react";
@@ -88,8 +88,8 @@ const PaymentSummary = ({ userId }: PaymentSummaryProps) => {
     return (
       <div className="p-6 bg-white rounded-xl shadow-md border border-gray-100">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]"></div>
-          <span className="ml-3 text-[#1c2b21]">Loading payment summary...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49]"></div>
+          <span className="ml-3 text-[#0f285b]">Loading payment summary...</span>
         </div>
       </div>
     );
@@ -118,50 +118,50 @@ const PaymentSummary = ({ userId }: PaymentSummaryProps) => {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-        <h2 className="text-2xl font-bold text-[#1c2b21] mb-6 flex items-center">
-          <CreditCard className="w-6 h-6 mr-3 text-[#D4AF37]" />
+        <h2 className="text-2xl font-bold text-[#0f285b] mb-6 flex items-center">
+          <CreditCard className="w-6 h-6 mr-3 text-[#be9b49]" />
           Payment Summary
         </h2>
         
         {/* Payment Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gradient-to-r from-[#1c2b21] to-[#1c2b21] rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-r from-[#0f285b] to-[#0f285b] rounded-lg p-4 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#D4AF37] text-sm font-medium">Total Spent</p>
+                <p className="text-[#be9b49] text-sm font-medium">Total Spent</p>
                 <p className="text-2xl font-bold">ETB {paymentData.totalSpent.toLocaleString()}</p>
               </div>
-              <DollarSign className="w-8 h-8 text-[#D4AF37]" />
+              <DollarSign className="w-8 h-8 text-[#be9b49]" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] rounded-lg p-4 text-[#1c2b21]">
+          <div className="bg-gradient-to-r from-[#be9b49] to-[#be9b49] rounded-lg p-4 text-[#0f285b]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#1c2b21] text-sm font-medium">Transactions</p>
+                <p className="text-[#0f285b] text-sm font-medium">Transactions</p>
                 <p className="text-2xl font-bold">{paymentData.totalTransactions}</p>
               </div>
-              <Receipt className="w-8 h-8 text-[#1c2b21]" />
+              <Receipt className="w-8 h-8 text-[#0f285b]" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-[#1c2b21] to-[#1c2b21] rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-r from-[#0f285b] to-[#0f285b] rounded-lg p-4 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#D4AF37] text-sm font-medium">Average</p>
+                <p className="text-[#be9b49] text-sm font-medium">Average</p>
                 <p className="text-2xl font-bold">ETB {Math.round(paymentData.averageTransactionAmount).toLocaleString()}</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-[#D4AF37]" />
+              <TrendingUp className="w-8 h-8 text-[#be9b49]" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] rounded-lg p-4 text-[#1c2b21]">
+          <div className="bg-gradient-to-r from-[#be9b49] to-[#be9b49] rounded-lg p-4 text-[#0f285b]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#1c2b21] text-sm font-medium">Last Payment</p>
+                <p className="text-[#0f285b] text-sm font-medium">Last Payment</p>
                 <p className="text-lg font-bold">{new Date(paymentData.lastPaymentDate).toLocaleDateString()}</p>
               </div>
-              <Calendar className="w-8 h-8 text-[#1c2b21]" />
+              <Calendar className="w-8 h-8 text-[#0f285b]" />
             </div>
           </div>
         </div>
@@ -169,12 +169,12 @@ const PaymentSummary = ({ userId }: PaymentSummaryProps) => {
         {/* Monthly Spending Chart */}
         {paymentData.monthlySpending.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-lg font-semibold text-[#1c2b21] mb-4">Monthly Spending</h3>
+            <h3 className="text-lg font-semibold text-[#0f285b] mb-4">Monthly Spending</h3>
             <div className="space-y-3">
               {paymentData.monthlySpending.map((month, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-[#f5f5f5] rounded-lg">
-                  <span className="font-medium text-[#1c2b21]">{month.month}</span>
-                  <span className="font-bold text-[#D4AF37]">ETB {month.amount.toLocaleString()}</span>
+                  <span className="font-medium text-[#0f285b]">{month.month}</span>
+                  <span className="font-bold text-[#be9b49]">ETB {month.amount.toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -184,7 +184,7 @@ const PaymentSummary = ({ userId }: PaymentSummaryProps) => {
         {paymentData.totalTransactions === 0 && (
           <div className="text-center py-12">
             <CreditCard className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-[#1c2b21] mb-2">No payments yet</h3>
+            <h3 className="text-lg font-semibold text-[#0f285b] mb-2">No payments yet</h3>
             <p className="text-gray-600">Your payment history will appear here once you make your first purchase.</p>
           </div>
         )}

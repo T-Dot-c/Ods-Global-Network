@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../api/api";
 
@@ -64,8 +64,8 @@ const ServiceCatalog = () => {
     
     // If already a full URL, normalize it
     if (url.startsWith('http')) {
-      if (url.includes('wanaw.et') && !url.includes('www.wanaw.et')) {
-        url = url.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+      if (url.includes('odsglobal.net') && !url.includes('www.odsglobal.net')) {
+        url = url.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
       }
       return url;
     }
@@ -73,7 +73,7 @@ const ServiceCatalog = () => {
     // For relative paths, construct full URL
     let serverBase;
     if (BASE_URL.startsWith('http')) {
-      // Production: BASE_URL is full URL like "https://wanaw.et/api"
+      // Production: BASE_URL is full URL like "https://www.odsglobal.net/api"
       serverBase = BASE_URL.replace('/api', '').replace(/\/$/, '');
     } else {
       // Development: BASE_URL is "/api", use localhost server directly
@@ -96,7 +96,7 @@ const ServiceCatalog = () => {
 
   return (
     <section className="px-4 py-10 max-w-7xl mx-auto">
-      <h2 className="text-3xl sm:text-4xl font-bold text-center text-[#1c2b21] mb-16">
+      <h2 className="text-3xl sm:text-4xl font-bold text-center text-[#0f285b] mb-16">
         Service Catalog
       </h2>
 
@@ -115,14 +115,14 @@ const ServiceCatalog = () => {
               />
 
               <div className="flex flex-col justify-center text-center md:text-left px-4 md:px-6 flex-1">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1c2b21]">
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0f285b]">
                   {meta.label}
                 </h3>
                 <button
                   onClick={() =>
                     setExpandedCategory(expandedCategory === catKey ? null : catKey)
                   }
-                  className="mt-6 bg-[#D4AF37] text-[#1c2b21] font-medium text-sm sm:text-base px-6 py-3 rounded-full hover:bg-[#caa82f] transition w-full sm:w-max mx-auto md:mx-0"
+                  className="mt-6 bg-[#be9b49] text-[#0f285b] font-medium text-sm sm:text-base px-6 py-3 rounded-full hover:bg-[#caa82f] transition w-full sm:w-max mx-auto md:mx-0"
                 >
                   {expandedCategory === catKey ? "Hide Services" : "View Services"}
                 </button>
@@ -144,7 +144,7 @@ const ServiceCatalog = () => {
                         className="w-full h-60 object-cover"
                       />
                       <div className="p-5 flex flex-col flex-1">
-                        <h4 className="text-lg font-semibold text-[#1c2b21]">
+                        <h4 className="text-lg font-semibold text-[#0f285b]">
                           {srv.title}
                         </h4>
                         <p className="text-sm text-gray-600 mt-1">
@@ -162,7 +162,7 @@ const ServiceCatalog = () => {
                                 {formatPrice(srv.price)}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
-                                <p className="text-base font-medium text-[#D4AF37]">
+                                <p className="text-base font-medium text-[#be9b49]">
                                   {formatPrice(srv.discountedPrice || (srv.price * (1 - srv.discount / 100)))}
                                 </p>
                                 <span className="text-xs bg-red-500 text-white px-2 py-1 rounded">
@@ -181,7 +181,7 @@ const ServiceCatalog = () => {
                           onClick={() =>
                             navigate("/send-gift", { state: { service: srv } })
                           }
-                          className="mt-auto bg-[#D4AF37] text-[#1c2b21] text-sm font-semibold py-2 px-4 rounded-full hover:bg-[#caa82f] transition mt-4"
+                          className="mt-auto bg-[#be9b49] text-[#0f285b] text-sm font-semibold py-2 px-4 rounded-full hover:bg-[#caa82f] transition mt-4"
                         >
                           Send This Gift
                         </button>

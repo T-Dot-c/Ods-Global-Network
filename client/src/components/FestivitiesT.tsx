@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+﻿import { useEffect, useMemo } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useTranslation } from "react-i18next";
@@ -63,7 +63,7 @@ function FestivitiesT() {
           viewBox="0 0 500 80"
           preserveAspectRatio="none"
         >
-          <path d="M500,0 C400,80 100,0 0,80 L0,0 L500,0 Z" fill="#d4af37" />
+          <path d="M500,0 C400,80 100,0 0,80 L0,0 L500,0 Z" fill="#be9b49" />
         </svg>
       </div>
 

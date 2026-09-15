@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import confetti from "canvas-confetti";
@@ -19,7 +19,7 @@ const GiftShowcase = () => {
       particleCount: 150,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ["#d4af37", "#ff69b4", "#1c2b21", "#ffffff"],
+      colors: ["#be9b49", "#ff69b4", "#0f285b", "#ffffff"],
     });
   };
 
@@ -56,13 +56,13 @@ const GiftShowcase = () => {
           viewBox="0 0 500 80"
           preserveAspectRatio="none"
         >
-          <path d="M500,0 C400,80 100,0 0,80 L0,0 L500,0 Z" fill="#d4af37" />
+          <path d="M500,0 C400,80 100,0 0,80 L0,0 L500,0 Z" fill="#be9b49" />
         </svg>
       </div>
 
       <div className="relative z-20 max-w-7xl mx-auto">
         <h2
-          className={`text-3xl md:text-4xl font-bold text-[#1c2b21] text-center mb-8 ${
+          className={`text-3xl md:text-4xl font-bold text-[#0f285b] text-center mb-8 ${
             animate ? "animate-fadeSlideUp" : ""
           }`}
         >
@@ -116,7 +116,7 @@ const GiftShowcase = () => {
                       handleEnjoyGift();
                     }
                   }}
-                  className="bg-[#d4af37] text-[#1c2b21] py-2 px-5 rounded-full shadow-md transition duration-300 hover:rounded-md text-sm md:text-base"
+                  className="bg-[#be9b49] text-[#0f285b] py-2 px-5 rounded-full shadow-md transition duration-300 hover:rounded-md text-sm md:text-base"
                 >
                   {card.buttonText}
                 </button>

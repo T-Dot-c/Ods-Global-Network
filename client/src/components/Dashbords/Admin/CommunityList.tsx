@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import BASE_URL from "../../../api/api";
 
 
@@ -88,13 +88,13 @@ const CommunityList = () => {
   const renderProfessionalTable = () => (
     <div className="overflow-x-auto">
       <div className="mb-4 flex items-center gap-2">
-        <div className="h-1 w-12 bg-[#1c2b21]"></div>
-        <h3 className="text-lg font-semibold text-[#1c2b21]">
+        <div className="h-1 w-12 bg-[#0f285b]"></div>
+        <h3 className="text-lg font-semibold text-[#0f285b]">
           Professionals Community ({professionalMembers.length})
         </h3>
       </div>
       <table className="min-w-full table-auto border border-gray-300 text-sm">
-        <thead className="bg-[#1c2b21] text-white">
+        <thead className="bg-[#0f285b] text-white">
           <tr>
             <th className="border p-2">#</th>
             <th className="border p-2">Certificate #</th>
@@ -125,7 +125,7 @@ const CommunityList = () => {
               return (
                 <tr key={member._id || member.id || index} className="hover:bg-gray-50">
                   <td className="border p-2 text-center">{index + 1}</td>
-                  <td className="border p-2 text-center font-semibold text-[#1c2b21]">
+                  <td className="border p-2 text-center font-semibold text-[#0f285b]">
                     {member.certificateNumber || "Pending"}
                   </td>
                   <td className="border p-2 text-center">{issuedAt}</td>
@@ -179,13 +179,13 @@ const CommunityList = () => {
   const renderPremiumTable = () => (
     <div className="overflow-x-auto">
       <div className="mb-4 flex items-center gap-2">
-        <div className="h-1 w-12 bg-[#D4AF37]"></div>
-        <h3 className="text-lg font-semibold text-[#1c2b21]">
+        <div className="h-1 w-12 bg-[#be9b49]"></div>
+        <h3 className="text-lg font-semibold text-[#0f285b]">
           ODS Global Network Premium Community ({premiumMembers.length})
         </h3>
       </div>
       <table className="min-w-full table-auto border border-gray-300 text-sm">
-        <thead className="bg-[#D4AF37] text-[#1c2b21]">
+        <thead className="bg-[#be9b49] text-[#0f285b]">
           <tr>
             <th className="border p-2">#</th>
             <th className="border p-2">Certificate #</th>
@@ -231,7 +231,7 @@ const CommunityList = () => {
               return (
                 <tr key={member._id || member.id || index} className="hover:bg-gray-50">
                   <td className="border p-2 text-center">{index + 1}</td>
-                  <td className="border p-2 text-center font-semibold text-[#D4AF37]">
+                  <td className="border p-2 text-center font-semibold text-[#be9b49]">
                     {member.certificateNumber || "Pending"}
                   </td>
                   <td className="border p-2 text-center">{issuedAt}</td>
@@ -268,7 +268,7 @@ const CommunityList = () => {
   return (
     <div className="p-4">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-[#1c2b21] mb-2">Community Members</h2>
+        <h2 className="text-2xl font-bold text-[#0f285b] mb-2">Community Members</h2>
         <p className="text-gray-600">
           Manage Professional Community and ODS Global Network Premium memberships
         </p>
@@ -281,8 +281,8 @@ const CommunityList = () => {
             onClick={() => setActiveTab("professional")}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === "professional"
-                ? "border-b-2 border-[#1c2b21] text-[#1c2b21]"
-                : "text-gray-500 hover:text-[#1c2b21]"
+                ? "border-b-2 border-[#0f285b] text-[#0f285b]"
+                : "text-gray-500 hover:text-[#0f285b]"
             }`}
           >
             Professionals Community ({professionalMembers.length})
@@ -291,8 +291,8 @@ const CommunityList = () => {
             onClick={() => setActiveTab("premium")}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === "premium"
-                ? "border-b-2 border-[#D4AF37] text-[#1c2b21]"
-                : "text-gray-500 hover:text-[#1c2b21]"
+                ? "border-b-2 border-[#be9b49] text-[#0f285b]"
+                : "text-gray-500 hover:text-[#0f285b]"
             }`}
           >
             ODS Global Network Premium ({premiumMembers.length})
@@ -303,7 +303,7 @@ const CommunityList = () => {
       {/* Loading State */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1c2b21] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f285b] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading members...</p>
         </div>
       ) : (

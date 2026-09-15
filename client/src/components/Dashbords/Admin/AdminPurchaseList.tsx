@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 
@@ -149,7 +149,7 @@ const AdminPurchaseList = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-[#1c2b21]">All Purchases</h2>
+        <h2 className="text-2xl font-bold text-[#0f285b]">All Purchases</h2>
         <div className="text-sm text-gray-600">
           Total: <span className="font-semibold">{filteredPurchases.length}</span> purchase{filteredPurchases.length !== 1 ? "s" : ""}
         </div>
@@ -162,12 +162,12 @@ const AdminPurchaseList = () => {
           placeholder="Search by service, buyer, provider..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+          className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+          className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -179,7 +179,7 @@ const AdminPurchaseList = () => {
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto bg-white rounded-lg shadow">
         <table className="min-w-full">
-          <thead className="bg-[#1c2b21] text-[#D4AF37]">
+          <thead className="bg-[#0f285b] text-[#be9b49]">
             <tr>
               <th className="px-4 py-3 text-left">ID</th>
               <th className="px-4 py-3 text-left">Service</th>

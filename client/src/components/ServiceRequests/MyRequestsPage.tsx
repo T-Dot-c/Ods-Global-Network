@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getMyServiceRequests } from "../../api/serviceRequests";
 
@@ -34,8 +34,8 @@ const MyRequestsPage = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-[#1c2b21]">My Requests</h1>
-        <Link to="/request-service" className="text-sm bg-[#1c2b21] text-[#D4AF37] px-3 py-2 rounded">
+        <h1 className="text-2xl font-bold text-[#0f285b]">My Requests</h1>
+        <Link to="/request-service" className="text-sm bg-[#0f285b] text-[#be9b49] px-3 py-2 rounded">
           New Request
         </Link>
       </div>
@@ -53,7 +53,7 @@ const MyRequestsPage = () => {
                   {row.location} - {row.status}
                 </p>
               </div>
-              <Link to={`/requests/${row.id}`} className="text-[#1c2b21] font-semibold">
+              <Link to={`/requests/${row.id}`} className="text-[#0f285b] font-semibold">
                 View Proposals
               </Link>
             </div>

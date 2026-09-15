@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, useState } from "react";
+﻿import { useRef, useMemo, useEffect, useState } from "react";
 import html2pdf from "html2pdf.js";
 import QRCode from "react-qr-code";
 import BASE_URL from "../../api/api";
@@ -57,7 +57,7 @@ const getTierConfig = (tier: GiftTier = "standard") => {
       return {
         label: "👑 VIP (+15%)",
         note: " (includes 15% VIP markup)",
-        accent: "#D4AF37",
+        accent: "#be9b49",
         background: "#fef3c7",
       };
     case "corporate":
@@ -366,10 +366,10 @@ const DownloadableInvoice = ({
           padding: "1.5rem",
           marginBottom: "1.5rem",
           fontFamily: "'Segoe UI', sans-serif",
-          color: "#1c2b21",
+          color: "#0f285b",
           maxWidth: "42rem",
           margin: "0 auto",
-          borderTop: "6px solid #D4AF37",
+          borderTop: "6px solid #be9b49",
         }}
       >
         {/* Header */}
@@ -381,7 +381,7 @@ const DownloadableInvoice = ({
           }}
         >
           <img
-            src="/wanaw gifting logo.jpeg"
+            src="/brand/ods-logo-mark-gold.png"
             alt="ODS Global Network Logo"
             style={{
               height: "4rem",
@@ -478,7 +478,7 @@ const DownloadableInvoice = ({
                 <p>
                   <strong>Occasion:</strong> {gift.occasion}
                 </p>
-                <p style={{ fontWeight: "bold", color: "#D4AF37", fontSize: "1rem" }}>
+                <p style={{ fontWeight: "bold", color: "#be9b49", fontSize: "1rem" }}>
                   🎁 Gift Code: {gift.gift_code}
                 </p>
                 <p>
@@ -552,7 +552,7 @@ const DownloadableInvoice = ({
                     )}
                 </p>
                 {gift.giftCode && gift.giftCode !== "N/A" && gift.giftCode !== "Generating..." && (
-                  <p style={{ fontWeight: "bold", color: "#D4AF37", fontSize: "1rem" }}>
+                  <p style={{ fontWeight: "bold", color: "#be9b49", fontSize: "1rem" }}>
                     🎁 Gift Code: {gift.giftCode}
                   </p>
                 )}
@@ -587,10 +587,10 @@ const DownloadableInvoice = ({
             padding: "1rem",
             backgroundColor: "#f8f9fa",
             borderRadius: "0.5rem",
-            border: "2px solid #D4AF37",
+            border: "2px solid #be9b49",
           }}
         >
-          <p style={{ margin: "0", fontSize: "1.2rem", color: "#1c2b21" }}>
+          <p style={{ margin: "0", fontSize: "1.2rem", color: "#0f285b" }}>
             <strong>Total Amount Due: {actualTotal.toFixed(2)} {currency}</strong>
           </p>
         </div>
@@ -600,13 +600,13 @@ const DownloadableInvoice = ({
           <p style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.5rem" }}>
             Scan to verify this invoice
           </p>
-          <QRCode value={`https://wanaw.com/invoice?code=${invoiceNumber}`} size={80} />
+          <QRCode value={`https://www.odsglobal.net/invoice?code=${invoiceNumber}`} size={80} />
         </div>
 
         <div
           style={{
             height: "30px",
-            background: "linear-gradient(to right, #D4AF37, #f5deb3)",
+            background: "linear-gradient(to right, #be9b49, #f5deb3)",
             marginTop: "1.5rem",
             borderBottomLeftRadius: "0.5rem",
             borderBottomRightRadius: "0.5rem",
@@ -618,8 +618,8 @@ const DownloadableInvoice = ({
         <button
           onClick={handleDownload}
           style={{
-            backgroundColor: "#1c2b21",
-            color: "#D4AF37",
+            backgroundColor: "#0f285b",
+            color: "#be9b49",
             padding: "0.5rem 1.5rem",
             borderRadius: "0.375rem",
             cursor: "pointer",

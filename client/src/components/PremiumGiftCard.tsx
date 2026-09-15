@@ -1,4 +1,4 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import html2pdf from "html2pdf.js";
 import QRCode from "react-qr-code";
 
@@ -43,8 +43,8 @@ const PremiumGiftCard = ({
           margin: "auto",
           padding: "3rem",
           borderRadius: "1rem",
-          background: "linear-gradient(145deg, #D4AF37, #FFD700)",
-          color: "#1c2b21",
+          background: "linear-gradient(145deg, #be9b49, #FFD700)",
+          color: "#0f285b",
           fontFamily: "'Segoe UI', sans-serif",
           boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
           position: "relative",
@@ -109,7 +109,7 @@ const PremiumGiftCard = ({
               textAlign: "center",
               margin: "1rem 0",
               fontStyle: "italic",
-              color: "#1c2b21",
+              color: "#0f285b",
               backgroundColor: "rgba(255, 255, 255, 0.25)",
               padding: "0.5rem 1rem",
               borderRadius: "0.5rem",
@@ -144,7 +144,7 @@ const PremiumGiftCard = ({
             boxShadow: "inset 0 0 10px rgba(0,0,0,0.1)",
           }}
         >
-          <QRCode value={`https://wanaw.com/redeem?code=${giftCode || ""}`} size={120} />
+          <QRCode value={`https://www.odsglobal.net/redeem?code=${giftCode || ""}`} size={120} />
         </div>
 
         <div
@@ -165,7 +165,7 @@ const PremiumGiftCard = ({
         <button
           onClick={handleDownload}
           style={{
-            backgroundColor: "#1c2b21",
+            backgroundColor: "#0f285b",
             color: "#FFD700",
             padding: "0.75rem 2rem",
             borderRadius: "0.5rem",
@@ -176,7 +176,7 @@ const PremiumGiftCard = ({
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#3a3a3a")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#1c2b21")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#0f285b")}
         >
           Download Gift Card
         </button>

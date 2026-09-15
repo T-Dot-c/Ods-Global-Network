@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import BASE_URL from "../../../api/api";
 import { Users, Link2, Unlink, ChevronDown, ChevronUp, LayoutDashboard } from "lucide-react";
 
@@ -173,7 +173,7 @@ const AgentDashboard = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#e6f2ef] to-[#f5f5f5] px-4">
         <p className="text-red-600 text-lg mb-4">Access denied. Sign in as an agent.</p>
-        <a href="/login" className="text-[#1c2b21] underline font-medium">
+        <a href="/login" className="text-[#0f285b] underline font-medium">
           Go to login
         </a>
       </div>
@@ -184,17 +184,17 @@ const AgentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f0f7f4] via-white to-[#faf8f3]">
-      <header className="border-b border-[#1c2b21]/10 bg-white/90 backdrop-blur sticky top-0 z-10">
+      <header className="border-b border-[#0f285b]/10 bg-white/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#1c2b21] text-[#D4AF37]">
+            <div className="p-2 rounded-xl bg-[#0f285b] text-[#be9b49]">
               <LayoutDashboard className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[#1c2b21]">Agent dashboard</h1>
+              <h1 className="text-xl font-bold text-[#0f285b]">Agent dashboard</h1>
               <p className="text-sm text-gray-600">
                 {user.fullName || "Agent"} ·{" "}
-                <span className="font-semibold text-[#D4AF37]">{tierLabel}</span>
+                <span className="font-semibold text-[#be9b49]">{tierLabel}</span>
                 {user.membership ? ` · ${user.membership}` : ""}
               </p>
             </div>
@@ -202,7 +202,7 @@ const AgentDashboard = () => {
           <div className="flex gap-2">
             <a
               href="/services"
-              className="px-4 py-2 text-sm font-medium text-[#1c2b21] border border-[#1c2b21]/20 rounded-lg hover:bg-[#1c2b21]/5"
+              className="px-4 py-2 text-sm font-medium text-[#0f285b] border border-[#0f285b]/20 rounded-lg hover:bg-[#0f285b]/5"
             >
               Browse services
             </a>
@@ -212,7 +212,7 @@ const AgentDashboard = () => {
                 localStorage.clear();
                 window.location.href = "/login";
               }}
-              className="px-4 py-2 text-sm font-medium bg-[#1c2b21] text-[#D4AF37] rounded-lg hover:opacity-90"
+              className="px-4 py-2 text-sm font-medium bg-[#0f285b] text-[#be9b49] rounded-lg hover:opacity-90"
             >
               Log out
             </button>
@@ -232,8 +232,8 @@ const AgentDashboard = () => {
 
         <section className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
-            <Users className="w-5 h-5 text-[#1c2b21]" />
-            <h2 className="text-lg font-semibold text-[#1c2b21]">Professionals offering services</h2>
+            <Users className="w-5 h-5 text-[#0f285b]" />
+            <h2 className="text-lg font-semibold text-[#0f285b]">Professionals offering services</h2>
           </div>
           <div className="overflow-x-auto">
             {loadingDir ? (
@@ -255,7 +255,7 @@ const AgentDashboard = () => {
                   {professionals.map((p) => (
                     <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/80">
                       <td className="px-6 py-3">
-                        <div className="font-medium text-[#1c2b21]">{p.companyName || p.fullName}</div>
+                        <div className="font-medium text-[#0f285b]">{p.companyName || p.fullName}</div>
                         <div className="text-xs text-gray-500">{p.email}</div>
                       </td>
                       <td className="px-6 py-3 text-gray-700">{p.serviceType || "—"}</td>
@@ -268,7 +268,7 @@ const AgentDashboard = () => {
                           <button
                             type="button"
                             onClick={() => linkProvider(p.id)}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1c2b21] bg-[#D4AF37]/30 hover:bg-[#D4AF37]/50 px-3 py-1.5 rounded-lg"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#0f285b] bg-[#be9b49]/30 hover:bg-[#be9b49]/50 px-3 py-1.5 rounded-lg"
                           >
                             <Link2 className="w-3.5 h-3.5" />
                             Link to track bookings
@@ -285,8 +285,8 @@ const AgentDashboard = () => {
 
         <section className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
-            <Users className="w-5 h-5 text-[#1c2b21]" />
-            <h2 className="text-lg font-semibold text-[#1c2b21]">Professionals you track</h2>
+            <Users className="w-5 h-5 text-[#0f285b]" />
+            <h2 className="text-lg font-semibold text-[#0f285b]">Professionals you track</h2>
           </div>
           <div className="overflow-x-auto">
             {loadingLinked ? (
@@ -308,14 +308,14 @@ const AgentDashboard = () => {
                   {linked.map((p) => (
                     <tr key={p.id} className="border-b border-gray-50 align-top">
                       <td className="px-6 py-3">
-                        <div className="font-medium text-[#1c2b21]">{p.companyName || p.fullName}</div>
+                        <div className="font-medium text-[#0f285b]">{p.companyName || p.fullName}</div>
                         <div className="text-xs text-gray-500">{p.email}</div>
                       </td>
                       <td className="px-6 py-3">
                         <button
                           type="button"
                           onClick={() => toggleBookings(p.id)}
-                          className="inline-flex items-center gap-1 text-[#1c2b21] font-medium hover:underline"
+                          className="inline-flex items-center gap-1 text-[#0f285b] font-medium hover:underline"
                         >
                           {openBookingsId === p.id ? (
                             <ChevronUp className="w-4 h-4" />
@@ -337,7 +337,7 @@ const AgentDashboard = () => {
                                     key={b.id ?? i}
                                     className="text-xs border-b border-gray-200/80 pb-2 last:border-0"
                                   >
-                                    <span className="font-semibold text-[#1c2b21]">{b.buyerName || "Buyer"}</span>
+                                    <span className="font-semibold text-[#0f285b]">{b.buyerName || "Buyer"}</span>
                                     {b.buyerEmail ? (
                                       <span className="text-gray-600"> · {b.buyerEmail}</span>
                                     ) : null}

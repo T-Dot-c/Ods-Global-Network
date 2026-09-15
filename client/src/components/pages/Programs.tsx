@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { FaSpa, FaHeartbeat, FaUser, FaHotel } from "react-icons/fa";
 import { GiLotus} from "react-icons/gi";
 import type { JSX } from "react";
@@ -60,7 +60,7 @@ export default function Programs() {
   return (
     <div className="bg-[#f9fafb] min-h-screen py-16 px-6 md:px-16">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl md:text-4xl font-bold text-center text-[#1c2b21] mb-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-center text-[#0f285b] mb-4">
           ODS Programs
         </h1>
         <p className="text-center text-gray-700 max-w-3xl mx-auto mb-8">
@@ -76,7 +76,7 @@ export default function Programs() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-1 rounded-full text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md ${
                 selectedCategory === cat
-                  ? "bg-[#1c2b21] text-white"
+                  ? "bg-[#0f285b] text-white"
                   : "bg-gray-200 text-gray-800"
               }`}
             >
@@ -98,7 +98,7 @@ export default function Programs() {
               >
                 <div className="flex items-center gap-4">
                   {getIcon(program.category)}
-                  <span className="text-lg font-semibold text-[#1c2b21]">
+                  <span className="text-lg font-semibold text-[#0f285b]">
                     {program.title}
                   </span>
                 </div>

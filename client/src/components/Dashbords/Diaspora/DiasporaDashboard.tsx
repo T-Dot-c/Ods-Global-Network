@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Gift, Bell, TrendingUp, LogOut, Menu, Users, Globe, Heart, Home, RefreshCw, Calendar, DollarSign, CreditCard } from 'lucide-react';
 import Navbar from '../Navbar';
@@ -81,7 +81,7 @@ const DiasporaDashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
         <div className="text-center">
-          <p className="text-[#1c2b21] text-lg">User not found. Please login again.</p>
+          <p className="text-[#0f285b] text-lg">User not found. Please login again.</p>
         </div>
       </div>
     );
@@ -107,20 +107,20 @@ const DiasporaDashboard = () => {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-64 bg-gradient-to-b from-[#1c2b21] to-[#1c2b21]
+          w-64 bg-gradient-to-b from-[#0f285b] to-[#0f285b]
           text-white transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         {/* User Profile Section */}
-        <div className="p-6 border-b border-[#D4AF37]">
+        <div className="p-6 border-b border-[#be9b49]">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-[#D4AF37] rounded-full flex items-center justify-center text-xl font-bold text-[#1c2b21]">
+            <div className="w-12 h-12 bg-[#be9b49] rounded-full flex items-center justify-center text-xl font-bold text-[#0f285b]">
               {user.fullName?.charAt(0).toUpperCase() || "D"}
             </div>
             <div>
               <h3 className="font-semibold text-lg">{user.fullName || "User"}</h3>
-              <p className="text-[#D4AF37] text-sm">Ethiopian Diaspora</p>
+              <p className="text-[#be9b49] text-sm">Ethiopian Diaspora</p>
             </div>
           </div>
         </div>
@@ -137,12 +137,12 @@ const DiasporaDashboard = () => {
               className={`
                 w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all
                 ${activeTab === tab
-                  ? "bg-[#D4AF37] text-[#1c2b21] shadow-lg"
-                  : "text-white hover:bg-[#D4AF37] hover:text-[#1c2b21]"
+                  ? "bg-[#be9b49] text-[#0f285b] shadow-lg"
+                  : "text-white hover:bg-[#be9b49] hover:text-[#0f285b]"
                 }
               `}
             >
-              <Icon className={`${activeTab === tab ? "text-[#1c2b21]" : "text-[#D4AF37]"} w-5 h-5`} />
+              <Icon className={`${activeTab === tab ? "text-[#0f285b]" : "text-[#be9b49]"} w-5 h-5`} />
               <span className="font-medium">{label}</span>
             </button>
           ))}
@@ -155,7 +155,7 @@ const DiasporaDashboard = () => {
               localStorage.clear();
               window.location.href = "/login";
             }}
-            className="w-full flex items-center space-x-3 px-4 py-3 bg-[#1c2b21] hover:bg-[#D4AF37] hover:text-[#1c2b21] rounded-lg transition-all text-white font-medium"
+            className="w-full flex items-center space-x-3 px-4 py-3 bg-[#0f285b] hover:bg-[#be9b49] hover:text-[#0f285b] rounded-lg transition-all text-white font-medium"
           >
             <LogOut className="w-5 h-5" />
             <span>Logout</span>
@@ -171,30 +171,30 @@ const DiasporaDashboard = () => {
         return (
           <div className="space-y-6">
             {/* Welcome Card */}
-            <div className="bg-gradient-to-r from-[#1c2b21] to-[#1c2b21] rounded-2xl p-8 text-white shadow-xl">
+            <div className="bg-gradient-to-r from-[#0f285b] to-[#0f285b] rounded-2xl p-8 text-white shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <Globe className="w-8 h-8 text-[#D4AF37]" />
+                  <Globe className="w-8 h-8 text-[#be9b49]" />
                   <div>
                     <h2 className="text-3xl font-bold mb-2">Welcome back, {user.fullName}!</h2>
-                    <p className="text-[#D4AF37] text-lg">Connecting hearts across continents.</p>
+                    <p className="text-[#be9b49] text-lg">Connecting hearts across continents.</p>
                   </div>
                 </div>
                 <button
                   onClick={refetchStats}
                   disabled={statsLoading}
-                  className="p-2 bg-[#D4AF37] text-[#1c2b21] rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50"
+                  className="p-2 bg-[#be9b49] text-[#0f285b] rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50"
                 >
                   <RefreshCw className={`w-5 h-5 ${statsLoading ? 'animate-spin' : ''}`} />
                 </button>
               </div>
               <div className="flex items-center space-x-4 text-sm">
                 <div className="flex items-center space-x-2">
-                  <Heart className="w-4 h-4 text-[#D4AF37]" />
+                  <Heart className="w-4 h-4 text-[#be9b49]" />
                   <span>Supporting Ethiopia</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Home className="w-4 h-4 text-[#D4AF37]" />
+                  <Home className="w-4 h-4 text-[#be9b49]" />
                   <span>Global Community</span>
                 </div>
               </div>
@@ -202,66 +202,66 @@ const DiasporaDashboard = () => {
 
             {/* Diaspora Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl p-6 shadow-md border border-[#D4AF37]">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-[#be9b49]">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Gifts Sent</p>
-                    <p className="text-2xl font-bold text-[#1c2b21]">{statsLoading ? '...' : stats.totalGiftsSent}</p>
+                    <p className="text-2xl font-bold text-[#0f285b]">{statsLoading ? '...' : stats.totalGiftsSent}</p>
                   </div>
-                  <Gift className="w-8 h-8 text-[#D4AF37]" />
+                  <Gift className="w-8 h-8 text-[#be9b49]" />
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl p-6 shadow-md border border-[#D4AF37]">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-[#be9b49]">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Amount Sent</p>
-                    <p className="text-2xl font-bold text-[#1c2b21]">${statsLoading ? '...' : stats.totalAmountSent}</p>
+                    <p className="text-2xl font-bold text-[#0f285b]">${statsLoading ? '...' : stats.totalAmountSent}</p>
                   </div>
-                  <DollarSign className="w-8 h-8 text-[#D4AF37]" />
+                  <DollarSign className="w-8 h-8 text-[#be9b49]" />
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl p-6 shadow-md border border-[#D4AF37]">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-[#be9b49]">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Connections</p>
-                    <p className="text-2xl font-bold text-[#1c2b21]">{statsLoading ? '...' : stats.activeConnections}</p>
+                    <p className="text-2xl font-bold text-[#0f285b]">{statsLoading ? '...' : stats.activeConnections}</p>
                   </div>
-                  <Users className="w-8 h-8 text-[#D4AF37]" />
+                  <Users className="w-8 h-8 text-[#be9b49]" />
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl p-6 shadow-md border border-[#D4AF37]">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-[#be9b49]">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Events</p>
-                    <p className="text-2xl font-bold text-[#1c2b21]">{statsLoading ? '...' : stats.communityEvents}</p>
+                    <p className="text-2xl font-bold text-[#0f285b]">{statsLoading ? '...' : stats.communityEvents}</p>
                   </div>
-                  <Calendar className="w-8 h-8 text-[#D4AF37]" />
+                  <Calendar className="w-8 h-8 text-[#be9b49]" />
                 </div>
               </div>
             </div>
 
             {/* Diaspora-Specific Quick Actions */}
-            <div className="bg-white rounded-xl p-6 shadow-md border border-[#D4AF37]">
-              <h3 className="text-xl font-bold text-[#1c2b21] mb-4">Diaspora Actions</h3>
+            <div className="bg-white rounded-xl p-6 shadow-md border border-[#be9b49]">
+              <h3 className="text-xl font-bold text-[#0f285b] mb-4">Diaspora Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <button className="flex items-center space-x-3 p-4 border border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-[#1c2b21] transition-all">
-                  <Gift className="w-6 h-6 text-[#D4AF37]" />
-                  <span className="font-medium text-[#1c2b21]">Send Gift Home</span>
+                <button className="flex items-center space-x-3 p-4 border border-[#be9b49] rounded-lg hover:bg-[#be9b49] hover:text-[#0f285b] transition-all">
+                  <Gift className="w-6 h-6 text-[#be9b49]" />
+                  <span className="font-medium text-[#0f285b]">Send Gift Home</span>
                 </button>
-                <button className="flex items-center space-x-3 p-4 border border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-[#1c2b21] transition-all">
-                  <Bell className="w-6 h-6 text-[#D4AF37]" />
-                  <span className="font-medium text-[#1c2b21]">Community Updates</span>
+                <button className="flex items-center space-x-3 p-4 border border-[#be9b49] rounded-lg hover:bg-[#be9b49] hover:text-[#0f285b] transition-all">
+                  <Bell className="w-6 h-6 text-[#be9b49]" />
+                  <span className="font-medium text-[#0f285b]">Community Updates</span>
                 </button>
-                <button className="flex items-center space-x-3 p-4 border border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-[#1c2b21] transition-all">
-                  <Globe className="w-6 h-6 text-[#D4AF37]" />
-                  <span className="font-medium text-[#1c2b21]">Join Community</span>
+                <button className="flex items-center space-x-3 p-4 border border-[#be9b49] rounded-lg hover:bg-[#be9b49] hover:text-[#0f285b] transition-all">
+                  <Globe className="w-6 h-6 text-[#be9b49]" />
+                  <span className="font-medium text-[#0f285b]">Join Community</span>
                 </button>
-                <button className="flex items-center space-x-3 p-4 border border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-[#1c2b21] transition-all">
-                  <Heart className="w-6 h-6 text-[#D4AF37]" />
-                  <span className="font-medium text-[#1c2b21]">Support Causes</span>
+                <button className="flex items-center space-x-3 p-4 border border-[#be9b49] rounded-lg hover:bg-[#be9b49] hover:text-[#0f285b] transition-all">
+                  <Heart className="w-6 h-6 text-[#be9b49]" />
+                  <span className="font-medium text-[#0f285b]">Support Causes</span>
                 </button>
               </div>
             </div>
@@ -271,21 +271,21 @@ const DiasporaDashboard = () => {
       case "community":
         return (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl p-6 shadow-md border border-[#D4AF37]">
-              <h3 className="text-2xl font-bold text-[#1c2b21] mb-4">Ethiopian Diaspora Community</h3>
+            <div className="bg-white rounded-xl p-6 shadow-md border border-[#be9b49]">
+              <h3 className="text-2xl font-bold text-[#0f285b] mb-4">Ethiopian Diaspora Community</h3>
               <p className="text-gray-600 mb-6">
                 Connect with fellow Ethiopians around the world and support causes back home.
               </p>
               
               {/* Community Events */}
               <div className="mb-8">
-                <h4 className="text-xl font-semibold text-[#1c2b21] mb-4 flex items-center">
-                  <Calendar className="w-5 h-5 mr-2 text-[#D4AF37]" />
+                <h4 className="text-xl font-semibold text-[#0f285b] mb-4 flex items-center">
+                  <Calendar className="w-5 h-5 mr-2 text-[#be9b49]" />
                   Upcoming Events
                 </h4>
                 {eventsLoading ? (
                   <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49] mx-auto"></div>
                     <p className="text-gray-600 mt-2">Loading events...</p>
                   </div>
                 ) : eventsError ? (
@@ -295,12 +295,12 @@ const DiasporaDashboard = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {events.map((event) => (
-                      <div key={event.id} className="border border-[#D4AF37] rounded-lg p-4">
-                        <h5 className="font-semibold text-[#1c2b21] mb-2">{event.title}</h5>
+                      <div key={event.id} className="border border-[#be9b49] rounded-lg p-4">
+                        <h5 className="font-semibold text-[#0f285b] mb-2">{event.title}</h5>
                         <p className="text-gray-600 text-sm mb-2">{event.description}</p>
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-[#D4AF37] font-medium">{event.date}</span>
-                          <span className="bg-[#D4AF37] text-[#1c2b21] px-2 py-1 rounded text-xs">{event.type}</span>
+                          <span className="text-[#be9b49] font-medium">{event.date}</span>
+                          <span className="bg-[#be9b49] text-[#0f285b] px-2 py-1 rounded text-xs">{event.type}</span>
                         </div>
                       </div>
                     ))}
@@ -310,13 +310,13 @@ const DiasporaDashboard = () => {
 
               {/* Support Causes */}
               <div>
-                <h4 className="text-xl font-semibold text-[#1c2b21] mb-4 flex items-center">
-                  <Heart className="w-5 h-5 mr-2 text-[#D4AF37]" />
+                <h4 className="text-xl font-semibold text-[#0f285b] mb-4 flex items-center">
+                  <Heart className="w-5 h-5 mr-2 text-[#be9b49]" />
                   Support Causes
                 </h4>
                 {causesLoading ? (
                   <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49] mx-auto"></div>
                     <p className="text-gray-600 mt-2">Loading causes...</p>
                   </div>
                 ) : causesError ? (
@@ -326,24 +326,24 @@ const DiasporaDashboard = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {causes.map((cause) => (
-                      <div key={cause.id} className="border border-[#D4AF37] rounded-lg p-4">
-                        <h5 className="font-semibold text-[#1c2b21] mb-2">{cause.title}</h5>
+                      <div key={cause.id} className="border border-[#be9b49] rounded-lg p-4">
+                        <h5 className="font-semibold text-[#0f285b] mb-2">{cause.title}</h5>
                         <p className="text-gray-600 text-sm mb-3">{cause.description}</p>
                         <div className="mb-3">
                           <div className="flex justify-between text-sm mb-1">
                             <span>Progress</span>
-                            <span className="text-[#D4AF37] font-medium">{cause.progress}%</span>
+                            <span className="text-[#be9b49] font-medium">{cause.progress}%</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
-                              className="bg-[#D4AF37] h-2 rounded-full" 
+                              className="bg-[#be9b49] h-2 rounded-full" 
                               style={{ width: `${cause.progress}%` }}
                             ></div>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">${cause.currentAmount} / ${cause.targetAmount}</span>
-                          <button className="bg-[#1c2b21] text-white px-3 py-1 rounded text-sm hover:bg-[#D4AF37] hover:text-[#1c2b21] transition-colors">
+                          <button className="bg-[#0f285b] text-white px-3 py-1 rounded text-sm hover:bg-[#be9b49] hover:text-[#0f285b] transition-colors">
                             Support
                           </button>
                         </div>

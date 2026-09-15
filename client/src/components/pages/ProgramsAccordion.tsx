@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import BASE_URL from "../../api/api";
 
 interface Program {
@@ -87,7 +87,7 @@ export default function ProgramsAccordion() {
                   className="w-10 h-10 rounded object-cover"
                 />
               )}
-              <span className="text-lg font-semibold text-[#1c2b21]">
+              <span className="text-lg font-semibold text-[#0f285b]">
                 {program.title}
               </span>
             </div>

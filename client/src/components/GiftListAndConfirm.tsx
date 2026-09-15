@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../api/api";
 
@@ -192,7 +192,7 @@ const GiftListAndConfirm: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mb-4"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#be9b49] mb-4"></div>
           <p className="text-gray-600">Loading gifts...</p>
         </div>
       </div>
@@ -209,7 +209,7 @@ const GiftListAndConfirm: React.FC = () => {
               setError(null);
               fetchGifts();
             }}
-            className="bg-[#1c2b21] hover:bg-[#2d3d32] text-white px-6 py-2 rounded-lg transition-colors"
+            className="bg-[#0f285b] hover:bg-[#2d3d32] text-white px-6 py-2 rounded-lg transition-colors"
           >
             Retry
           </button>
@@ -221,7 +221,7 @@ const GiftListAndConfirm: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-[#1c2b21]">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-[#0f285b]">
           🎁 Gift List & Confirm
         </h1>
 
@@ -236,7 +236,7 @@ const GiftListAndConfirm: React.FC = () => {
                   px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium whitespace-nowrap transition-all
                   ${
                     activeCategory === category
-                      ? "bg-[#D4AF37] text-[#1c2b21] shadow-lg"
+                      ? "bg-[#be9b49] text-[#0f285b] shadow-lg"
                       : "bg-white text-gray-700 hover:bg-gray-100"
                   }
                 `}
@@ -252,7 +252,7 @@ const GiftListAndConfirm: React.FC = () => {
           <input
             type="text"
             placeholder="Search by gift, buyer, provider, recipient, occasion or code..."
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] shadow-sm"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#be9b49] focus:border-[#be9b49] shadow-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -260,7 +260,7 @@ const GiftListAndConfirm: React.FC = () => {
 
         {/* Category Folder Content */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-4 md:p-6 border-b border-gray-200 bg-[#1c2b21] text-white">
+          <div className="p-4 md:p-6 border-b border-gray-200 bg-[#0f285b] text-white">
             <h2 className="text-xl md:text-2xl font-bold">
               {categoryLabels[activeCategory]} Gifts
             </h2>
@@ -300,9 +300,9 @@ const GiftListAndConfirm: React.FC = () => {
                         key={`${gift._id}-${index}`}
                         className={`${
                           index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                        } hover:bg-[#D4AF37]/10 transition-colors`}
+                        } hover:bg-[#be9b49]/10 transition-colors`}
                       >
-                        <td className="px-4 py-3 border-b font-mono font-semibold text-[#D4AF37]">
+                        <td className="px-4 py-3 border-b font-mono font-semibold text-[#be9b49]">
                           {gift.giftCode || "N/A"}
                         </td>
                         <td className="px-4 py-3 border-b">
@@ -364,7 +364,7 @@ const GiftListAndConfirm: React.FC = () => {
                     {/* Header */}
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
-                        <div className="font-mono font-semibold text-[#D4AF37] text-lg mb-1">
+                        <div className="font-mono font-semibold text-[#be9b49] text-lg mb-1">
                           {gift.giftCode || "N/A"}
                         </div>
                         <div className="font-medium text-gray-900">

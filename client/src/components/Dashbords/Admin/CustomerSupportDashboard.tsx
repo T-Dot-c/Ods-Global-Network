@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import {
   MessageSquare,
   Users,
@@ -83,12 +83,12 @@ export default function CustomerSupportDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-[#fff9eb]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1c2b21] to-[#2d3f32] text-white shadow-lg">
+      <div className="bg-gradient-to-r from-[#0f285b] to-[#2d3f32] text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-start justify-between gap-4 mb-2">
             <div className="flex items-center gap-4">
-            <div className="bg-[#D4AF37] p-3 rounded-xl">
-              <Headphones className="h-8 w-8 text-[#1c2b21]" />
+            <div className="bg-[#be9b49] p-3 rounded-xl">
+              <Headphones className="h-8 w-8 text-[#0f285b]" />
             </div>
             <div>
               <h1 className="text-3xl font-bold">Customer Support Dashboard</h1>
@@ -108,25 +108,25 @@ export default function CustomerSupportDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 font-medium">Open Tickets</p>
-                <p className="text-2xl font-bold text-[#1c2b21] mt-1">—</p>
+                <p className="text-2xl font-bold text-[#0f285b] mt-1">—</p>
               </div>
               <MessageSquare className="h-10 w-10 text-red-500" />
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-[#D4AF37]">
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-[#be9b49]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 font-medium">Resolved Today</p>
-                <p className="text-2xl font-bold text-[#1c2b21] mt-1">—</p>
+                <p className="text-2xl font-bold text-[#0f285b] mt-1">—</p>
               </div>
-              <CheckCircle className="h-10 w-10 text-[#D4AF37]" />
+              <CheckCircle className="h-10 w-10 text-[#be9b49]" />
             </div>
           </div>
           <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 font-medium">Active Users</p>
-                <p className="text-2xl font-bold text-[#1c2b21] mt-1">—</p>
+                <p className="text-2xl font-bold text-[#0f285b] mt-1">—</p>
               </div>
               <Users className="h-10 w-10 text-blue-500" />
             </div>
@@ -135,7 +135,7 @@ export default function CustomerSupportDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 font-medium">Satisfaction</p>
-                <p className="text-2xl font-bold text-[#1c2b21] mt-1">—</p>
+                <p className="text-2xl font-bold text-[#0f285b] mt-1">—</p>
               </div>
               <CheckCircle className="h-10 w-10 text-green-500" />
             </div>
@@ -144,7 +144,7 @@ export default function CustomerSupportDashboard() {
 
         {/* Features Grid */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-[#1c2b21] mb-4">Support Tools</h2>
+          <h2 className="text-2xl font-bold text-[#0f285b] mb-4">Support Tools</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((item, index) => {
               const Icon = item.icon;
@@ -157,13 +157,13 @@ export default function CustomerSupportDashboard() {
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.color}`}></div>
                   <div className="p-6">
                     <div className={`inline-flex p-3 rounded-lg ${item.bgColor} mb-4 group-hover:scale-110 transition-transform`}>
-                      <Icon className={`h-6 w-6 text-[#1c2b21]`} />
+                      <Icon className={`h-6 w-6 text-[#0f285b]`} />
                     </div>
-                    <h3 className="text-lg font-semibold text-[#1c2b21] mb-2 group-hover:text-[#D4AF37] transition-colors">
+                    <h3 className="text-lg font-semibold text-[#0f285b] mb-2 group-hover:text-[#be9b49] transition-colors">
                       {item.title}
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
-                    <div className="mt-4 flex items-center text-[#D4AF37] font-medium text-sm group-hover:translate-x-1 transition-transform">
+                    <div className="mt-4 flex items-center text-[#be9b49] font-medium text-sm group-hover:translate-x-1 transition-transform">
                       Access <span className="ml-1">→</span>
                     </div>
                   </div>

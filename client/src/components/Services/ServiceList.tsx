@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import BASE_URL from "../../api/api";
@@ -262,7 +262,7 @@ const ServiceList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-10">
-      <h1 className="text-3xl font-extrabold text-center text-[#1c2b21] mb-6">
+      <h1 className="text-3xl font-extrabold text-center text-[#0f285b] mb-6">
         Available Services
       </h1>
 
@@ -273,7 +273,7 @@ const ServiceList = () => {
           placeholder="Search services..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49] text-sm"
         />
 
         {/* Hotel Rooms */}
@@ -281,7 +281,7 @@ const ServiceList = () => {
           <select
             value={selectedSubcategory}
             onChange={(e) => setSelectedSubcategory(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49] text-sm"
           >
             <option value="">-- Select Room Type --</option>
             {hotelRoomSubcategories.map((group) => (
@@ -301,7 +301,7 @@ const ServiceList = () => {
           <select
             value={selectedSubcategory}
             onChange={(e) => setSelectedSubcategory(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49] text-sm"
           >
             <option value="">-- Select Wellness Subcategory --</option>
             {wellnessSubcategories.map((group) => (
@@ -321,7 +321,7 @@ const ServiceList = () => {
           <select
             value={selectedSubcategory}
             onChange={(e) => setSelectedSubcategory(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49] text-sm"
           >
             <option value="">-- Select Home Based Subcategory --</option>
             {homeBasedSubcategories.map((group) => (
@@ -341,7 +341,7 @@ const ServiceList = () => {
           <select
             value={selectedSubcategory}
             onChange={(e) => setSelectedSubcategory(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49] text-sm"
           >
             <option value="">-- Select Health Subcategory --</option>
             {healthSubcategories.map((group) => (
@@ -368,8 +368,8 @@ const ServiceList = () => {
         <img
           src={(() => {
             if (service.imageUrl.startsWith('http')) {
-              if (service.imageUrl.includes('wanaw.et') && !service.imageUrl.includes('www.wanaw.et')) {
-                return service.imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+              if (service.imageUrl.includes('odsglobal.net') && !service.imageUrl.includes('www.odsglobal.net')) {
+                return service.imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
               }
               return service.imageUrl;
             }
@@ -403,7 +403,7 @@ const ServiceList = () => {
       )}
 
       <div className="flex-1">
-        <h2 className="text-xl font-bold text-[#1c2b21] mb-2">{service.title}</h2>
+        <h2 className="text-xl font-bold text-[#0f285b] mb-2">{service.title}</h2>
         <p className="text-sm text-gray-600 mb-1">
           Category: {service.category}
         </p>
@@ -423,7 +423,7 @@ const ServiceList = () => {
                 <Star
                   key={`${service.id}-star-${starValue}`}
                   size={18}
-                  className={isFilled ? "text-[#D4AF37]" : "text-gray-300"}
+                  className={isFilled ? "text-[#be9b49]" : "text-gray-300"}
                   fill={isFilled ? "currentColor" : "none"}
                 />
               );
@@ -440,7 +440,7 @@ const ServiceList = () => {
                 ETB {service.price?.toLocaleString()}
                 {service.category === "Hotel" || service.category === "Hotel Rooms" ? " / night" : ""}
               </p>
-              <p className="text-lg font-semibold text-[#D4AF37]">
+              <p className="text-lg font-semibold text-[#be9b49]">
                 ETB {service.discountedPrice ? service.discountedPrice.toLocaleString() : (service.price * (1 - service.discount / 100)).toLocaleString()}
                 {service.category === "Hotel" || service.category === "Hotel Rooms" ? " / night" : ""}
                 <span className="ml-2 text-sm bg-red-500 text-white px-2 py-1 rounded">
@@ -449,7 +449,7 @@ const ServiceList = () => {
               </p>
             </div>
           ) : (
-            <p className="text-lg font-semibold text-[#D4AF37]">
+            <p className="text-lg font-semibold text-[#be9b49]">
               ETB {service.price?.toLocaleString()}
               {service.category === "Hotel" || service.category === "Hotel Rooms" ? " / night" : ""}
             </p>
@@ -466,7 +466,7 @@ const ServiceList = () => {
       <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-200">
         <button
           onClick={() => handleViewDetails(service)}
-          className="w-full bg-white border border-gray-300 text-[#1c2b21] font-semibold py-3 px-3 rounded-lg hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 text-sm"
+          className="w-full bg-white border border-gray-300 text-[#0f285b] font-semibold py-3 px-3 rounded-lg hover:border-[#be9b49] hover:text-[#be9b49] transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 text-sm"
         >
           <span>🔍</span>
           <span>View Details & Reviews</span>
@@ -475,7 +475,7 @@ const ServiceList = () => {
           onClick={() => {
             handleAddToCart(service);
           }}
-          className="flex-1 min-w-[110px] bg-[#1c2b21] text-white font-semibold py-3 px-3 rounded-lg hover:bg-[#111] transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 text-sm"
+          className="flex-1 min-w-[110px] bg-[#0f285b] text-white font-semibold py-3 px-3 rounded-lg hover:bg-[#111] transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 text-sm"
         >
           <span>🛒</span>
           <span>Add to Cart</span>
@@ -484,7 +484,7 @@ const ServiceList = () => {
           onClick={() => {
             handleSendGift(service);
           }}
-          className="flex-1 min-w-[110px] bg-[#1c2b21] text-white font-semibold py-3 px-3 rounded-lg hover:bg-[#111] transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 text-sm"
+          className="flex-1 min-w-[110px] bg-[#0f285b] text-white font-semibold py-3 px-3 rounded-lg hover:bg-[#111] transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 text-sm"
         >
           <span>🎁</span>
           <span>Send Gift</span>
@@ -501,7 +501,7 @@ const ServiceList = () => {
           setSearchTerm("");
           setSelectedSubcategory("");
         }}
-        className="px-4 py-2 bg-[#D4AF37] text-[#1c2b21] rounded-lg hover:bg-[#b8962f] transition font-semibold"
+        className="px-4 py-2 bg-[#be9b49] text-[#0f285b] rounded-lg hover:bg-[#b8962f] transition font-semibold"
       >
         Clear All Filters
       </button>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getServiceRequestDetails, updateProposalStatus, updateRequestStatus } from "../../api/serviceRequests";
 
@@ -56,7 +56,7 @@ const RequestProposalsPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-[#1c2b21]">{requestData.title}</h1>
+      <h1 className="text-2xl font-bold text-[#0f285b]">{requestData.title}</h1>
       <p className="text-gray-700 mt-2">{requestData.description}</p>
       <p className="text-sm text-gray-500 mt-1">
         {requestData.location} - {requestData.status}
@@ -79,7 +79,7 @@ const RequestProposalsPage = () => {
               {proposal.status === "pending" && requestData.status !== "completed" && (
                 <button
                   onClick={() => acceptProposal(proposal.id)}
-                  className="mt-3 bg-[#1c2b21] text-[#D4AF37] px-3 py-2 rounded text-sm"
+                  className="mt-3 bg-[#0f285b] text-[#be9b49] px-3 py-2 rounded text-sm"
                 >
                   Accept Proposal
                 </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import BASE_URL from "../../../api/api";
 
@@ -135,7 +135,7 @@ const AdminAddGift = () => {
 
   return (
     <div className="max-w-xl mx-auto bg-white shadow-xl rounded-xl p-8 mt-12 border border-gray-100">
-      <h2 className="text-3xl font-bold text-center text-[#1c2b21] mb-6">Add a New Gift</h2>
+      <h2 className="text-3xl font-bold text-center text-[#0f285b] mb-6">Add a New Gift</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Title */}
@@ -146,7 +146,7 @@ const AdminAddGift = () => {
             value={gift.title}
             onChange={handleChange}
             required
-            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1c2b21]"
+            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0f285b]"
             placeholder="e.g. Welcome Kit"
           />
         </div>
@@ -212,7 +212,7 @@ const AdminAddGift = () => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full bg-[#1c2b21] hover:bg-[#2e4235] text-white font-semibold py-3 px-6 rounded-md shadow-md transition duration-200 ${
+          className={`w-full bg-[#0f285b] hover:bg-[#2e4235] text-white font-semibold py-3 px-6 rounded-md shadow-md transition duration-200 ${
             loading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >

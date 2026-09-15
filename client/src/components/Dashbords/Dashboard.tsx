@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaUserTie } from "react-icons/fa";
 import Navbar from "./Navbar";
@@ -66,7 +66,7 @@ const Dashboard = () => {
             <div className="flex justify-end mb-3">
               <LogoutButton />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#1c2b21] mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-[#0f285b] mb-2">
               Welcome, {user.fullName || "User"} 🎉
             </h1>
             <p className="text-gray-600">
@@ -81,7 +81,7 @@ const Dashboard = () => {
           {/* Admin View */}
           {user.role === "admin" && (
             <div className="bg-white p-6 md:p-10 rounded-xl shadow">
-              <h2 className="text-2xl font-semibold mb-4 text-[#1c2b21]">
+              <h2 className="text-2xl font-semibold mb-4 text-[#0f285b]">
                 Admin Dashboard
               </h2>
               <p className="text-gray-600 mb-6">
@@ -97,8 +97,8 @@ const Dashboard = () => {
               {/* Membership Info */}
               <div className="bg-gradient-to-br from-white to-gray-50 p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100">
                 <div className="flex items-center gap-4 mb-4">
-                  <FaUserTie className="text-3xl text-[#1c2b21]" />
-                  <h3 className="text-xl font-bold text-[#1c2b21]">
+                  <FaUserTie className="text-3xl text-[#0f285b]" />
+                  <h3 className="text-xl font-bold text-[#0f285b]">
                     Your Membership
                   </h3>
                 </div>
@@ -109,7 +109,7 @@ const Dashboard = () => {
                 </p>
                 <Link
                   to="/membership"
-                  className="inline-block bg-[#D4AF37] text-[#1c2b21] font-semibold py-2 px-6 rounded-lg hover:rounded-full transition"
+                  className="inline-block bg-[#be9b49] text-[#0f285b] font-semibold py-2 px-6 rounded-lg hover:rounded-full transition"
                 >
                   View Membership
                 </Link>
@@ -118,7 +118,7 @@ const Dashboard = () => {
               {/* Provider Panel */}
               {user.role === "provider" && (
                 <div className="bg-gradient-to-br from-white to-gray-50 p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100">
-                  <h2 className="text-2xl font-bold mb-3 text-[#1c2b21] flex items-center gap-2">
+                  <h2 className="text-2xl font-bold mb-3 text-[#0f285b] flex items-center gap-2">
                     ⚙️ Service Provider Panel
                   </h2>
                   <p className="text-gray-600 mb-4 leading-relaxed">
@@ -132,7 +132,7 @@ const Dashboard = () => {
                   </ul>
                   <button
                     onClick={() => navigate("/provider/add-service")}
-                    className="bg-[#D4AF37] text-[#1c2b21] font-semibold py-2 px-6 rounded-lg hover:rounded-full transition"
+                    className="bg-[#be9b49] text-[#0f285b] font-semibold py-2 px-6 rounded-lg hover:rounded-full transition"
                   >
                     ➕ Add New Service
                   </button>
@@ -144,7 +144,7 @@ const Dashboard = () => {
           {/* Specific Role Additions */}
           {user.role === "individual" && (
             <div className="bg-white p-6 rounded-xl shadow">
-              <h2 className="text-xl font-bold text-[#1c2b21] mb-2">
+              <h2 className="text-xl font-bold text-[#0f285b] mb-2">
                 🌿 Wellness Access
               </h2>
               <p className="text-gray-600">
@@ -156,7 +156,7 @@ const Dashboard = () => {
 
           {user.role === "corporate" && (
             <div className="bg-white p-6 rounded-xl shadow">
-              <h2 className="text-xl font-bold text-[#1c2b21] mb-2">
+              <h2 className="text-xl font-bold text-[#0f285b] mb-2">
                 🏢 Corporate Portal
               </h2>
               <p className="text-gray-600">
@@ -168,7 +168,7 @@ const Dashboard = () => {
 
           {user.role === "diaspora" && (
             <div className="bg-white p-6 rounded-xl shadow">
-              <h2 className="text-xl font-bold text-[#1c2b21] mb-2">
+              <h2 className="text-xl font-bold text-[#0f285b] mb-2">
                 🌍 Diaspora Member Area
               </h2>
               <p className="text-gray-600">

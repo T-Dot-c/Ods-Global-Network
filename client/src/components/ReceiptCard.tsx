@@ -1,4 +1,4 @@
-// components/ReceiptCard.tsx
+﻿// components/ReceiptCard.tsx
 interface ReceiptCardProps {
   fullName: string;
   email: string;
@@ -26,7 +26,7 @@ const ReceiptCard = ({ fullName, email, amount, cart, txRef = "Pending" }: Recei
         ))}
       </ul>
 
-      <div className="flex justify-between font-semibold text-[#1c2b21] mt-4 border-t pt-2">
+      <div className="flex justify-between font-semibold text-[#0f285b] mt-4 border-t pt-2">
         <span>Total</span>
         <span>${amount.toFixed(2)}</span>
       </div>

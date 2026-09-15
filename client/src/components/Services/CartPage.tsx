@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../api/api";
 
@@ -125,7 +125,7 @@ const CartPage = () => {
               placeholder="Your Full Name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#be9b49] focus:outline-none"
               required
             />
             <input
@@ -133,7 +133,7 @@ const CartPage = () => {
               placeholder="Your Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#be9b49] focus:outline-none"
               required
             />
             <input
@@ -141,7 +141,7 @@ const CartPage = () => {
               placeholder="Your Phone"
               value={guestPhone}
               onChange={(e) => setGuestPhone(e.target.value)}
-              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#be9b49] focus:outline-none"
               required
             />
             <textarea
@@ -149,7 +149,7 @@ const CartPage = () => {
               rows={2}
               value={guestAddress}
               onChange={(e) => setGuestAddress(e.target.value)}
-              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#D4AF37] focus:outline-none md:col-span-2"
+              className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#be9b49] focus:outline-none md:col-span-2"
               required
             />
           </div>
@@ -173,8 +173,8 @@ const CartPage = () => {
                     
                     // If already a full URL, normalize it
                     if (item.imageUrl.startsWith('http')) {
-                      if (item.imageUrl.includes('wanaw.et') && !item.imageUrl.includes('www.wanaw.et')) {
-                        return item.imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+                      if (item.imageUrl.includes('odsglobal.net') && !item.imageUrl.includes('www.odsglobal.net')) {
+                        return item.imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
                       }
                       return item.imageUrl;
                     }
@@ -182,7 +182,7 @@ const CartPage = () => {
                     // For relative paths, construct full URL
                     let serverBase;
                     if (BASE_URL.startsWith('http')) {
-                      // Production: BASE_URL is full URL like "https://wanaw.et/api"
+                      // Production: BASE_URL is full URL like "https://www.odsglobal.net/api"
                       serverBase = BASE_URL.replace('/api', '').replace(/\/$/, '');
                     } else {
                       // Development: BASE_URL is "/api", use localhost server directly
@@ -201,8 +201,8 @@ const CartPage = () => {
                     
                     if (item.imageUrl) {
                       // Try normalizing wanaw.et URLs
-                      if (img.src.includes('wanaw.et') && !img.src.includes('www.wanaw.et')) {
-                        img.src = img.src.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+                      if (img.src.includes('odsglobal.net') && !img.src.includes('www.odsglobal.net')) {
+                        img.src = img.src.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
                         return;
                       }
                       
@@ -287,7 +287,7 @@ const CartPage = () => {
           <div className="mt-10 flex flex-col md:flex-row justify-center items-center gap-6">
             <p className="text-lg font-semibold text-gray-800">
               Total:{" "}
-              <span className="text-[#D4AF37]">
+              <span className="text-[#be9b49]">
                 ETB {Number(total || 0).toFixed(2)}
               </span>
             </p>
@@ -300,7 +300,7 @@ const CartPage = () => {
               </button>
               <button
                 onClick={handleConfirmPayment}
-                className="px-8 py-3 bg-[#D4AF37] hover:bg-[#b8962f] text-white rounded-lg font-semibold text-lg transition-colors duration-300 shadow-md"
+                className="px-8 py-3 bg-[#be9b49] hover:bg-[#b8962f] text-white rounded-lg font-semibold text-lg transition-colors duration-300 shadow-md"
               >
                 Proceed to Payment
               </button>

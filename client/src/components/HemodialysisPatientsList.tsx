@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Mail, Phone, MessageCircle, Send, FileText, Download } from "lucide-react";
 import BASE_URL from "../api/api";
 import { generateCertificate } from "../assets/generateCertificate";
@@ -163,7 +163,7 @@ const HemodialysisPatientsList: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h2 className="text-3xl font-bold text-center mb-8 text-[#1c2b21]">
+      <h2 className="text-3xl font-bold text-center mb-8 text-[#0f285b]">
         Hemodialysis Patients Needing Support
       </h2>
 
@@ -171,7 +171,7 @@ const HemodialysisPatientsList: React.FC = () => {
       {showCertificateModal && certificateData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-2xl font-bold text-[#1c2b21] mb-4">Certificate of Contribution</h3>
+            <h3 className="text-2xl font-bold text-[#0f285b] mb-4">Certificate of Contribution</h3>
             <p className="mb-4">
               Thank you for your contribution to <strong>{certificateData.patientName}</strong> as a {certificateData.contributionType}.
             </p>
@@ -179,7 +179,7 @@ const HemodialysisPatientsList: React.FC = () => {
             <div className="flex gap-4">
               <button
                 onClick={handleDownloadCertificate}
-                className="flex-1 py-2 px-4 bg-[#1c2b21] text-white font-semibold rounded-lg flex items-center justify-center gap-2"
+                className="flex-1 py-2 px-4 bg-[#0f285b] text-white font-semibold rounded-lg flex items-center justify-center gap-2"
               >
                 <Download size={18} /> Download
               </button>
@@ -204,7 +204,7 @@ const HemodialysisPatientsList: React.FC = () => {
             <div key={patient._id} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-transform duration-300 relative">
               {/* Contribution Badge */}
               {hasContributedToPatient && (
-                <div className="absolute top-4 right-4 bg-[#D4AF37] text-white text-xs px-2 py-1 rounded-full z-10">
+                <div className="absolute top-4 right-4 bg-[#be9b49] text-white text-xs px-2 py-1 rounded-full z-10">
                   {recentAction === "gifter" && (gifterLevel.toLowerCase() === "corporate" ? "🏢 Corporate Gift Sent" : "🎁 Gift Sent")}
                   {recentAction === "influencer" && "📢 Promoting"}
                   {recentAction === "brandAmbassador" && "🌟 Ambassadoring"}
@@ -222,7 +222,7 @@ const HemodialysisPatientsList: React.FC = () => {
 )}
 
               <div className="p-6 space-y-4">
-                <h3 className="text-2xl font-semibold text-[#1c2b21]">
+                <h3 className="text-2xl font-semibold text-[#0f285b]">
                   {patient.name} <span className="text-gray-500 text-lg">({patient.age ?? "N/A"} yrs)</span>
                 </h3>
                 <p className="text-gray-700"><strong>Facility:</strong> {patient.facilityName}</p>
@@ -271,7 +271,7 @@ const HemodialysisPatientsList: React.FC = () => {
                       className={`flex-1 py-2 px-3 rounded-lg font-semibold hover:rounded-full transition text-sm ${
                         hasContributedToPatient
                           ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                          : "bg-[#D4AF37] text-[#1c2b21] hover:bg-[#c19b2a]"
+                          : "bg-[#be9b49] text-[#0f285b] hover:bg-[#9e7c30]"
                       }`}
                       disabled={hasContributedToPatient}
                     >
@@ -297,7 +297,7 @@ const HemodialysisPatientsList: React.FC = () => {
                       });
                       setShowCertificateModal(true);
                     }}
-                    className="flex-1 py-2 px-3 rounded-lg bg-[#1c2b21] text-white font-semibold hover:bg-[#0f1a14] transition text-sm flex items-center justify-center gap-1"
+                    className="flex-1 py-2 px-3 rounded-lg bg-[#0f285b] text-white font-semibold hover:bg-[#091838] transition text-sm flex items-center justify-center gap-1"
                   >
                     <Download size={16} /> Certificate
                   </button>

@@ -1,4 +1,4 @@
-import axios from "axios";
+﻿import axios from "axios";
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -161,7 +161,7 @@ const Account = () => {
       <div className="flex flex-col sm:flex-row border-b border-white mb-6 justify-center sm:space-x-4 space-y-2 sm:space-y-0">
         <button
           className={`flex-1 px-4 py-2 font-semibold rounded-lg transition-all text-center ${
-            activeTab === "profile" ? "bg-[#D4AF37] text-white shadow-lg" : "text-white hover:bg-white/20"
+            activeTab === "profile" ? "bg-[#be9b49] text-white shadow-lg" : "text-white hover:bg-white/20"
           }`}
           onClick={() => setActiveTab("profile")}
         >
@@ -169,7 +169,7 @@ const Account = () => {
         </button>
         <button
           className={`flex-1 px-4 py-2 font-semibold rounded-lg transition-all text-center ${
-            activeTab === "security" ? "bg-[#D4AF37] text-white shadow-lg" : "text-white hover:bg-white/20"
+            activeTab === "security" ? "bg-[#be9b49] text-white shadow-lg" : "text-white hover:bg-white/20"
           }`}
           onClick={() => setActiveTab("security")}
         >

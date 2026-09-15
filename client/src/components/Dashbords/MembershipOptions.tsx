@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface MembershipOptionsProps {
@@ -38,7 +38,7 @@ const MembershipOptions = ({ role }: MembershipOptionsProps) => {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
-      <h2 className="text-2xl font-bold text-[#1c2b21] mb-2">
+      <h2 className="text-2xl font-bold text-[#0f285b] mb-2">
         Membership Options
       </h2>
       <p className="text-gray-600 mb-6">
@@ -55,7 +55,7 @@ const MembershipOptions = ({ role }: MembershipOptionsProps) => {
           <select
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#1c2b21] transition text-gray-700 font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49] focus:border-[#0f285b] transition text-gray-700 font-medium"
           >
             <option value="">-- Choose Plan --</option>
             {membershipOptions[role].map((plan) => (
@@ -76,7 +76,7 @@ const MembershipOptions = ({ role }: MembershipOptionsProps) => {
           disabled={!selected}
           className={`w-full font-semibold py-3 rounded-xl shadow-lg transform transition-all
             ${selected
-              ? "bg-gradient-to-r from-[#1c2b21] to-[#3c4f3b] text-[#D4AF37] hover:shadow-2xl hover:scale-105"
+              ? "bg-gradient-to-r from-[#0f285b] to-[#163a82] text-[#be9b49] hover:shadow-2xl hover:scale-105"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"}
           `}
         >

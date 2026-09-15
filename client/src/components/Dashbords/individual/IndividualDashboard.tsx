@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Gift, Bell, CreditCard, User, TrendingUp, LogOut, Menu, Users } from "lucide-react";
 import Navbar from "../Navbar";
@@ -80,7 +80,7 @@ const IndividualDashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
         <div className="text-center">
-          <p className="text-[#1c2b21] text-lg">User not found. Please login again.</p>
+          <p className="text-[#0f285b] text-lg">User not found. Please login again.</p>
         </div>
       </div>
     );
@@ -110,20 +110,20 @@ const IndividualDashboard = () => {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-64 bg-gradient-to-b from-[#1c2b21] to-[#1c2b21]
+          w-64 bg-gradient-to-b from-[#0f285b] to-[#0f285b]
           text-white transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         {/* User Profile Section */}
-        <div className="p-6 border-b border-[#D4AF37]">
+        <div className="p-6 border-b border-[#be9b49]">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-[#D4AF37] rounded-full flex items-center justify-center text-xl font-bold text-[#1c2b21]">
+            <div className="w-12 h-12 bg-[#be9b49] rounded-full flex items-center justify-center text-xl font-bold text-[#0f285b]">
               {user.fullName?.charAt(0).toUpperCase() || "U"}
             </div>
             <div>
               <h3 className="font-semibold text-lg">{user.fullName || "User"}</h3>
-              <p className="text-[#D4AF37] text-sm">Individual Member</p>
+              <p className="text-[#be9b49] text-sm">Individual Member</p>
             </div>
           </div>
         </div>
@@ -140,12 +140,12 @@ const IndividualDashboard = () => {
               className={`
                 w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all
                 ${activeTab === tab
-                  ? "bg-[#D4AF37] text-[#1c2b21] shadow-lg"
-                  : "text-white hover:bg-[#D4AF37] hover:text-[#1c2b21]"
+                  ? "bg-[#be9b49] text-[#0f285b] shadow-lg"
+                  : "text-white hover:bg-[#be9b49] hover:text-[#0f285b]"
                 }
               `}
             >
-              <Icon className={`${activeTab === tab ? "text-[#1c2b21]" : "text-[#D4AF37]"} w-5 h-5`} />
+              <Icon className={`${activeTab === tab ? "text-[#0f285b]" : "text-[#be9b49]"} w-5 h-5`} />
               <span className="font-medium">{label}</span>
             </button>
           ))}
@@ -158,7 +158,7 @@ const IndividualDashboard = () => {
               localStorage.clear();
               window.location.href = "/login";
             }}
-            className="w-full flex items-center space-x-3 px-4 py-3 bg-[#1c2b21] hover:bg-[#D4AF37] hover:text-[#1c2b21] rounded-lg transition-all text-white font-medium"
+            className="w-full flex items-center space-x-3 px-4 py-3 bg-[#0f285b] hover:bg-[#be9b49] hover:text-[#0f285b] rounded-lg transition-all text-white font-medium"
           >
             <LogOut className="w-5 h-5" />
             <span>Logout</span>
@@ -174,9 +174,9 @@ const IndividualDashboard = () => {
         return (
           <div className="space-y-6">
             {/* Welcome Card */}
-            <div className="bg-gradient-to-r from-[#1c2b21] to-[#1c2b21] rounded-2xl p-8 text-white shadow-xl">
+            <div className="bg-gradient-to-r from-[#0f285b] to-[#0f285b] rounded-2xl p-8 text-white shadow-xl">
               <h2 className="text-3xl font-bold mb-2">Welcome back, {user.fullName}!</h2>
-              <p className="text-[#D4AF37] text-lg">Here's what's happening with your gifts today.</p>
+              <p className="text-[#be9b49] text-lg">Here's what's happening with your gifts today.</p>
             </div>
 
             {/* Stats Grid */}

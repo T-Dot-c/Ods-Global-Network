@@ -167,11 +167,11 @@ const PurchaseListForProvider = () => {
 
   const getStatusBadge = (status: string) => {
     const statusColors: { [key: string]: string } = {
-      pending: "bg-yellow-100 text-yellow-800",
-      completed: "bg-green-100 text-green-800",
-      cancelled: "bg-red-100 text-red-800",
+      pending: "bg-[#FAF0D7] text-[#8D7338] border border-[#BE9B49]/30",
+      completed: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      cancelled: "bg-red-50 text-red-700 border border-red-200",
     };
-    return statusColors[status] || "bg-gray-100 text-gray-800";
+    return statusColors[status] || "bg-slate-50 text-slate-700 border border-slate-200";
   };
 
   const filteredPurchases = purchases.filter((p) => {
@@ -198,7 +198,8 @@ const PurchaseListForProvider = () => {
         <p className="text-red-600 font-semibold mb-2">Error: {error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 bg-[#D4AF37] text-[#1c2b21] rounded-lg hover:bg-[#b8962f] transition"
+          className="mt-2 px-4 py-2 text-[#0F285B] rounded-lg hover:brightness-105 transition font-semibold shadow-sm"
+          style={{ background: "linear-gradient(135deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%)" }}
         >
           Retry
         </button>
@@ -219,18 +220,18 @@ const PurchaseListForProvider = () => {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
         <input
           type="text"
           placeholder="Search by service, buyer name, or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+          className="flex-1 w-full border border-[#E8E8E8] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#EDC45B] focus:ring-1 focus:ring-[#EDC45B]/30 bg-white transition-all placeholder-gray-400"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+          className="w-full sm:w-auto border border-[#E8E8E8] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#EDC45B] focus:ring-1 focus:ring-[#EDC45B]/30 bg-white transition-all text-gray-700 font-medium"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -240,17 +241,17 @@ const PurchaseListForProvider = () => {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full bg-white border rounded-lg">
-          <thead className="bg-[#1c2b21] text-[#D4AF37]">
+      <div className="hidden md:block overflow-x-auto border border-[#E8E8E8] rounded-2xl">
+        <table className="min-w-full bg-white">
+          <thead className="bg-[#0F285B] text-[#EDC45B]">
             <tr>
-              <th className="px-4 py-3 text-left">Service</th>
-              <th className="px-4 py-3 text-left">Buyer</th>
-              <th className="px-4 py-3 text-left">Contact</th>
-              <th className="px-4 py-3 text-left">Amount</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3 text-left">Actions</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Service</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Buyer</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Contact</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Amount</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -312,7 +313,7 @@ const PurchaseListForProvider = () => {
                     <select
                       value={purchase.status}
                       onChange={(e) => handleStatusChange(String(purchase.id), e.target.value)}
-                      className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                      className="border border-[#E8E8E8] rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#EDC45B]"
                       disabled={purchase.status === "cancelled"}
                     >
                       <option value="pending">Pending</option>
@@ -387,7 +388,7 @@ const PurchaseListForProvider = () => {
                   <select
                   value={purchase.status}
                   onChange={(e) => handleStatusChange(String(purchase.id), e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#be9b49]"
                   disabled={purchase.status === "cancelled"}
                 >
                   <option value="pending">Pending</option>

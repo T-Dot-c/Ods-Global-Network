@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../api/api";
 
@@ -77,7 +77,7 @@ export default function RegisteredPartners() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h2 className="text-3xl font-bold text-center mb-8 text-[#1c2b21]">
+      <h2 className="text-3xl font-bold text-center mb-8 text-[#0f285b]">
         Registered Partners
       </h2>
 
@@ -103,7 +103,7 @@ export default function RegisteredPartners() {
         <button
           onClick={handleSendEmail}
           disabled={sending}
-          className={`bg-[#1c2b21] text-white px-6 py-2 rounded hover:bg-[#0f1a14] transition ${
+          className={`bg-[#0f285b] text-white px-6 py-2 rounded hover:bg-[#091838] transition ${
             sending ? "opacity-60 cursor-not-allowed" : ""
           }`}
         >
@@ -114,7 +114,7 @@ export default function RegisteredPartners() {
       {/* Partners Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-          <thead className="bg-[#1c2b21] text-white">
+          <thead className="bg-[#0f285b] text-white">
             <tr>
               <th className="py-3 px-4 text-left text-sm font-semibold">Name</th>
               <th className="py-3 px-4 text-left text-sm font-semibold">Company</th>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import BASE_URL from "../../api/api";
@@ -67,7 +67,7 @@ const PaymentSuccess = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
       <CheckCircle size={64} className="text-green-500 mb-4" />
-      <h1 className="text-3xl font-bold text-[#1c2b21]">Payment Successful!</h1>
+      <h1 className="text-3xl font-bold text-[#0f285b]">Payment Successful!</h1>
       <p className="mt-2 text-gray-600">Thank you for your payment 🎉</p>
       <p className="text-sm text-gray-500 mt-1">
         Redirecting you shortly...

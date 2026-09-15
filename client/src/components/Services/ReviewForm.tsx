@@ -1,4 +1,4 @@
-// client/src/components/Services/ReviewForm.tsx
+﻿// client/src/components/Services/ReviewForm.tsx
 import { useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../api/api";
@@ -176,9 +176,9 @@ const ReviewForm = ({ serviceId, onSubmitSuccess, userEmail }: ReviewFormProps) 
             key={star}
             size={28}
             className="cursor-pointer transition-transform hover:scale-110"
-            fill={star <= rating ? "#D4AF37" : "none"}
-            stroke={star <= rating ? "#D4AF37" : "#d1d5db"}
-            color={star <= rating ? "#D4AF37" : "#d1d5db"}
+            fill={star <= rating ? "#be9b49" : "none"}
+            stroke={star <= rating ? "#be9b49" : "#d1d5db"}
+            color={star <= rating ? "#be9b49" : "#d1d5db"}
             onClick={() => onRatingChange(star)}
           />
         ))}
@@ -188,7 +188,7 @@ const ReviewForm = ({ serviceId, onSubmitSuccess, userEmail }: ReviewFormProps) 
 
   return (
     <div className="bg-white border rounded-lg p-6 shadow-md">
-      <h3 className="text-xl font-bold text-[#1c2b21] mb-4">Write a Review</h3>
+      <h3 className="text-xl font-bold text-[#0f285b] mb-4">Write a Review</h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -209,7 +209,7 @@ const ReviewForm = ({ serviceId, onSubmitSuccess, userEmail }: ReviewFormProps) 
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Share your experience with this service..."
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
             rows={4}
             maxLength={1000}
           />
@@ -233,7 +233,7 @@ const ReviewForm = ({ serviceId, onSubmitSuccess, userEmail }: ReviewFormProps) 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-lg hover:bg-[#b8962f] transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-lg hover:bg-[#b8962f] transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? "Submitting..." : "Submit Review"}
         </button>

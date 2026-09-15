@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import BASE_URL from "../../../api/api";
 
@@ -30,7 +30,7 @@ const BlogList = () => {
 
   return (
     <div className="max-w-5xl mx-auto mt-12 px-4">
-      <h2 className="text-3xl font-bold text-center mb-8 text-[#1c2b21]">Latest Blog Posts</h2>
+      <h2 className="text-3xl font-bold text-center mb-8 text-[#0f285b]">Latest Blog Posts</h2>
 
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
@@ -48,14 +48,14 @@ const BlogList = () => {
                 />
               )}
               <div className="p-6">
-                <h3 className="text-xl font-semibold mb-2 text-[#1c2b21]">{post.title}</h3>
+                <h3 className="text-xl font-semibold mb-2 text-[#0f285b]">{post.title}</h3>
                 <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
                 <p className="text-sm text-gray-400 mb-2">
                   Posted on {new Date(post.createdAt).toLocaleDateString()}
                 </p>
                 <Link
                   to={`/blog/${post.slug}`}
-                  className="text-[#D4AF37] font-medium hover:underline"
+                  className="text-[#be9b49] font-medium hover:underline"
                 >
                   Read More →
                 </Link>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 import { Gift, Package, Bell, DollarSign } from "lucide-react";
@@ -110,10 +110,10 @@ const OverviewStats = ({ userId }: OverviewStatsProps) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-gray-600 text-sm font-medium">Total Gifts</p>
-            <p className="text-3xl font-bold text-[#1c2b21] mt-2">{stats.totalGifts}</p>
+            <p className="text-3xl font-bold text-[#0f285b] mt-2">{stats.totalGifts}</p>
           </div>
-          <div className="bg-[#D4AF37] bg-opacity-10 p-3 rounded-lg">
-            <Gift className="w-8 h-8 text-[#D4AF37]" />
+          <div className="bg-[#be9b49] bg-opacity-10 p-3 rounded-lg">
+            <Gift className="w-8 h-8 text-[#be9b49]" />
           </div>
         </div>
       </div>
@@ -122,7 +122,7 @@ const OverviewStats = ({ userId }: OverviewStatsProps) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-gray-600 text-sm font-medium">Active Now</p>
-            <p className="text-3xl font-bold text-[#1c2b21] mt-2">{stats.activeGifts}</p>
+            <p className="text-3xl font-bold text-[#0f285b] mt-2">{stats.activeGifts}</p>
           </div>
           <div className="bg-green-100 p-3 rounded-lg">
             <Package className="w-8 h-8 text-green-600" />
@@ -134,10 +134,10 @@ const OverviewStats = ({ userId }: OverviewStatsProps) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-gray-600 text-sm font-medium">Notifications</p>
-            <p className="text-3xl font-bold text-[#1c2b21] mt-2">{stats.notifications}</p>
+            <p className="text-3xl font-bold text-[#0f285b] mt-2">{stats.notifications}</p>
           </div>
-          <div className="bg-[#D4AF37] bg-opacity-10 p-3 rounded-lg">
-            <Bell className="w-8 h-8 text-[#D4AF37]" />
+          <div className="bg-[#be9b49] bg-opacity-10 p-3 rounded-lg">
+            <Bell className="w-8 h-8 text-[#be9b49]" />
           </div>
         </div>
       </div>
@@ -146,10 +146,10 @@ const OverviewStats = ({ userId }: OverviewStatsProps) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-gray-600 text-sm font-medium">Total Spent</p>
-            <p className="text-3xl font-bold text-[#1c2b21] mt-2">ETB {stats.totalSpent.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-[#0f285b] mt-2">ETB {stats.totalSpent.toLocaleString()}</p>
           </div>
-          <div className="bg-[#D4AF37] bg-opacity-10 p-3 rounded-lg">
-            <DollarSign className="w-8 h-8 text-[#D4AF37]" />
+          <div className="bg-[#be9b49] bg-opacity-10 p-3 rounded-lg">
+            <DollarSign className="w-8 h-8 text-[#be9b49]" />
           </div>
         </div>
       </div>

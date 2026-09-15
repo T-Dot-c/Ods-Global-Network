@@ -1,4 +1,4 @@
-// client/src/components/Services/ServiceDetail.tsx
+﻿// client/src/components/Services/ServiceDetail.tsx
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -74,9 +74,9 @@ const ServiceDetail = () => {
       if (imageUrl.includes('/api/uploads/')) {
         imageUrl = imageUrl.replace('/api/uploads/', '/uploads/');
       }
-      // Normalize wanaw.et to www.wanaw.et
-      if (imageUrl.includes('wanaw.et') && !imageUrl.includes('www.wanaw.et')) {
-        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+      // Normalize wanaw.et to www.odsglobal.net
+      if (imageUrl.includes('odsglobal.net') && !imageUrl.includes('www.odsglobal.net')) {
+        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
       }
       return imageUrl;
     }
@@ -84,7 +84,7 @@ const ServiceDetail = () => {
     // For relative paths, construct the full URL
     let serverBase: string;
     if (BASE_URL.startsWith('http')) {
-      // Production: BASE_URL is full URL like "https://wanaw.et/api"
+      // Production: BASE_URL is full URL like "https://www.odsglobal.net/api"
       serverBase = BASE_URL.replace('/api', '').replace(/\/$/, '');
     } else {
       // Development: BASE_URL is "/api", use localhost server directly
@@ -421,7 +421,7 @@ const ServiceDetail = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="text-lg text-gray-500 mb-2">Loading service details...</div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37] mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49] mx-auto"></div>
         </div>
       </div>
     );
@@ -441,13 +441,13 @@ const ServiceDetail = () => {
           <div className="flex gap-4 justify-center">
             <button
               onClick={() => fetchService()}
-              className="px-6 py-3 bg-[#1c2b21] text-white font-bold rounded-lg hover:bg-[#111] transition"
+              className="px-6 py-3 bg-[#0f285b] text-white font-bold rounded-lg hover:bg-[#111] transition"
             >
               Retry
             </button>
             <button
               onClick={() => navigate("/services")}
-              className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-lg hover:bg-[#b8962f] transition"
+              className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-lg hover:bg-[#b8962f] transition"
             >
               Back to Services
             </button>
@@ -466,7 +466,7 @@ const ServiceDetail = () => {
           <p className="text-gray-600 mb-4 text-lg">Service not found</p>
               <button
                 onClick={() => navigate("/services")}
-                className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-lg hover:bg-[#b8962f] transition"
+                className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-lg hover:bg-[#b8962f] transition"
               >
                 Back to Services
               </button>
@@ -495,7 +495,7 @@ const ServiceDetail = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate("/services")}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-[#1c2b21] transition"
+          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-[#0f285b] transition"
         >
           <ArrowLeft size={20} />
           <span>Back to Services</span>
@@ -528,9 +528,9 @@ const ServiceDetail = () => {
             {/* Service Info */}
             <div className="space-y-4">
               <div>
-                <h1 className="text-3xl font-bold text-[#1c2b21] mb-2">{service.title}</h1>
+                <h1 className="text-3xl font-bold text-[#0f285b] mb-2">{service.title}</h1>
                 <div className="flex items-center gap-4 mb-3">
-                  <span className="px-3 py-1 bg-[#1c2b21] text-white rounded-full text-sm">
+                  <span className="px-3 py-1 bg-[#0f285b] text-white rounded-full text-sm">
                     {service.category}
                   </span>
                   {service.subcategory && (
@@ -549,7 +549,7 @@ const ServiceDetail = () => {
                       ETB {service.price.toLocaleString()}
                     </p>
                     <div className="flex items-center gap-3">
-                      <p className="text-3xl font-bold text-[#D4AF37]">
+                      <p className="text-3xl font-bold text-[#be9b49]">
                         ETB {effectivePrice.toLocaleString()}
                       </p>
                       <span className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-semibold">
@@ -558,7 +558,7 @@ const ServiceDetail = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-3xl font-bold text-[#D4AF37]">
+                  <p className="text-3xl font-bold text-[#be9b49]">
                     ETB {service.price.toLocaleString()}
                   </p>
                 )}
@@ -594,14 +594,14 @@ const ServiceDetail = () => {
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#1c2b21] text-white font-semibold rounded-lg hover:bg-[#111] transition"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#0f285b] text-white font-semibold rounded-lg hover:bg-[#111] transition"
                 >
                   <ShoppingCart size={20} />
                   Add to Cart
                 </button>
                 <button
                   onClick={handleSendGift}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-semibold rounded-lg hover:bg-[#b8962f] transition"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#be9b49] text-[#0f285b] font-semibold rounded-lg hover:bg-[#b8962f] transition"
                 >
                   <Gift size={20} />
                   Send as Gift
@@ -615,11 +615,11 @@ const ServiceDetail = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-[#1c2b21]">Reviews & Ratings</h2>
+              <h2 className="text-2xl font-semibold text-[#0f285b]">Reviews & Ratings</h2>
               <p className="text-sm text-gray-500">See what others think about this service.</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="text-3xl font-bold text-[#D4AF37]">
+              <div className="text-3xl font-bold text-[#be9b49]">
                 {averageRating ? averageRating.toFixed(1) : "0.0"}
               </div>
               <div className="text-sm text-gray-500">
@@ -660,7 +660,7 @@ const ServiceDetail = () => {
                           aria-label={`Rate ${starValue} star${starValue > 1 ? "s" : ""}`}
                         >
                           <Star
-                            className={isActive ? "text-[#D4AF37]" : "text-gray-300"}
+                            className={isActive ? "text-[#be9b49]" : "text-gray-300"}
                             fill={isActive ? "currentColor" : "none"}
                             size={28}
                           />
@@ -683,7 +683,7 @@ const ServiceDetail = () => {
                     value={userComment}
                     onChange={event => setUserComment(event.target.value)}
                     placeholder="What did you like or dislike about this service?"
-                    className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:border-[#D4AF37] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40"
+                    className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:border-[#be9b49] focus:outline-none focus:ring-2 focus:ring-[#be9b49]/40"
                   />
                 </div>
 
@@ -691,7 +691,7 @@ const ServiceDetail = () => {
                   type="submit"
                   disabled={reviewSubmitting}
                   className={`flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white transition ${
-                    reviewSubmitting ? "bg-gray-400" : "bg-[#1c2b21] hover:bg-[#111]"
+                    reviewSubmitting ? "bg-gray-400" : "bg-[#0f285b] hover:bg-[#111]"
                   }`}
                 >
                   {reviewSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -715,7 +715,7 @@ const ServiceDetail = () => {
                   <div key={review.id} className="rounded-xl border border-gray-200 p-4 shadow-sm">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-[#1c2b21]">
+                        <p className="text-sm font-semibold text-[#0f285b]">
                           {review.reviewerName || "Anonymous"}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -734,7 +734,7 @@ const ServiceDetail = () => {
                             <Star
                               key={`${review.id}-star-${starValue}`}
                               size={18}
-                              className={isFilled ? "text-[#D4AF37]" : "text-gray-300"}
+                              className={isFilled ? "text-[#be9b49]" : "text-gray-300"}
                               fill={isFilled ? "currentColor" : "none"}
                             />
                           );

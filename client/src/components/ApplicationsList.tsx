@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../api/api';
@@ -170,7 +170,7 @@ const ApplicationsList = () => {
                   <td className="py-2 px-4 text-sm space-x-2">
                     <button
                       onClick={() => handleUpdate(app._id)}
-                      className="bg-yellow-400 text-white px-3 py-1 rounded-md hover:bg-yellow-500 transition"
+                      className="bg-[#edc45b] text-white px-3 py-1 rounded-md hover:bg-yellow-500 transition"
                     >
                       Update
                     </button>

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import html2pdf from "html2pdf.js";
 import QRCode from "react-qr-code";
 
@@ -173,7 +173,7 @@ const EnhancedGiftCard = ({ gift, onDownload }: EnhancedGiftCardProps) => {
               </div>
               <div className="flex justify-center">
                 <QRCode 
-                  value={`https://wanaw.com/redeem?code=${gift.giftCode}`} 
+                  value={`https://www.odsglobal.net/redeem?code=${gift.giftCode}`} 
                   size={80}
                   className="rounded-lg"
                 />

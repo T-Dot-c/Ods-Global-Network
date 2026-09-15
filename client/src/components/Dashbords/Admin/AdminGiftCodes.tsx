@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 
@@ -150,7 +150,7 @@ const AdminGiftCodes: React.FC = () => {
   return (
     <div className="p-4 md:p-6 lg:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-[#1c2b21] mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#0f285b] mb-6">
           🎁 Gift Codes Management
         </h2>
 
@@ -165,7 +165,7 @@ const AdminGiftCodes: React.FC = () => {
                   px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium whitespace-nowrap transition-all
                   ${
                     activeCategory === category
-                      ? "bg-[#D4AF37] text-[#1c2b21] shadow-lg"
+                      ? "bg-[#be9b49] text-[#0f285b] shadow-lg"
                       : "bg-white text-gray-700 hover:bg-gray-100"
                   }
                 `}
@@ -178,7 +178,7 @@ const AdminGiftCodes: React.FC = () => {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
-          <h3 className="text-lg font-semibold text-[#1c2b21] mb-4">Filters</h3>
+          <h3 className="text-lg font-semibold text-[#0f285b] mb-4">Filters</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -188,7 +188,7 @@ const AdminGiftCodes: React.FC = () => {
                 name="status"
                 value={filters.status}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#be9b49] focus:border-[#be9b49]"
               >
                 <option value="">All Status</option>
                 <option value="pending">Pending</option>
@@ -206,7 +206,7 @@ const AdminGiftCodes: React.FC = () => {
                 placeholder="Search provider..."
                 value={filters.providerName}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#be9b49] focus:border-[#be9b49]"
               />
             </div>
 
@@ -219,7 +219,7 @@ const AdminGiftCodes: React.FC = () => {
                 name="dateFrom"
                 value={filters.dateFrom}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#be9b49] focus:border-[#be9b49]"
               />
             </div>
 
@@ -232,13 +232,13 @@ const AdminGiftCodes: React.FC = () => {
                 name="dateTo"
                 value={filters.dateTo}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#be9b49] focus:border-[#be9b49]"
               />
             </div>
           </div>
           <button
             onClick={applyFilters}
-            className="mt-4 px-6 py-2 bg-[#1c2b21] text-white rounded-lg hover:bg-[#2d3d32] transition-colors font-medium"
+            className="mt-4 px-6 py-2 bg-[#0f285b] text-white rounded-lg hover:bg-[#2d3d32] transition-colors font-medium"
           >
             Apply Filters
           </button>
@@ -247,7 +247,7 @@ const AdminGiftCodes: React.FC = () => {
         {/* Loading / Error / Table */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37]"></div>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#be9b49]"></div>
             <p className="mt-4 text-gray-600">Loading gift codes...</p>
           </div>
         ) : error ? (
@@ -260,7 +260,7 @@ const AdminGiftCodes: React.FC = () => {
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-[#1c2b21] text-white">
+                  <tr className="bg-[#0f285b] text-white">
                     <th className="px-4 py-3 text-left font-semibold">Gift Code</th>
                     <th className="px-4 py-3 text-left font-semibold">Recipient</th>
                     <th className="px-4 py-3 text-left font-semibold">Service</th>
@@ -277,7 +277,7 @@ const AdminGiftCodes: React.FC = () => {
                         key={code._id}
                         className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                       >
-                        <td className="px-4 py-3 font-mono font-semibold text-[#D4AF37]">
+                        <td className="px-4 py-3 font-mono font-semibold text-[#be9b49]">
                           {code.giftCode || "N/A"}
                         </td>
                         <td className="px-4 py-3">
@@ -341,7 +341,7 @@ const AdminGiftCodes: React.FC = () => {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <div className="font-mono font-semibold text-[#D4AF37] text-lg">
+                        <div className="font-mono font-semibold text-[#be9b49] text-lg">
                           {code.giftCode || "N/A"}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">

@@ -1,8 +1,8 @@
-// Use environment variable or default to /api for proxy
+﻿// Use environment variable or default to /api for proxy
 // In production, this will be handled by the server serving the built files
 const BASE_URL = import.meta.env.VITE_API_URL || (
   import.meta.env.MODE === 'production' 
-    ? "https://wanaw.et/api" 
+    ? "https://www.odsglobal.net/api" 
     : "/api"
 );
 

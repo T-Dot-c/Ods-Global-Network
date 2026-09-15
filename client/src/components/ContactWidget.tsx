@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { FaPhoneAlt, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { HiChatBubbleLeftRight } from "react-icons/hi2";
@@ -76,7 +76,7 @@ const ContactWidget = () => {
     <div className="fixed bottom-5 right-5 flex flex-col items-end z-50">
       {open && (
         <div className="mb-3 w-[320px] sm:w-[340px] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
-          <div className="bg-[#1c2b21] text-[#D4AF37] px-4 py-3 flex items-center justify-between">
+          <div className="bg-[#0f285b] text-[#be9b49] px-4 py-3 flex items-center justify-between">
             <span className="font-semibold">
               {view === "menu" ? t("contactWidget.headerMenu") : t("contactWidget.headerChat")}
             </span>
@@ -108,9 +108,9 @@ const ContactWidget = () => {
                 <li>
                   <a
                     href={`tel:${PHONE.replace(/\s/g, "")}`}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#D4AF37]/10 text-[#1c2b21] transition"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#be9b49]/10 text-[#0f285b] transition"
                   >
-                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#1c2b21]">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#0f285b]">
                       <FaPhoneAlt className="text-lg" />
                     </span>
                     <span className="font-medium">{t("contactWidget.phone")}</span>
@@ -121,9 +121,9 @@ const ContactWidget = () => {
                     href={WHATSAPP_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#D4AF37]/10 text-[#1c2b21] transition"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#be9b49]/10 text-[#0f285b] transition"
                   >
-                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#1c2b21]">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#0f285b]">
                       <FaWhatsapp className="text-lg" />
                     </span>
                     <span className="font-medium">{t("contactWidget.whatsapp")}</span>
@@ -132,9 +132,9 @@ const ContactWidget = () => {
                 <li>
                   <a
                     href={`mailto:${EMAIL}`}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#D4AF37]/10 text-[#1c2b21] transition"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#be9b49]/10 text-[#0f285b] transition"
                   >
-                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#1c2b21]">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#0f285b]">
                       <FaEnvelope className="text-lg" />
                     </span>
                     <span className="font-medium">{t("contactWidget.email")}</span>
@@ -144,9 +144,9 @@ const ContactWidget = () => {
                   <button
                     type="button"
                     onClick={handleAppChat}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#D4AF37]/10 text-[#1c2b21] transition text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-[#be9b49]/10 text-[#0f285b] transition text-left"
                   >
-                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#1c2b21]">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-green/10 text-[#0f285b]">
                       <HiChatBubbleLeftRight className="text-lg" />
                     </span>
                     <span className="font-medium">{t("contactWidget.appChat")}</span>
@@ -169,7 +169,7 @@ const ContactWidget = () => {
                       <div
                         className={`px-3 py-2 rounded-2xl text-sm max-w-[85%] ${
                           msg.role === "user"
-                            ? "bg-[#1c2b21] text-[#D4AF37] rounded-br-none"
+                            ? "bg-[#0f285b] text-[#be9b49] rounded-br-none"
                             : "bg-gray-100 text-gray-800 rounded-bl-none"
                         }`}
                       >
@@ -193,13 +193,13 @@ const ContactWidget = () => {
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
                   />
                   <button
                     type="button"
                     onClick={handleSendChat}
                     disabled={chatLoading}
-                    className="px-4 py-2 bg-[#1c2b21] text-[#D4AF37] rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-50 transition"
+                    className="px-4 py-2 bg-[#0f285b] text-[#be9b49] rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-50 transition"
                   >
                     {t("contactWidget.send")}
                   </button>
@@ -213,7 +213,7 @@ const ContactWidget = () => {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-center w-14 h-14 rounded-full bg-[#1c2b21] text-[#D4AF37] shadow-lg hover:shadow-xl hover:scale-105 transition z-50"
+        className="flex items-center justify-center w-14 h-14 rounded-full bg-[#0f285b] text-[#be9b49] shadow-lg hover:shadow-xl hover:scale-105 transition z-50"
         aria-label={t("contactWidget.fabAria")}
         title={t("contactWidget.fabTitle")}
       >

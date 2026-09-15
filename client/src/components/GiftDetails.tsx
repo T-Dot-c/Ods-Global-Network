@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import BASE_URL from "../api/api";
 
@@ -48,9 +48,9 @@ const GiftDetails = () => {
       if (imageUrl.includes('/api/uploads/')) {
         imageUrl = imageUrl.replace('/api/uploads/', '/uploads/');
       }
-      // Normalize wanaw.et to www.wanaw.et
-      if (imageUrl.includes('wanaw.et') && !imageUrl.includes('www.wanaw.et')) {
-        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+      // Normalize wanaw.et to www.odsglobal.net
+      if (imageUrl.includes('odsglobal.net') && !imageUrl.includes('www.odsglobal.net')) {
+        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
       }
       return imageUrl;
     }
@@ -58,7 +58,7 @@ const GiftDetails = () => {
     // For relative paths, construct the full URL
     let serverBase;
     if (BASE_URL.startsWith('http')) {
-      // Production: BASE_URL is full URL like "https://wanaw.et/api"
+      // Production: BASE_URL is full URL like "https://www.odsglobal.net/api"
       serverBase = BASE_URL.replace('/api', '').replace(/\/$/, '');
     } else {
       // Development: BASE_URL is "/api", use localhost server directly
@@ -157,7 +157,7 @@ const handleSendGift = () => {
   </div>
 )}
 
-        <h1 className="text-3xl font-bold text-[#1c2b21] mb-2">{occasion.title}</h1>
+        <h1 className="text-3xl font-bold text-[#0f285b] mb-2">{occasion.title}</h1>
         <p className="text-sm text-gray-500 mb-1">
           Category:&nbsp;{occasion.category && typeof occasion.category === 'string' 
             ? occasion.category === "diaspora" 
@@ -172,7 +172,7 @@ const handleSendGift = () => {
 
       {/* Service List */}
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-semibold text-[#1c2b21] mb-6">
+        <h2 className="text-2xl font-semibold text-[#0f285b] mb-6">
           Choose the service you’d like to send
         </h2>
 
@@ -187,7 +187,7 @@ const handleSendGift = () => {
               <label
   key={service.id}
   className={`cursor-pointer bg-white border rounded-xl p-4 transition duration-300 shadow hover:shadow-lg flex flex-col ${
-    checked ? "ring-2 ring-offset-2 ring-[#D4AF37]" : ""
+    checked ? "ring-2 ring-offset-2 ring-[#be9b49]" : ""
   }`}
 >
   <input
@@ -243,7 +243,7 @@ const handleSendGift = () => {
         <button
           onClick={handleSendGift}
           disabled={!selectedServiceId}
-          className={`mt-10 w-1/2 bg-[#D4AF37] text-[#1c2b21] font-medium py-2 rounded-md transition ${
+          className={`mt-10 w-1/2 bg-[#be9b49] text-[#0f285b] font-medium py-2 rounded-md transition ${
             !selectedServiceId ? "opacity-50 cursor-not-allowed" : "hover:bg-[#caa82f]"
           }`}
         >

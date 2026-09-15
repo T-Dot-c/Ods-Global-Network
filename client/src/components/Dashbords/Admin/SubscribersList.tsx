@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 
@@ -49,7 +49,7 @@ const SubscribersList = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h2 className="text-3xl font-bold mb-6 text-center text-[#1c2b21]">
+      <h2 className="text-3xl font-bold mb-6 text-center text-[#0f285b]">
         Subscribers
       </h2>
 
@@ -67,7 +67,7 @@ const SubscribersList = () => {
           <button
             onClick={handleSendEmail}
             disabled={sending}
-            className="bg-[#1c2b21] text-white px-4 py-2 rounded hover:bg-[#0f1a14] transition"
+            className="bg-[#0f285b] text-white px-4 py-2 rounded hover:bg-[#091838] transition"
           >
             {sending ? "Sending..." : "Send Email"}
           </button>
@@ -84,7 +84,7 @@ const SubscribersList = () => {
       {/* Subscribers Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-md">
         <table className="min-w-full border-collapse">
-          <thead className="bg-[#1c2b21] text-white">
+          <thead className="bg-[#0f285b] text-white">
             <tr>
               {["#", "Email", "Subscribed On"].map((title) => (
                 <th

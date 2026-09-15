@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 
 // Optional: default logo as Base64 (in case public path fails)
-import defaultLogo from "/wanaw gifting logo.jpeg"; // or convert to Base64 if needed
+import defaultLogo from "/brand/ods-logo-mark-gold.png"; // or convert to Base64 if needed
 
 export async function generateCertificate({
   name,
@@ -20,8 +20,8 @@ export async function generateCertificate({
   const doc = new jsPDF("landscape");
 
   // Brand Colors
-  const brandDark: [number, number, number] = [28, 43, 33]; // #1c2b21
-  const brandGold: [number, number, number] = [212, 175, 55]; // #D4AF37
+  const brandDark: [number, number, number] = [28, 43, 33]; // #0f285b
+  const brandGold: [number, number, number] = [212, 175, 55]; // #be9b49
 
   // Border
   doc.setDrawColor(...brandDark);

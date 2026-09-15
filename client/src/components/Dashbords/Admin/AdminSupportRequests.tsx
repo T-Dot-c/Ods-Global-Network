@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import BASE_URL from "../../../api/api";
 
 type SupportRequest = {
@@ -24,7 +24,7 @@ const AdminSupportRequests = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8 text-center text-[#1c2b21]">
+      <h1 className="text-3xl font-bold mb-8 text-center text-[#0f285b]">
         Support Requests
       </h1>
 
@@ -42,7 +42,7 @@ const AdminSupportRequests = () => {
               className="border border-gray-200 rounded-xl shadow-md p-5 bg-white hover:shadow-lg transition"
             >
               <div className="mb-3">
-                <p className="font-semibold text-lg text-[#1c2b21]">{req.subject}</p>
+                <p className="font-semibold text-lg text-[#0f285b]">{req.subject}</p>
                 <p className="text-sm text-gray-500">
                   Submitted {new Date(req.createdAt).toLocaleString()}
                 </p>
@@ -72,7 +72,7 @@ const AdminSupportRequests = () => {
                   href={`mailto:${req.email}?subject=Re: ${encodeURIComponent(
                     req.subject
                   )}`}
-                  className="inline-block w-full text-center bg-[#1c2b21] text-white px-4 py-2 rounded-lg hover:bg-[#0f1a14] transition"
+                  className="inline-block w-full text-center bg-[#0f285b] text-white px-4 py-2 rounded-lg hover:bg-[#091838] transition"
                 >
                   Reply via Email
                 </a>

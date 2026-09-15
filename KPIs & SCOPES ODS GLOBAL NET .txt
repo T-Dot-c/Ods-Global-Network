@@ -1,0 +1,235 @@
+ODS GLOBAL NET
+Weekly Scope of Work & KPI
+ IT Development Team
+Duration: 2 weeks
+Date: August 6, 2026
+Project Status: Full Website deployment and APP development
+
+Objective:
+
+Complete core development, testing, and deployment of ODS Global Net to deliver a fully functional Minimum Viable Product (MVP) ready for merchant onboarding and pilot operations. Complete all remaining platform modules, integrate core services, perform testing, and prepare ODS Global Net for merchant onboarding and pilot launch.
+
+1. Website Completion
+Scope of Work
+* Complete all website pages.
+* Verify all menus and navigation links.
+* Optimize desktop and mobile responsiveness.
+* Integrate company branding.
+* Configure SEO fundamentals.
+* Optimize loading speed.
+* Resolve all identified bugs.
+Deliverables
+* Fully operational website.
+* Responsive design.
+* Zero broken pages.
+* SSL configured.
+* Performance optimized.
+KPI
+* 100% website pages completed.
+* Page loading time under 3 seconds.
+* Zero critical bugs.
+* Mobile responsiveness above 95%.
+2. Merchant Registration Portal
+Scope of Work
+* Complete merchant registration workflow.
+* Build merchant dashboard.
+* Document upload functionality.
+* Merchant approval workflow.
+* Email verification.
+* Merchant status tracking.
+Deliverables
+* Functional merchant portal.
+* Admin approval system.
+* Merchant profile management.
+KPI
+* Registration success rate above 95%.
+* Merchant approval within 5 minutes of admin review.
+* Zero registration errors.
+3. Customer Portal
+Scope of Work
+* Customer registration.
+* Login and password recovery.
+* Customer profile management.
+* Appointment history.
+* Booking history.
+* Notifications.
+Deliverables
+* Complete customer account system.
+KPI
+* Login success above 99%.
+* Registration completion above 95%.
+4. Service Provider Management
+Scope of Work
+Integrate:
+* Hospitals
+* Clinics
+* Pharmacies
+* Laboratories
+* Wellness Centers
+* Ambulance Services
+* Home Care
+* Specialists
+* Diagnostic Centers
+Deliverables
+* Service provider database.
+* Provider dashboard.
+* Approval workflow.
+KPI
+* All provider categories functional.
+* Provider onboarding completed successfully.
+5. Appointment Booking System
+Scope of Work
+* Online booking.
+* Calendar integration.
+* Time-slot management.
+* Booking confirmation.
+* Appointment reminders.
+* Cancellation and rescheduling.
+Deliverables
+* Live booking engine.
+KPI
+* Booking success above 98%.
+* Instant confirmation.
+* No duplicate bookings.
+6. Payment Integration
+Scope of Work
+Integrate:
+* Credit Cards
+* Debit Cards
+* Mobile Money
+* Bank Transfer
+* Digital Wallets
+Deliverables
+* Secure payment gateway.
+KPI
+* Payment success above 98%.
+* PCI-compliant implementation.
+* Zero payment failures caused by the platform.
+7. Gift Card System
+Scope of Work
+* Purchase gift cards.
+* Redeem gift cards.
+* Balance tracking.
+* Expiry management.
+Deliverables
+* Functional gift card module.
+KPI
+* 100% redemption accuracy.
+8. Admin Dashboard
+Scope of Work
+Develop dashboards for:
+* Users
+* Merchants
+* Transactions
+* Bookings
+* Revenue
+* Analytics
+* Reports
+* Support tickets
+Deliverables
+* Executive dashboard.
+KPI
+* Real-time reporting.
+* Dashboard refresh under 5 seconds.
+9. Notification System
+Scope of Work
+Implement:
+* Email notifications.
+* SMS notifications.
+* Push notifications.
+* Booking reminders.
+* Payment confirmations.
+Deliverables
+* Automated notification system.
+KPI
+* Delivery rate above 98%.
+10. Security
+Scope of Work
+* User authentication.
+* Role-based access control.
+* Data encryption.
+* Secure backups.
+* Activity logs.
+* Audit trail.
+Deliverables
+* Secure production-ready platform.
+KPI
+* Zero critical security vulnerabilities.
+* Daily automated backups.
+* Audit logging enabled for key actions.
+11. Testing & Quality Assurance
+Scope of Work
+* Functional testing.
+* User acceptance testing.
+* Cross-browser testing.
+* Mobile testing.
+* Performance testing.
+* Security testing.
+* Bug fixing.
+Deliverables
+* Tested platform.
+* Bug report.
+* QA sign-off.
+KPI
+* 95% or higher test pass rate.
+* No unresolved critical issues before release.
+12. Documentation
+Scope of Work
+Prepare:
+* Technical documentation.
+* System architecture.
+* API documentation.
+* User manual.
+* Admin manual.
+* Deployment guide.
+* Backup and recovery procedures.
+Deliverables
+* Complete documentation package.
+KPI
+* 100% documentation completed and reviewed.
+Daily Reporting Requirements
+By 5:00 PM each day, the IT team shall submit:
+* Tasks completed.
+* Outstanding tasks.
+* Issues requiring management support.
+* Number of bugs fixed.
+* Progress percentage by module.
+* Planned activities for the following day.
+Weekly Success Criteria
+By the end of the week, ODS Global Net will have:
+* Fully operational website.
+* Merchant registration portal.
+* Customer registration portal.
+* Service provider onboarding.
+* Appointment booking engine.
+* Payment gateway integration.
+* Gift card module.
+* Executive admin dashboard.
+* Notification system.
+* Security implementation.
+* Complete testing and quality assurance.
+* Technical and user documentation.
+* Production deployment readiness.
+
+
+
+Overall Weekly KPI Target
+AreaTargetWebsite Completion100%Core Modules Completed100%Critical Bugs0High-Priority Bugs0System Uptime (Testing)99%Mobile Compatibility95%+Security Compliance100%Documentation Completion100%Deployment Readiness100%Executive Sign-offAchieved
+NOTE: WEEK 1 – Platform Feature Completion
+1. Merchant Management System
+Scope
+* Complete merchant registration workflow.
+* Merchant profile management.
+* Document upload and verification.
+* Merchant approval/rejection workflow.
+* Merchant dashboard.
+KPI
+* 100% merchant registration module completed.
+* Merchant approval process fully functional.
+2. Customer Management System
+Scope
+* Customer registration.
+* Login and password recovery.
+* Customer profile.
+
+

@@ -19,8 +19,57 @@
   --ods-silver: #e8e8e8;
   --ods-bg: #f8fafc;
 
+  /* Official ODS 5-Stop Gold Gradient (Strict Brand Rule: #F5E189 -> #EDC45B -> #BE9B49 -> #BB9F54 -> #8D7338) */
+  --ods-gold-gradient-h: linear-gradient(90deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%);
+  --ods-gold-gradient-v: linear-gradient(180deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%);
+  --ods-gold-gradient-diag: linear-gradient(135deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%);
+
   /* Typography: Google Sans / Inter */
   --font-primary: 'Google Sans', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== Official ODS 5-Stop Gold Gradient Utilities ===== */
+.ods-gold-gradient,
+.bg-ods-gold-gradient {
+  background: linear-gradient(90deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%) !important;
+}
+
+.ods-gold-gradient-v,
+.bg-ods-gold-gradient-v {
+  background: linear-gradient(180deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%) !important;
+}
+
+.ods-gold-gradient-diag,
+.bg-ods-gold-gradient-diag {
+  background: linear-gradient(135deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%) !important;
+}
+
+.text-ods-gold-gradient {
+  background: linear-gradient(90deg, #F5E189 0%, #EDC45B 25%, #BE9B49 50%, #BB9F54 75%, #8D7338 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gold Gradient Shimmer Animation */
+@keyframes odsGoldShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.btn-shine {
+  background: linear-gradient(
+    90deg,
+    #8D7338 0%,
+    #BB9F54 15%,
+    #BE9B49 30%,
+    #EDC45B 50%,
+    #F5E189 65%,
+    #EDC45B 80%,
+    #8D7338 100%
+  ) !important;
+  background-size: 200% auto !important;
+  animation: odsGoldShimmer 1.6s linear infinite !important;
+  box-shadow: 0 0 18px 2px rgba(237, 196, 91, 0.55) !important;
 }
 
 /* ===== Global Base Styles ===== */

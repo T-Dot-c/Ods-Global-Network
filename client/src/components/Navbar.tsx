@@ -204,7 +204,7 @@ const Navbar = () => {
         <Link
           key={section.key}
           to={section.path}
-          className=" hover:text-[#1c2b21]"
+          className="text-[#0F285B] hover:text-[#BE9B49] transition-colors"
         >
           {t(section.titleKey)}
           <IoIosArrowDown className="inline ml-1" />
@@ -214,19 +214,19 @@ const Navbar = () => {
 
     return (
       <div key={section.key} className="relative group">
-        <span className="cursor-pointer pb-1 group-hover:text-[#1c2b21]">
-          {t(section.titleKey)} <IoIosArrowDown className="inline ml-1" />
+        <span className="cursor-pointer pb-1 text-[#0F285B] group-hover:text-[#BE9B49] transition-colors flex items-center gap-1">
+          {t(section.titleKey)} <IoIosArrowDown className="inline ml-1 text-[#0F285B] group-hover:text-[#BE9B49] transition-colors" />
         </span>
-        <ul className="absolute left-0 mt-2 bg-zinc-50 rounded shadow-lg p-12 gap-10 hidden group-hover:block min-w-[400px] z-50">
+        <ul className="absolute left-0 mt-2 bg-white rounded shadow-lg p-12 gap-10 hidden group-hover:block min-w-[400px] z-50 border border-gray-100">
           {section.items.map((item: ServiceMenuItem | GiftMenuItem) => (
             <div key={item.path} className="relative group/item">
               <Link
                 to={item.path}
-                className="flex items-start gap-8 text-sm py-3 rounded px-2 hover:bg-gray-100"
+                className="flex items-start gap-8 text-sm py-3 rounded px-2 hover:bg-[#E8E8E8] group/link"
               >
                 {itemIcon(item)}
                 <div>
-                  <p className="font-semibold">{itemLabel(item)}</p>
+                  <p className="font-semibold text-[#0F285B] group-hover/link:text-[#BE9B49] transition-colors">{itemLabel(item)}</p>
                   {itemDescription(item) ? (
                     <p className="text-xs text-gray-500">{itemDescription(item)}</p>
                   ) : null}
@@ -241,11 +241,11 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row justify-between  bg-green text-white text-xs sm:text-sm px-4 sm:px-6 lg:px-12 py-2 font-inter gap-2 sm:gap-0">
+      <div className="flex flex-col sm:flex-row justify-between bg-[#0F285B] text-[#E8E8E8] text-xs sm:text-sm px-4 sm:px-6 lg:px-12 py-2 font-inter gap-2 sm:gap-0">
         <div className="flex items-center gap-2 order-1 sm:order-none">
           <button
             type="button"
-            className="bg-[#D4AF37] text-[#1c2b21] font-semibold text-xs px-3 py-1 rounded-full"
+            className="ods-gold-gradient text-[#0F285B] font-semibold text-xs px-3.5 py-1 rounded-full shadow-sm hover:brightness-105 transition-all"
             onClick={() => latestBlog?.slug && navigate(`/blogs/${latestBlog.slug}`)}
           >
             {t("nav.blog")}
@@ -262,19 +262,19 @@ const Navbar = () => {
             role="button"
             tabIndex={0}
           >
-            {latestBlog?.title || t("nav.latestBlogFallback")}
+            {latestBlog?.title || "Greetings to the African Union, Embassies, and the Diplomatic Community"}
           </span>
         </div>
 
         <div className="hidden md:grid grid-cols-4 gap-6 text-center order-0 sm:order-none">
           <div>
-            <a href="tel:+251-960-606-042" className="text-gray-300">
-              <FaPhoneAlt className="text-gold text-lg  mx-auto mb-1" />
+            <a href="tel:+251-960-606-042" className="group">
+              <FaPhoneAlt className="text-[#BE9B49] group-hover:text-[#EDC45B] text-lg mx-auto mb-1 transition-colors" />
             </a>
           </div>
           <div>
-            <a href="mailto:info@odsglobal.net" className="text-gray-300">
-              <FaEnvelope className="text-gold text-lg  mx-auto mb-1" />
+            <a href="mailto:info@odsglobal.net" className="group">
+              <FaEnvelope className="text-[#BE9B49] group-hover:text-[#EDC45B] text-lg mx-auto mb-1 transition-colors" />
             </a>
           </div>
           <div>
@@ -282,9 +282,9 @@ const Navbar = () => {
               href="https://wa.me/251960606042"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-300"
+              className="group"
             >
-              <FaWhatsapp className="text-gold text-lg  mx-auto mb-1" />
+              <FaWhatsapp className="text-[#BE9B49] group-hover:text-[#EDC45B] text-lg mx-auto mb-1 transition-colors" />
             </a>
           </div>
           <div>
@@ -292,39 +292,44 @@ const Navbar = () => {
               href="https://t.me/+251960606042"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-300"
+              className="group"
             >
-              <SiTelegram className="text-gold text-lg  mx-auto mb-1" />
+              <SiTelegram className="text-[#BE9B49] group-hover:text-[#EDC45B] text-lg mx-auto mb-1 transition-colors" />
             </a>
           </div>
         </div>
       </div>
 
       <header className="bg-zinc-50 shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center gap-3 py-4 px-5 md:px-8 lg:px-12 relative">
+        {/* py-4 = 16px top/bottom clear space around the 44px logo (≈36% ratio, per brand guideline) */}
+        <div className="max-w-7xl mx-auto flex items-center py-4 px-5 md:px-8 lg:px-12 relative">
+
+          {/* Logo — left anchor */}
           <img
-            src="wanaw gifting logo.jpeg"
+            src="/brand/gold-primary.svg"
             alt={t("nav.logoAlt")}
-            className="h-10 w-10 md:h-12 md:w-12 rounded-full cursor-pointer"
+            className="h-9 md:h-11 w-auto cursor-pointer flex-shrink-0"
             onClick={() => navigate("/")}
           />
 
-          <nav className="hidden md:flex flex-1 min-w-0 items-center justify-center flex-wrap gap-x-6 gap-y-2 text-[14px] lg:text-[15px]">
-            <Link to="/company">{t("nav.about")}</Link>
-            <Link to="/request-service" className="hover:text-[#1c2b21]">
+          {/* Nav links — absolutely centered within the full container width */}
+          <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-x-5 text-[13px] lg:text-[14px] whitespace-nowrap">
+            <Link to="/company" className="text-[#0F285B] hover:text-[#BE9B49] transition-colors">{t("nav.about")}</Link>
+            <Link to="/request-service" className="text-[#0F285B] hover:text-[#BE9B49] transition-colors">
               {t("nav.requestService")}
             </Link>
 
             {menuSections.map((section) => renderDesktopSection(section))}
 
-            <Link to="/support">{t("nav.support")}</Link>
+            <Link to="/support" className="text-[#0F285B] hover:text-[#BE9B49] transition-colors">{t("nav.support")}</Link>
           </nav>
 
-          <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+          {/* Right controls — pushed to the far right with ml-auto */}
+          <div className="hidden md:flex items-center gap-3 ml-auto flex-shrink-0">
             <button
               type="button"
               onClick={() => setSearchOpen((o) => !o)}
-              className="p-2 rounded hover:bg-gray-100"
+              className="p-2 rounded text-[#0F285B] hover:text-[#BE9B49] hover:bg-gray-100 transition-colors"
               aria-label={t("nav.searchPlaceholder")}
             >
               <IoIosSearch size={20} />
@@ -333,33 +338,26 @@ const Navbar = () => {
             <LanguageSwitcher />
 
             {user ? (
-              <div className="flex items-center gap-3">
-                <Link
-                  to={getDashboardLink()}
-                  className="text-sm font-medium text-gray-800 hover:text-[#1c2b21] transition-colors whitespace-nowrap"
-                >
-                  Dashboard
-                </Link>
-                <button
-                  onClick={logout}
-                  className="text-xs text-gray-500 hover:text-red-600 font-medium px-1 transition-colors"
-                >
-                  Sign Out
-                </button>
-              </div>
+              <button
+                onClick={logout}
+                className="text-xs text-gray-500 hover:text-red-600 font-medium px-1 transition-colors whitespace-nowrap"
+              >
+                Sign Out
+              </button>
             ) : (
               <Link
                 to="/login"
-                className="text-sm font-medium text-gray-800 hover:text-[#1c2b21] transition-colors whitespace-nowrap ml-1"
+                className="text-sm font-semibold ods-gold-gradient text-[#0F285B] px-4 py-1.5 rounded-full shadow-sm hover:brightness-105 active:scale-95 transition-all whitespace-nowrap"
               >
-                Sign In
+                {t("nav.signIn")}
               </Link>
             )}
           </div>
 
+          {/* Mobile hamburger — pushed right with ml-auto on small screens */}
           <button
             type="button"
-            className="md:hidden z-20 p-2"
+            className="md:hidden z-20 p-2 ml-auto"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
           >
@@ -367,9 +365,9 @@ const Navbar = () => {
               <X className="w-6 h-6" />
             ) : (
               <div className="flex flex-col gap-1">
-                <span className="block w-5 h-0.5 bg-green" />
-                <span className="block w-4 h-0.5 bg-green ml-auto" />
-                <span className="block w-3 h-0.5 bg-green ml-auto" />
+                <span className="block w-5 h-0.5 bg-[#0F285B]" />
+                <span className="block w-4 h-0.5 bg-[#0F285B] ml-auto" />
+                <span className="block w-3 h-0.5 bg-[#0F285B] ml-auto" />
               </div>
             )}
           </button>
@@ -550,11 +548,12 @@ const Navbar = () => {
                 <LanguageSwitcher align="left" className="w-full" />
               </div>
 
-              <div className="flex gap-4 mt-6 text-[#1c2b21]">
+              <div className="flex gap-4 mt-6">
                 <a
                   href="https://www.facebook.com/share/14JxGfvVv4C/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="text-[#BE9B49] hover:text-[#EDC45B] transition-colors"
                 >
                   <FaFacebook size={18} />
                 </a>
@@ -562,6 +561,7 @@ const Navbar = () => {
                   href="https://www.linkedin.com/company/wanaw-health-and-wellness-digital-solution/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="text-[#BE9B49] hover:text-[#EDC45B] transition-colors"
                 >
                   <FaLinkedin size={18} />
                 </a>
@@ -569,6 +569,7 @@ const Navbar = () => {
                   href="https://www.instagram.com/wanaw_health_and_wellness_?igsh=bmJxdTVkMGY3NDVn"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="text-[#BE9B49] hover:text-[#EDC45B] transition-colors"
                 >
                   <FaInstagram size={18} />
                 </a>
@@ -576,6 +577,7 @@ const Navbar = () => {
                   href="https://www.tiktok.com/@wanawhealthandwellness?_t=ZM-8yBOhm4EAIa&_r=1"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="text-[#BE9B49] hover:text-[#EDC45B] transition-colors"
                 >
                   <FaTiktok size={18} />
                 </a>

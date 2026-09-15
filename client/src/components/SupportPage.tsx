@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { FaPhoneAlt, FaEnvelope,FaWhatsapp, } from "react-icons/fa";
 import BASE_URL from "../api/api";
 
@@ -63,15 +63,15 @@ const handleSubmit = async (e: React.FormEvent) => {
     <>
       <div className="min-h-screen flex items-center justify-center bg-white px-4 relative overflow-hidden">
       {/* Decorative Shapes */}
-      <div className="absolute top-0 left-0 w-40 h-40 bg-[#1c2b21] rounded-full opacity-40  animate-pulse z-0"></div>
-      <div className="absolute bottom-0 right-0 w-60 h-60 bg-[#1c2b21] rounded-full opacity-30  animate-spin-slow z-0"></div>
-      <div className="absolute -top-10 right-10 w-32 h-32 bg-[#D4AF37] rotate-45 rounded-lg opacity-50  z-0"></div>
-      <div className="absolute top-10 left-10 w-40 h-40 bg-[#1c2b21] rounded-full opacity-40  animate-pulse z-0"></div>
-      <div className="absolute bottom-10 right-0 w-60 h-60 bg-[#1c2b21] rounded-full opacity-30  animate-spin-slow z-0"></div>
-      <div className="absolute -top-0 right-0 w-32 h-32 bg-[#D4AF37] rotate-45 rounded-lg opacity-50  z-0"></div>
-      <div className="absolute top-20 left-20 w-40 h-40 bg-[#1c2b21] rounded-full opacity-40  animate-pulse z-0"></div>
-      <div className="absolute bottom-20 right-20 w-60 h-60 bg-[#1c2b21] rounded-full opacity-30  animate-spin-slow z-0"></div>
-      <div className="absolute -top-20 right-0 w-32 h-32 bg-[#D4AF37] rotate-45 rounded-lg opacity-50  z-0"></div>
+      <div className="absolute top-0 left-0 w-40 h-40 bg-[#0f285b] rounded-full opacity-40  animate-pulse z-0"></div>
+      <div className="absolute bottom-0 right-0 w-60 h-60 bg-[#0f285b] rounded-full opacity-30  animate-spin-slow z-0"></div>
+      <div className="absolute -top-10 right-10 w-32 h-32 bg-[#be9b49] rotate-45 rounded-lg opacity-50  z-0"></div>
+      <div className="absolute top-10 left-10 w-40 h-40 bg-[#0f285b] rounded-full opacity-40  animate-pulse z-0"></div>
+      <div className="absolute bottom-10 right-0 w-60 h-60 bg-[#0f285b] rounded-full opacity-30  animate-spin-slow z-0"></div>
+      <div className="absolute -top-0 right-0 w-32 h-32 bg-[#be9b49] rotate-45 rounded-lg opacity-50  z-0"></div>
+      <div className="absolute top-20 left-20 w-40 h-40 bg-[#0f285b] rounded-full opacity-40  animate-pulse z-0"></div>
+      <div className="absolute bottom-20 right-20 w-60 h-60 bg-[#0f285b] rounded-full opacity-30  animate-spin-slow z-0"></div>
+      <div className="absolute -top-20 right-0 w-32 h-32 bg-[#be9b49] rotate-45 rounded-lg opacity-50  z-0"></div>
       {/* Login Card */}
       <div className="max-w-xl mx-auto bg-green rounded-2xl z-10 shadow-md p-8">
         <h1 className="text-3xl font-bold text-center mb-6 text-gold">Customer Support & Help Center</h1>
@@ -151,7 +151,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           ></textarea>
           <button
             type="submit"
-            className="bg-[#D4AF37] text-[#1c2b21] py-3 rounded-xl hover:rounded-full transition col-span-full"
+            className="bg-[#be9b49] text-[#0f285b] py-3 rounded-xl hover:rounded-full transition col-span-full"
           >
             Submit Request
           </button>

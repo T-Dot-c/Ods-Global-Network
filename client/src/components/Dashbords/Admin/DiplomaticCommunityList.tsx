@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 
@@ -85,7 +85,7 @@ const DiplomaticCommunityList = () => {
         <p className="text-center mt-10 text-lg text-red-600">{error}</p>
         <button
           onClick={fetchMembers}
-          className="mt-4 mx-auto block bg-[#1c2b21] text-white px-4 py-2 rounded hover:bg-[#0f1a14] transition"
+          className="mt-4 mx-auto block bg-[#0f285b] text-white px-4 py-2 rounded hover:bg-[#091838] transition"
         >
           Retry
         </button>
@@ -95,7 +95,7 @@ const DiplomaticCommunityList = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h2 className="text-3xl font-bold mb-6 text-center text-[#1c2b21]">
+      <h2 className="text-3xl font-bold mb-6 text-center text-[#0f285b]">
         Africa Union, Embassy & Diplomatic Community Members
       </h2>
 
@@ -108,12 +108,12 @@ const DiplomaticCommunityList = () => {
             placeholder="Subject"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="col-span-2 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+            className="col-span-2 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
           />
           <button
             onClick={handleSendEmail}
             disabled={sending}
-            className="bg-[#1c2b21] text-white px-4 py-2 rounded hover:bg-[#0f1a14] transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#0f285b] text-white px-4 py-2 rounded hover:bg-[#091838] transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? "Sending..." : "Send Email"}
           </button>
@@ -123,14 +123,14 @@ const DiplomaticCommunityList = () => {
           placeholder="Message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+          className="w-full p-2 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
         />
       </div>
 
       {/* Members Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-md">
         <table className="min-w-full border-collapse">
-          <thead className="bg-[#1c2b21] text-white">
+          <thead className="bg-[#0f285b] text-white">
             <tr>
               {[
                 "#",
@@ -202,7 +202,7 @@ const DiplomaticCommunityList = () => {
 
       {/* Summary */}
       <div className="mt-6 text-center text-gray-600">
-        <p>Total Members: <span className="font-semibold text-[#1c2b21]">{members.length}</span></p>
+        <p>Total Members: <span className="font-semibold text-[#0f285b]">{members.length}</span></p>
       </div>
     </div>
   );

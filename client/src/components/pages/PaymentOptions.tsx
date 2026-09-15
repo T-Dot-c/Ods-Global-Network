@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+﻿import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import BASE_URL from "../../api/api";
@@ -502,14 +502,14 @@ const PaymentOptions = () => {
   // Show loading state - different messages for gift data vs purchase processing
   if (loading && isGiftPayment) return (
     <div className="text-center py-8">
-      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]"></div>
+      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49]"></div>
       <p className="mt-2 text-gray-600">Loading gift data...</p>
     </div>
   );
   
   if (purchasing) return (
     <div className="text-center py-8">
-      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]"></div>
+      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49]"></div>
       <p className="mt-2 text-gray-600">
         {isGiftPayment ? "Processing your gift purchase..." : "Processing your purchase..."}
       </p>
@@ -527,7 +527,7 @@ const PaymentOptions = () => {
               setError(null);
               window.location.reload();
             }}
-            className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-xl shadow-lg hover:shadow-xl transition"
+            className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-xl shadow-lg hover:shadow-xl transition"
           >
             Retry
           </button>
@@ -543,13 +543,13 @@ const PaymentOptions = () => {
       <div className="min-h-screen bg-gray-50 py-10 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="bg-white rounded-3xl shadow-2xl p-8 text-center">
-            <h2 className="text-3xl font-bold text-[#1c2b21] mb-6">No Items in Cart</h2>
+            <h2 className="text-3xl font-bold text-[#0f285b] mb-6">No Items in Cart</h2>
             <p className="text-gray-600 mb-6">
               It looks like no items were selected for purchase. Please go back and select some services.
             </p>
             <button
               onClick={() => window.history.back()}
-              className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-xl shadow-lg hover:shadow-xl transition"
+              className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-xl shadow-lg hover:shadow-xl transition"
             >
               Go Back
             </button>
@@ -580,7 +580,7 @@ const PaymentOptions = () => {
 
         {/* Invoice Section */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 overflow-hidden">
-          <h2 className="text-3xl font-bold text-center text-[#1c2b21] mb-6">Payment Summary</h2>
+          <h2 className="text-3xl font-bold text-center text-[#0f285b] mb-6">Payment Summary</h2>
           <p className="text-center text-xl font-bold mb-6">
             Total: {numericDisplayAmount.toFixed(2)} {currency}
           </p>
@@ -656,7 +656,7 @@ const PaymentOptions = () => {
           <div className="mt-6 text-center">
             <button
               onClick={handlePurchase}
-              className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-xl shadow-lg hover:shadow-xl transition"
+              className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-xl shadow-lg hover:shadow-xl transition"
             >
               Complete Purchase
             </button>
@@ -666,7 +666,7 @@ const PaymentOptions = () => {
         {/* Gift Cards Section - Only show for gift payments with valid gift codes */}
         {isGiftPayment && Array.isArray(recipientsWithCodes) && recipientsWithCodes.length > 0 && (
           <div className="bg-white rounded-3xl shadow-2xl p-8 overflow-hidden">
-            <h2 className="text-3xl font-bold text-center text-[#1c2b21] mb-6">
+            <h2 className="text-3xl font-bold text-center text-[#0f285b] mb-6">
               Download Gift Cards
             </h2>
             <p className="text-center text-gray-600 mb-8">
@@ -748,10 +748,10 @@ const PaymentOptions = () => {
                   return (
                     <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
                       <div>
-                        <h3 className="text-lg font-semibold text-[#1c2b21]">
+                        <h3 className="text-lg font-semibold text-[#0f285b]">
                           {giftCardProps.recipientName}
                           {giftType === "vip" && (
-                            <span className="ml-2 text-[#D4AF37]">👑 VIP</span>
+                            <span className="ml-2 text-[#be9b49]">👑 VIP</span>
                           )}
                           {giftType === "corporate" && (
                             <span className="ml-2 text-blue-600">🏢 Corporate</span>
@@ -783,7 +783,7 @@ const PaymentOptions = () => {
                             }
                           }
                         }}
-                        className="px-6 py-2 bg-gradient-to-r from-[#D4AF37] to-[#f5deb3] text-white font-semibold rounded-lg hover:from-[#c9a028] hover:to-[#e6d4a0] transition-all duration-200 shadow-md hover:shadow-lg"
+                        className="px-6 py-2 bg-gradient-to-r from-[#be9b49] to-[#f5deb3] text-white font-semibold rounded-lg hover:from-[#c9a028] hover:to-[#e6d4a0] transition-all duration-200 shadow-md hover:shadow-lg"
                       >
                         Download Gift Card
                       </button>
@@ -806,13 +806,13 @@ const PaymentOptions = () => {
         <div className="flex justify-center gap-4">
           <button
             onClick={() => setCurrency("ETB")}
-            className={`px-4 py-2 rounded-lg font-semibold ${currency === "ETB" ? "bg-[#D4AF37] text-white" : "bg-gray-200 text-gray-800"}`}
+            className={`px-4 py-2 rounded-lg font-semibold ${currency === "ETB" ? "bg-[#be9b49] text-white" : "bg-gray-200 text-gray-800"}`}
           >
             Birr
           </button>
           <button
             onClick={() => setCurrency("USD")}
-            className={`px-4 py-2 rounded-lg font-semibold ${currency === "USD" ? "bg-[#D4AF37] text-white" : "bg-gray-200 text-gray-800"}`}
+            className={`px-4 py-2 rounded-lg font-semibold ${currency === "USD" ? "bg-[#be9b49] text-white" : "bg-gray-200 text-gray-800"}`}
           >
             USD
           </button>
@@ -820,7 +820,7 @@ const PaymentOptions = () => {
 
         {/* Payment Methods */}
         <div className="bg-white rounded-3xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-[#1c2b21] mb-4 text-center">Choose Payment Method</h2>
+          <h2 className="text-2xl font-bold text-[#0f285b] mb-4 text-center">Choose Payment Method</h2>
           <p className="text-gray-500 mb-6 text-center">Select a secure method to complete your payment</p>
 
           <div className="grid gap-4 sm:grid-cols-2">

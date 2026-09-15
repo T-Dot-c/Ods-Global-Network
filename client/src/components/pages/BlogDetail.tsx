@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+﻿import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../api/api";
@@ -35,8 +35,8 @@ const BlogDetail: React.FC = () => {
       if (imageUrl.includes('/api/uploads/')) {
         imageUrl = imageUrl.replace('/api/uploads/', '/uploads/');
       }
-      if (imageUrl.includes('wanaw.et') && !imageUrl.includes('www.wanaw.et')) {
-        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+      if (imageUrl.includes('odsglobal.net') && !imageUrl.includes('www.odsglobal.net')) {
+        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
       }
       return imageUrl;
     }
@@ -126,7 +126,7 @@ const BlogDetail: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="text-lg text-gray-500 mb-2">Loading blog post...</div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37] mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49] mx-auto"></div>
         </div>
       </div>
     );
@@ -140,7 +140,7 @@ const BlogDetail: React.FC = () => {
           <div className="flex gap-4 justify-center">
             <button
               onClick={() => navigate("/blogs")}
-              className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-lg hover:bg-[#b8962f] transition"
+              className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-lg hover:bg-[#b8962f] transition"
             >
               Back to Blogs
             </button>
@@ -157,7 +157,7 @@ const BlogDetail: React.FC = () => {
           <p className="text-gray-600 mb-4 text-lg">Blog post not found</p>
           <button
             onClick={() => navigate("/blogs")}
-            className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-lg hover:bg-[#b8962f] transition"
+            className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-lg hover:bg-[#b8962f] transition"
           >
             Back to Blogs
           </button>
@@ -172,7 +172,7 @@ const BlogDetail: React.FC = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate("/blogs")}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-[#1c2b21] transition"
+          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-[#0f285b] transition"
         >
           <ArrowLeft size={20} />
           <span>Back to Blogs</span>
@@ -199,7 +199,7 @@ const BlogDetail: React.FC = () => {
 
           {/* Content */}
           <div className="p-8">
-            <h1 className="text-4xl font-bold mb-4 text-[#1c2b21]">{post.title}</h1>
+            <h1 className="text-4xl font-bold mb-4 text-[#0f285b]">{post.title}</h1>
             
             <div className="flex items-center gap-4 mb-6 text-sm text-gray-500">
               <span>Posted on {new Date(post.createdAt).toLocaleDateString('en-US', { 
@@ -217,7 +217,7 @@ const BlogDetail: React.FC = () => {
             )}
 
             <div 
-              className="prose max-w-none prose-lg prose-headings:text-[#1c2b21] prose-a:text-[#D4AF37] prose-strong:text-[#1c2b21]"
+              className="prose max-w-none prose-lg prose-headings:text-[#0f285b] prose-a:text-[#be9b49] prose-strong:text-[#0f285b]"
               dangerouslySetInnerHTML={{ __html: post.content }} 
             />
           </div>

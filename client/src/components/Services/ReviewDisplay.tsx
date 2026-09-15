@@ -1,4 +1,4 @@
-// client/src/components/Services/ReviewDisplay.tsx
+﻿// client/src/components/Services/ReviewDisplay.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../api/api";
@@ -201,9 +201,9 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
             key={star}
             size={size}
             className={interactive ? "cursor-pointer transition-transform hover:scale-110" : ""}
-            fill={star <= fullStars ? "#D4AF37" : star === fullStars + 1 && hasHalfStar ? "#D4AF37" : "none"}
-            stroke={star <= fullStars || (star === fullStars + 1 && hasHalfStar) ? "#D4AF37" : "#d1d5db"}
-            color={star <= fullStars || (star === fullStars + 1 && hasHalfStar) ? "#D4AF37" : "#d1d5db"}
+            fill={star <= fullStars ? "#be9b49" : star === fullStars + 1 && hasHalfStar ? "#be9b49" : "none"}
+            stroke={star <= fullStars || (star === fullStars + 1 && hasHalfStar) ? "#be9b49" : "#d1d5db"}
+            color={star <= fullStars || (star === fullStars + 1 && hasHalfStar) ? "#be9b49" : "#d1d5db"}
             onClick={() => interactive && onRatingChange?.(star)}
           />
         ))}
@@ -215,7 +215,7 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
     return (
       <div className="bg-white border rounded-lg p-6 shadow-md">
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37] mx-auto mb-2"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49] mx-auto mb-2"></div>
           <p className="text-gray-500">Loading reviews...</p>
         </div>
       </div>
@@ -229,7 +229,7 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={fetchReviews}
-            className="px-4 py-2 bg-[#D4AF37] text-[#1c2b21] rounded-lg font-semibold hover:bg-[#b8962f] transition"
+            className="px-4 py-2 bg-[#be9b49] text-[#0f285b] rounded-lg font-semibold hover:bg-[#b8962f] transition"
           >
             Retry
           </button>
@@ -250,7 +250,7 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
 
   return (
     <div className="bg-white border rounded-lg p-6 shadow-md">
-      <h3 className="text-xl font-bold text-[#1c2b21] mb-6">
+      <h3 className="text-xl font-bold text-[#0f285b] mb-6">
         Reviews ({reviews.length})
       </h3>
       
@@ -279,7 +279,7 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
                     <textarea
                       value={editComment}
                       onChange={(e) => setEditComment(e.target.value)}
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
                       rows={3}
                       maxLength={1000}
                     />
@@ -287,7 +287,7 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEditSave(review.id)}
-                      className="px-4 py-2 bg-[#D4AF37] text-[#1c2b21] rounded-lg font-semibold hover:bg-[#b8962f] transition"
+                      className="px-4 py-2 bg-[#be9b49] text-[#0f285b] rounded-lg font-semibold hover:bg-[#b8962f] transition"
                     >
                       Save
                     </button>
@@ -304,7 +304,7 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <p className="font-semibold text-[#1c2b21]">{review.userName}</p>
+                        <p className="font-semibold text-[#0f285b]">{review.userName}</p>
                         <StarRating rating={review.rating} size={18} />
                       </div>
                       {review.comment && (
@@ -319,7 +319,7 @@ const ReviewDisplay = ({ serviceId, currentUserId, currentUserEmail, onReviewUpd
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEditStart(review)}
-                          className="p-1 text-gray-600 hover:text-[#D4AF37] transition"
+                          className="p-1 text-gray-600 hover:text-[#be9b49] transition"
                           title="Edit review"
                         >
                           <Edit size={16} />

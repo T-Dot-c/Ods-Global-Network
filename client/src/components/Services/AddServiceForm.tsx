@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../api/api";
 
@@ -150,27 +150,27 @@ const handleSubmit = async () => {
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
-      <h2 className="text-3xl font-bold mb-6 text-center text-[#1c2b21]">Add a Service</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center text-[#0f285b]">Add a Service</h2>
 
       <input
         type="text"
         placeholder="Title *"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
       />
 
       <textarea
         placeholder="Description"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] resize-none h-24"
+        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49] resize-none h-24"
       />
 
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
       >
         <option value="">Select Category *</option>
         <option value="Wellness">Wellness</option>
@@ -183,7 +183,7 @@ const handleSubmit = async () => {
         <select
           value={subcategory}
           onChange={(e) => setSubcategory(e.target.value)}
-          className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+          className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
         >
           <option value="">Select Subcategory *</option>
           {subcategoriesMap[category].map((group) => (
@@ -203,7 +203,7 @@ const handleSubmit = async () => {
         placeholder={category === "Hotel" || category === "Hotel Rooms" ? "Price per night (ETB) *" : "Price (ETB) *"}
         value={price}
         onChange={(e) => setPrice(Number(e.target.value))}
-        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
       />
 
       <input
@@ -211,7 +211,7 @@ const handleSubmit = async () => {
         placeholder="Duration (e.g. 60 minutes)"
         value={duration}
         onChange={(e) => setDuration(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
       />
 
       <input
@@ -219,7 +219,7 @@ const handleSubmit = async () => {
         placeholder="Location"
         value={location}
         onChange={(e) => setLocation(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
       />
 
       <input
@@ -227,7 +227,7 @@ const handleSubmit = async () => {
         placeholder="Tags (comma-separated)"
         value={tags}
         onChange={(e) => setTags(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+        className="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#be9b49]"
       />
 
       <input
@@ -239,7 +239,7 @@ const handleSubmit = async () => {
 
       <button
         onClick={handleSubmit}
-        className="w-full bg-[#1c2b21] hover:bg-[#16301b] text-[#D4AF37] font-bold py-3 rounded-xl shadow-md transition duration-300"
+        className="w-full bg-[#0f285b] hover:bg-[#16301b] text-[#be9b49] font-bold py-3 rounded-xl shadow-md transition duration-300"
       >
         Add Service
       </button>

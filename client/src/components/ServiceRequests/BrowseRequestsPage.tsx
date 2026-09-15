@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+﻿import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   acceptServiceRequest,
@@ -84,11 +84,11 @@ const BrowseRequestsPage = () => {
   return (
     <div className="max-w-5xl mx-auto p-6">
       <div className="mb-4">
-        <Link to="/provider-dashboard" className="text-sm font-medium text-[#1c2b21] hover:underline">
+        <Link to="/provider-dashboard" className="text-sm font-medium text-[#0f285b] hover:underline">
           ← Back to Provider Dashboard
         </Link>
       </div>
-      <h1 className="text-2xl font-bold text-[#1c2b21] mb-4">Browse Service Requests</h1>
+      <h1 className="text-2xl font-bold text-[#0f285b] mb-4">Browse Service Requests</h1>
       {error && <p className="text-red-600 mb-3">{error}</p>}
       {notice && <p className="text-green-700 mb-3">{notice}</p>}
 
@@ -102,7 +102,7 @@ const BrowseRequestsPage = () => {
               <div key={req.id} className="bg-white border rounded-lg p-4">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="font-semibold">{req.title}</h3>
-                  <span className="shrink-0 rounded-full bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#1c2b21]">
+                  <span className="shrink-0 rounded-full bg-[#be9b49]/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#0f285b]">
                     {isPending ? "Requested Service" : req.status || "Open"}
                   </span>
                 </div>
@@ -114,7 +114,7 @@ const BrowseRequestsPage = () => {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {isPending ? (
                     <button
-                      className="bg-[#1c2b21] text-[#D4AF37] px-3 py-2 rounded text-sm font-semibold hover:bg-[#16301b] transition"
+                      className="bg-[#0f285b] text-[#be9b49] px-3 py-2 rounded text-sm font-semibold hover:bg-[#16301b] transition"
                       onClick={() => {
                         setAcceptingId(req.id);
                         setAcceptMessage("");
@@ -125,7 +125,7 @@ const BrowseRequestsPage = () => {
                     </button>
                   ) : (
                     <button
-                      className="bg-[#1c2b21] text-[#D4AF37] px-3 py-2 rounded text-sm font-semibold hover:bg-[#16301b] transition"
+                      className="bg-[#0f285b] text-[#be9b49] px-3 py-2 rounded text-sm font-semibold hover:bg-[#16301b] transition"
                       onClick={() => setSelectedId(req.id)}
                     >
                       Submit Proposal
@@ -159,7 +159,7 @@ const BrowseRequestsPage = () => {
               onChange={(e) => setMessage(e.target.value)}
             />
             <div className="flex gap-2">
-              <button type="submit" className="bg-[#1c2b21] text-[#D4AF37] px-4 py-2 rounded">
+              <button type="submit" className="bg-[#0f285b] text-[#be9b49] px-4 py-2 rounded">
                 Send
               </button>
               <button type="button" className="bg-gray-200 px-4 py-2 rounded" onClick={() => setSelectedId(null)}>
@@ -187,7 +187,7 @@ const BrowseRequestsPage = () => {
               <button
                 type="submit"
                 disabled={submittingAccept}
-                className="bg-[#1c2b21] text-[#D4AF37] px-4 py-2 rounded disabled:opacity-60"
+                className="bg-[#0f285b] text-[#be9b49] px-4 py-2 rounded disabled:opacity-60"
               >
                 {submittingAccept ? "Accepting..." : "Confirm Accept"}
               </button>

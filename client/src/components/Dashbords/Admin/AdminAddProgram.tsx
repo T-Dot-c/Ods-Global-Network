@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import BASE_URL from "../../../api/api";
 
 const categories = [
@@ -71,7 +71,7 @@ const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded-lg shadow-md space-y-4">
-      <h2 className="text-xl font-bold text-[#1c2b21]">Add New Program</h2>
+      <h2 className="text-xl font-bold text-[#0f285b]">Add New Program</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
@@ -159,7 +159,7 @@ const [imagePreview, setImagePreview] = useState<string | null>(null);
         <button
           type="submit"
           disabled={loading}
-          className="bg-[#1c2b21] text-white px-4 py-2 rounded"
+          className="bg-[#0f285b] text-white px-4 py-2 rounded"
         >
           {loading ? "Submitting..." : "Add Program"}
         </button>

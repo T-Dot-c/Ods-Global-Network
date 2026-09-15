@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 import { Bell, Calendar, Gift, CheckCircle, Clock } from "lucide-react";
@@ -112,20 +112,20 @@ const Notifications = ({ userId }: NotificationsProps) => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'gift_received':
-        return <Gift className="w-5 h-5 text-[#D4AF37]" />;
+        return <Gift className="w-5 h-5 text-[#be9b49]" />;
       case 'gift_delivered':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'payment_confirmed':
         return <CheckCircle className="w-5 h-5 text-blue-600" />;
       default:
-        return <Bell className="w-5 h-5 text-[#D4AF37]" />;
+        return <Bell className="w-5 h-5 text-[#be9b49]" />;
     }
   };
 
   const getNotificationColor = (type: string) => {
     switch (type) {
       case 'gift_received':
-        return 'border-l-[#D4AF37] bg-[#D4AF37] bg-opacity-5';
+        return 'border-l-[#be9b49] bg-[#be9b49] bg-opacity-5';
       case 'gift_delivered':
         return 'border-l-green-500 bg-green-50';
       case 'payment_confirmed':
@@ -139,8 +139,8 @@ const Notifications = ({ userId }: NotificationsProps) => {
     return (
       <div className="p-6 bg-white rounded-xl shadow-md border border-gray-100">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]"></div>
-          <span className="ml-3 text-[#1c2b21]">Loading notifications...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49]"></div>
+          <span className="ml-3 text-[#0f285b]">Loading notifications...</span>
         </div>
       </div>
     );
@@ -162,11 +162,11 @@ const Notifications = ({ userId }: NotificationsProps) => {
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-[#1c2b21] flex items-center">
-            <Bell className="w-6 h-6 mr-3 text-[#D4AF37]" />
+          <h2 className="text-2xl font-bold text-[#0f285b] flex items-center">
+            <Bell className="w-6 h-6 mr-3 text-[#be9b49]" />
             Notifications
             {unreadCount > 0 && (
-              <span className="ml-2 bg-[#D4AF37] text-[#1c2b21] text-xs font-bold px-2 py-1 rounded-full">
+              <span className="ml-2 bg-[#be9b49] text-[#0f285b] text-xs font-bold px-2 py-1 rounded-full">
                 {unreadCount}
               </span>
             )}
@@ -174,7 +174,7 @@ const Notifications = ({ userId }: NotificationsProps) => {
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-sm text-[#D4AF37] hover:text-[#1c2b21] font-medium"
+              className="text-sm text-[#be9b49] hover:text-[#0f285b] font-medium"
             >
               Mark all as read
             </button>
@@ -184,7 +184,7 @@ const Notifications = ({ userId }: NotificationsProps) => {
         {notifications.length === 0 ? (
           <div className="text-center py-12">
             <Bell className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-[#1c2b21] mb-2">No notifications</h3>
+            <h3 className="text-lg font-semibold text-[#0f285b] mb-2">No notifications</h3>
             <p className="text-gray-600">You'll receive notifications about your gifts and payments here.</p>
           </div>
         ) : (
@@ -202,7 +202,7 @@ const Notifications = ({ userId }: NotificationsProps) => {
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1">
-                      <p className={`font-medium ${notification.isRead ? 'text-gray-600' : 'text-[#1c2b21]'}`}>
+                      <p className={`font-medium ${notification.isRead ? 'text-gray-600' : 'text-[#0f285b]'}`}>
                         {notification.message}
                       </p>
                       <div className="flex items-center mt-2 text-sm text-gray-500">
@@ -221,7 +221,7 @@ const Notifications = ({ userId }: NotificationsProps) => {
                   {!notification.isRead && (
                     <button
                       onClick={() => markAsRead(notification.id)}
-                      className="text-xs text-[#D4AF37] hover:text-[#1c2b21] font-medium"
+                      className="text-xs text-[#be9b49] hover:text-[#0f285b] font-medium"
                     >
                       Mark as read
                     </button>

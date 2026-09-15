@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import BASE_URL from "../../../api/api";
 
 type Service = {
@@ -226,7 +226,7 @@ const ManageServices = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1c2b21] mb-2">Manage Services</h1>
+        <h1 className="text-2xl font-bold text-[#0f285b] mb-2">Manage Services</h1>
         <p className="text-gray-600">Approve, reject, or delete services submitted by providers</p>
       </div>
 
@@ -237,8 +237,8 @@ const ManageServices = () => {
             onClick={() => setActiveTab("pending")}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === "pending"
-                ? "border-b-2 border-[#D4AF37] text-[#1c2b21]"
-                : "text-gray-500 hover:text-[#1c2b21]"
+                ? "border-b-2 border-[#be9b49] text-[#0f285b]"
+                : "text-gray-500 hover:text-[#0f285b]"
             }`}
           >
             Pending Approval ({pendingServices.length})
@@ -247,8 +247,8 @@ const ManageServices = () => {
             onClick={() => setActiveTab("all")}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === "all"
-                ? "border-b-2 border-[#1c2b21] text-[#1c2b21]"
-                : "text-gray-500 hover:text-[#1c2b21]"
+                ? "border-b-2 border-[#0f285b] text-[#0f285b]"
+                : "text-gray-500 hover:text-[#0f285b]"
             }`}
           >
             All Services ({services.length})
@@ -258,7 +258,7 @@ const ManageServices = () => {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1c2b21] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f285b] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading services...</p>
         </div>
       ) : error ? (
@@ -268,7 +268,7 @@ const ManageServices = () => {
       ) : (
         <div className="overflow-x-auto bg-white rounded-lg shadow-md">
           <table className="min-w-full border-collapse">
-            <thead className="bg-[#1c2b21] text-white">
+            <thead className="bg-[#0f285b] text-white">
               <tr>
                 <th className="py-3 px-4 text-left text-sm font-semibold">#</th>
                 <th className="py-3 px-4 text-left text-sm font-semibold">Service</th>

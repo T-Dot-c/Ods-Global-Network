@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+﻿import React, { useRef, useState, useEffect } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import BASE_URL from "../api/api";
@@ -8,12 +8,12 @@ import QRCode from "react-qr-code";
 // Helper to get logo URL
 const getLogoUrl = () => {
   if (typeof window !== 'undefined') {
-    const isProduction = window.location.hostname === 'www.wanaw.et' || window.location.hostname === 'wanaw.et';
+    const isProduction = window.location.hostname === 'www.odsglobal.net' || window.location.hostname === 'odsglobal.net';
     if (isProduction) {
-      return `${window.location.protocol}//${window.location.host}/wanaw%20gifting%20logo.jpeg`;
+      return `${window.location.protocol}//${window.location.host}/brand/ods-logo-mark-gold.png`;
     }
   }
-  return "/wanaw gifting logo.jpeg";
+  return "/brand/ods-logo-mark-gold.png";
 };
 
 interface VipGiftCardProps {
@@ -200,18 +200,18 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
     } 
     // If it starts with /uploads/, construct full URL
     else if (recipientPhoto.startsWith("/uploads/")) {
-      // In production, use www.wanaw.et, otherwise use current host
-      const isProduction = window.location.hostname === 'www.wanaw.et' || window.location.hostname === 'wanaw.et';
+      // In production, use www.odsglobal.net, otherwise use current host
+      const isProduction = window.location.hostname === 'www.odsglobal.net' || window.location.hostname === 'odsglobal.net';
       const baseUrl = isProduction 
-        ? 'https://www.wanaw.et'
+        ? 'https://www.odsglobal.net'
         : `${window.location.protocol}//${window.location.host}`;
       photoUrl = `${baseUrl}${recipientPhoto}`;
     }
     // Otherwise, assume it's a filename and prepend /uploads/
     else {
-      const isProduction = window.location.hostname === 'www.wanaw.et' || window.location.hostname === 'wanaw.et';
+      const isProduction = window.location.hostname === 'www.odsglobal.net' || window.location.hostname === 'odsglobal.net';
       const baseUrl = isProduction 
-        ? 'https://www.wanaw.et'
+        ? 'https://www.odsglobal.net'
         : `${window.location.protocol}//${window.location.host}`;
       photoUrl = `${baseUrl}/uploads/${recipientPhoto}`;
     }
@@ -247,7 +247,7 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
   if (loading) {
     return (
       <div style={{ padding: "1rem", textAlign: "center" }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mx-auto"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#be9b49] mx-auto"></div>
         <p className="mt-4 text-gray-600">Loading VIP gift card...</p>
       </div>
     );
@@ -275,10 +275,10 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
           padding: "1.5rem",
           marginBottom: "1.5rem",
           fontFamily: "'Segoe UI', sans-serif",
-          color: "#1c2b21",
+          color: "#0f285b",
           maxWidth: "42rem",
           margin: "0 auto",
-          borderTop: "6px solid #D4AF37",
+          borderTop: "6px solid #be9b49",
         }}
       >
         {/* Header - Exact Invoice Style */}
@@ -299,8 +299,8 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
               objectFit: "cover",
             }}
             onError={(e) => {
-              if ((e.target as HTMLImageElement).src.includes("www.wanaw.et")) {
-                (e.target as HTMLImageElement).src = "/wanaw gifting logo.jpeg";
+              if ((e.target as HTMLImageElement).src.includes("www.odsglobal.net")) {
+                (e.target as HTMLImageElement).src = "/brand/ods-logo-mark-gold.png";
               } else {
                 (e.target as HTMLImageElement).style.display = "none";
               }
@@ -382,7 +382,7 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
                 height: "150px",
                 borderRadius: "0.5rem",
                 objectFit: "cover",
-                border: "3px solid #D4AF37",
+                border: "3px solid #be9b49",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
                 onError={(e) => {
@@ -401,7 +401,7 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
             padding: "0.75rem",
             borderRadius: "0.5rem",
             backgroundColor: "#fef3c7",
-            borderLeft: "4px solid #D4AF37",
+            borderLeft: "4px solid #be9b49",
           }}
         >
           {displayData.serviceTitle && (
@@ -426,12 +426,12 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
                 )}
           <p>
             <strong>Gift Card Type:</strong>{" "}
-            <span style={{ color: "#D4AF37", fontWeight: "bold" }}>
+            <span style={{ color: "#be9b49", fontWeight: "bold" }}>
               👑 VIP (+15% Premium)
               </span>
           </p>
           {displayData.code && displayData.code !== "Generating..." && displayData.code !== "N/A" && (
-            <p style={{ fontWeight: "bold", color: "#D4AF37", fontSize: "1rem", marginTop: "0.5rem" }}>
+            <p style={{ fontWeight: "bold", color: "#be9b49", fontSize: "1rem", marginTop: "0.5rem" }}>
               🎁 Gift Code: {displayData.code}
             </p>
           )}
@@ -452,7 +452,7 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
             <p style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.5rem" }}>
               Scan to redeem this VIP gift card
             </p>
-            <QRCode value={`https://www.wanaw.et/redeem?code=${displayData.code}`} size={80} />
+            <QRCode value={`https://www.odsglobal.net/redeem?code=${displayData.code}`} size={80} />
           </div>
         )}
 
@@ -460,7 +460,7 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
         <div
           style={{
             height: "30px",
-            background: "linear-gradient(to right, #D4AF37, #f5deb3)",
+            background: "linear-gradient(to right, #be9b49, #f5deb3)",
             marginTop: "1.5rem",
             borderBottomLeftRadius: "0.5rem",
             borderBottomRightRadius: "0.5rem",
@@ -473,8 +473,8 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
         <button
           onClick={downloadAsPDF}
           style={{
-            backgroundColor: "#1c2b21",
-            color: "#D4AF37",
+            backgroundColor: "#0f285b",
+            color: "#be9b49",
             padding: "0.5rem 1.5rem",
             borderRadius: "0.375rem",
             cursor: "pointer",
@@ -490,8 +490,8 @@ const VipGiftCard: React.FC<VipGiftCardProps> = ({
         <button
           onClick={downloadAsPNG}
           style={{
-            backgroundColor: "#1c2b21",
-            color: "#D4AF37",
+            backgroundColor: "#0f285b",
+            color: "#be9b49",
             padding: "0.5rem 1.5rem",
             borderRadius: "0.375rem",
             cursor: "pointer",

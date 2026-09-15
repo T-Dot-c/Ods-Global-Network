@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Gift as GiftIcon, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -201,7 +201,7 @@ const SendGiftForm: React.FC = () => {
         <p className="text-red-600 mb-4">No service selected.</p>
         <button
           onClick={() => navigate(-1)}
-          className="bg-[#1c2b21] text-white px-4 py-2 rounded"
+          className="bg-[#0f285b] text-white px-4 py-2 rounded"
         >
           Go Back
         </button>
@@ -841,13 +841,13 @@ const handlePayAndSend = async () => {
   return (
     <div className="max-w-lg mx-auto bg-white shadow-xl rounded-2xl overflow-hidden my-10">
       <div className="p-6 sm:p-8">
-        <h2 className="flex items-center text-2xl font-bold mb-4 text-[#1c2b21]">
-          <GiftIcon className="w-6 h-6 mr-2 text-[#D4AF37]" />
+        <h2 className="flex items-center text-2xl font-bold mb-4 text-[#0f285b]">
+          <GiftIcon className="w-6 h-6 mr-2 text-[#be9b49]" />
           Send “{service.title}”
         </h2>
 
         <div className="mb-6 border border-gray-200 rounded-xl p-4 bg-gray-50">
-          <label className="block text-sm font-semibold text-[#1c2b21] mb-2">
+          <label className="block text-sm font-semibold text-[#0f285b] mb-2">
             Occasion (optional)
           </label>
           <input
@@ -855,7 +855,7 @@ const handlePayAndSend = async () => {
             value={occasionTitleInput}
             onChange={(e) => setOccasionTitleInput(e.target.value)}
             placeholder="Type any occasion or leave blank"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#be9b49] focus:border-[#be9b49]"
           />
           <datalist id="wanaw-occasion-options">
             {occasionOptions.map((title) => (
@@ -876,9 +876,9 @@ const handlePayAndSend = async () => {
         {/* ---------------------- Availability step (hotel only) ---------------------- */}
         {isHotelRoom && !availabilityVerified && !proceedAnyway && (
           <div className="mb-6 border p-4 rounded bg-gray-50">
-            <h3 className="font-semibold mb-3 text-[#1c2b21]">Step 1 — Check Room Availability</h3>
+            <h3 className="font-semibold mb-3 text-[#0f285b]">Step 1 — Check Room Availability</h3>
 
-            <label className="block mb-2 font-medium text-[#1c2b21]">Check-in Date</label>
+            <label className="block mb-2 font-medium text-[#0f285b]">Check-in Date</label>
             <input
               type="date"
               value={checkInDate}
@@ -886,7 +886,7 @@ const handlePayAndSend = async () => {
               className="w-full p-3 border border-gray-300 rounded-lg mb-4"
             />
 
-            <label className="block mb-2 font-medium text-[#1c2b21]">Check-out Date</label>
+            <label className="block mb-2 font-medium text-[#0f285b]">Check-out Date</label>
             <input
               type="date"
               value={checkOutDate}
@@ -895,7 +895,7 @@ const handlePayAndSend = async () => {
             />
 
 
-            <label className="block mb-2 font-medium text-[#1c2b21]">Room Preference</label>
+            <label className="block mb-2 font-medium text-[#0f285b]">Room Preference</label>
 <select
   value={roomPref}
   onChange={(e) => setRoomPref(e.target.value)}
@@ -954,7 +954,7 @@ const handlePayAndSend = async () => {
               <button
                 onClick={handleCheckAvailability}
                 disabled={checkingAvailability}
-                className="bg-[#1c2b21] text-white px-4 py-2 rounded"
+                className="bg-[#0f285b] text-white px-4 py-2 rounded"
               >
                 {checkingAvailability ? "Checking..." : "Check Availability"}
               </button>
@@ -1063,7 +1063,7 @@ const handlePayAndSend = async () => {
     {/* If VIP, show photo upload */}
     {r.type === "vip" && (
       <div className="mt-2">
-        <label className="block mb-2 font-medium text-[#1c2b21]">
+        <label className="block mb-2 font-medium text-[#0f285b]">
           Upload Photo (VIP only - Required)
         </label>
         <input
@@ -1167,7 +1167,7 @@ const handlePayAndSend = async () => {
 
 <button
   type="button"
-  className="bg-[#1c2b21] text-white px-4 py-1 mb-4 rounded"
+  className="bg-[#0f285b] text-white px-4 py-1 mb-4 rounded"
   onClick={() =>
     setRecipients([
       ...recipients,
@@ -1192,7 +1192,7 @@ const handlePayAndSend = async () => {
             {/* Conditional date inputs */}
             {isHotelRoom ? (
               <>
-                <label className="block mb-2 font-medium text-[#1c2b21]">Check-in Date</label>
+                <label className="block mb-2 font-medium text-[#0f285b]">Check-in Date</label>
                 <input
                   type="date"
                   value={checkInDate}
@@ -1201,7 +1201,7 @@ const handlePayAndSend = async () => {
                   required
                 />
 
-                <label className="block mb-2 font-medium text-[#1c2b21]">Check-out Date</label>
+                <label className="block mb-2 font-medium text-[#0f285b]">Check-out Date</label>
                 <input
                   type="date"
                   value={checkOutDate}
@@ -1211,7 +1211,7 @@ const handlePayAndSend = async () => {
                   min={checkInDate || undefined}
                 />
 
-                <label className="block mb-2 font-medium text-[#1c2b21]">Number of Nights</label>
+                <label className="block mb-2 font-medium text-[#0f285b]">Number of Nights</label>
                 <input
                   type="number"
                   min={1}
@@ -1246,7 +1246,7 @@ const handlePayAndSend = async () => {
                       </div>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-green/20">
-                      <span className="text-base font-bold text-[#1c2b21]">Total Amount:</span>
+                      <span className="text-base font-bold text-[#0f285b]">Total Amount:</span>
                       <span className="text-lg font-bold text-green">ETB {(effectivePrice * nights).toLocaleString()}</span>
                     </div>
                   </div>
@@ -1254,7 +1254,7 @@ const handlePayAndSend = async () => {
               </>
             ) : (
               <>
-                <label className="block mb-2 font-medium text-[#1c2b21]">Preferred Service Date</label>
+                <label className="block mb-2 font-medium text-[#0f285b]">Preferred Service Date</label>
                 <input
                   type="date"
                   value={deliveryDate}
@@ -1283,7 +1283,7 @@ const handlePayAndSend = async () => {
     <button
       type="button"
       onClick={() => setNotifyProvider((v) => !v)}
-      className="flex items-center text-sm font-medium text-[#1c2b21] mb-2"
+      className="flex items-center text-sm font-medium text-[#0f285b] mb-2"
     >
       {notifyProvider ? (
         <ChevronUp className="w-4 h-4 mr-1" />
@@ -1319,7 +1319,7 @@ const handlePayAndSend = async () => {
           Original: ETB {(service.price * (isHotelRoom ? nights : 1) * recipients.length).toLocaleString()}
         </div>
         <div>
-          <span className="font-semibold">Total:</span> <span className="text-[#1c2b21] font-bold">{totalAmount.toLocaleString()}</span> ETB
+          <span className="font-semibold">Total:</span> <span className="text-[#0f285b] font-bold">{totalAmount.toLocaleString()}</span> ETB
           <span className="ml-2 text-sm bg-red-500 text-white px-2 py-1 rounded">{service.discount}% OFF</span>
         </div>
       </div>
@@ -1331,7 +1331,7 @@ const handlePayAndSend = async () => {
   </div>
 )}
 <div className="mb-6 border rounded p-4 bg-gray-50">
-  <label className="block mb-2 font-medium text-[#1c2b21]">Referral Code (Optional)</label>
+  <label className="block mb-2 font-medium text-[#0f285b]">Referral Code (Optional)</label>
     <input
       type="text"
     placeholder="Enter referral code (numbers only)"
@@ -1351,7 +1351,7 @@ const handlePayAndSend = async () => {
            <button
   onClick={handlePayAndSend}
   disabled={isHotelRoom && !availabilityVerified && !proceedAnyway}
-  className="w-full bg-[#1c2b21] text-white py-2 rounded hover:bg-[#151e18] transition"
+  className="w-full bg-[#0f285b] text-white py-2 rounded hover:bg-[#091838] transition"
 >
   Pay&nbsp;&amp;&nbsp;Send Gift
 </button>

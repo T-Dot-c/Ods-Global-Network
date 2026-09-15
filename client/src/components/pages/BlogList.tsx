@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import BASE_URL from "../../api/api";
@@ -29,8 +29,8 @@ const BlogList: React.FC = () => {
       if (imageUrl.includes('/api/uploads/')) {
         imageUrl = imageUrl.replace('/api/uploads/', '/uploads/');
       }
-      if (imageUrl.includes('wanaw.et') && !imageUrl.includes('www.wanaw.et')) {
-        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.wanaw.et');
+      if (imageUrl.includes('odsglobal.net') && !imageUrl.includes('www.odsglobal.net')) {
+        imageUrl = imageUrl.replace(/https?:\/\/(?:www\.)?wanaw\.et/g, 'https://www.odsglobal.net');
       }
       return imageUrl;
     }
@@ -117,7 +117,7 @@ const BlogList: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="text-lg text-gray-500 mb-2">Loading blog posts...</div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37] mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49] mx-auto"></div>
         </div>
       </div>
     );
@@ -130,7 +130,7 @@ const BlogList: React.FC = () => {
           <p className="text-red-600 mb-4 text-lg">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-[#D4AF37] text-[#1c2b21] font-bold rounded-lg hover:bg-[#b8962f] transition"
+            className="px-6 py-3 bg-[#be9b49] text-[#0f285b] font-bold rounded-lg hover:bg-[#b8962f] transition"
           >
             Retry
           </button>
@@ -144,7 +144,7 @@ const BlogList: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-[#1c2b21] mb-4">Blog Posts</h1>
+          <h1 className="text-4xl font-bold text-[#0f285b] mb-4">Blog Posts</h1>
           <p className="text-gray-600 text-lg">Stay updated with our latest news and insights</p>
         </div>
 
@@ -154,8 +154,8 @@ const BlogList: React.FC = () => {
             onClick={() => setFilter("recent")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
               filter === "recent"
-                ? "bg-[#1c2b21] text-white"
-                : "bg-white text-[#1c2b21] hover:bg-gray-100"
+                ? "bg-[#0f285b] text-white"
+                : "bg-white text-[#0f285b] hover:bg-gray-100"
             }`}
           >
             Recent Posts
@@ -164,8 +164,8 @@ const BlogList: React.FC = () => {
             onClick={() => setFilter("all")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
               filter === "all"
-                ? "bg-[#1c2b21] text-white"
-                : "bg-white text-[#1c2b21] hover:bg-gray-100"
+                ? "bg-[#0f285b] text-white"
+                : "bg-white text-[#0f285b] hover:bg-gray-100"
             }`}
           >
             All Posts ({posts.length})
@@ -208,7 +208,7 @@ const BlogList: React.FC = () => {
 
                 {/* Content */}
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-[#1c2b21] mb-2 group-hover:text-[#D4AF37] transition">
+                  <h3 className="text-xl font-bold text-[#0f285b] mb-2 group-hover:text-[#be9b49] transition">
                     {post.title}
                   </h3>
                   
@@ -224,7 +224,7 @@ const BlogList: React.FC = () => {
                         day: 'numeric'
                       })}
                     </p>
-                    <span className="text-[#D4AF37] font-semibold group-hover:underline">
+                    <span className="text-[#be9b49] font-semibold group-hover:underline">
                       Read More →
                     </span>
                   </div>

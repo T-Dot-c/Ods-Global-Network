@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+﻿import { useRef, useState, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import QRCode from "react-qr-code";
 import axios from "axios";
@@ -7,12 +7,12 @@ import BASE_URL from "../api/api";
 // Helper to get logo URL that works in both local and production
 const getLogoUrl = () => {
   if (typeof window !== 'undefined') {
-    const isProduction = window.location.hostname === 'www.wanaw.et' || window.location.hostname === 'wanaw.et';
+    const isProduction = window.location.hostname === 'www.odsglobal.net' || window.location.hostname === 'odsglobal.net';
     if (isProduction) {
-      return `${window.location.protocol}//${window.location.host}/wanaw%20gifting%20logo.jpeg`;
+      return `${window.location.protocol}//${window.location.host}/brand/ods-logo-mark-gold.png`;
     }
   }
-  return "/wanaw gifting logo.jpeg";
+  return "/brand/ods-logo-mark-gold.png";
 };
 
 interface GiftCardProps {
@@ -208,7 +208,7 @@ const DownloadableGiftCard = ({
   if (loading) {
     return (
       <div style={{ padding: "1rem", textAlign: "center" }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mx-auto"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#be9b49] mx-auto"></div>
         <p className="mt-4 text-gray-600">Loading gift card...</p>
       </div>
     );
@@ -236,10 +236,10 @@ const DownloadableGiftCard = ({
           padding: "1.5rem",
           marginBottom: "1.5rem",
           fontFamily: "'Segoe UI', sans-serif",
-          color: "#1c2b21",
+          color: "#0f285b",
           maxWidth: "42rem",
           margin: "0 auto",
-          borderTop: "6px solid #D4AF37",
+          borderTop: "6px solid #be9b49",
         }}
       >
         {/* Header - Exact Invoice Style */}
@@ -260,8 +260,8 @@ const DownloadableGiftCard = ({
               objectFit: "cover",
             }}
             onError={(e) => {
-              if ((e.target as HTMLImageElement).src.includes("www.wanaw.et")) {
-                (e.target as HTMLImageElement).src = "/wanaw gifting logo.jpeg";
+              if ((e.target as HTMLImageElement).src.includes("www.odsglobal.net")) {
+                (e.target as HTMLImageElement).src = "/brand/ods-logo-mark-gold.png";
               } else {
                 (e.target as HTMLImageElement).style.display = "none";
               }
@@ -363,7 +363,7 @@ const DownloadableGiftCard = ({
             </p>
           )}
           {displayData.giftCode && displayData.giftCode !== "Generating..." && displayData.giftCode !== "N/A" && (
-            <p style={{ fontWeight: "bold", color: "#D4AF37", fontSize: "1rem", marginTop: "0.5rem" }}>
+            <p style={{ fontWeight: "bold", color: "#be9b49", fontSize: "1rem", marginTop: "0.5rem" }}>
               🎁 Gift Code: {displayData.giftCode}
             </p>
           )}
@@ -389,7 +389,7 @@ const DownloadableGiftCard = ({
             <p style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.5rem" }}>
               Scan to redeem this gift card
             </p>
-            <QRCode value={`https://www.wanaw.et/redeem?code=${displayData.giftCode}`} size={80} />
+            <QRCode value={`https://www.odsglobal.net/redeem?code=${displayData.giftCode}`} size={80} />
           </div>
         )}
 
@@ -397,7 +397,7 @@ const DownloadableGiftCard = ({
         <div
           style={{
             height: "30px",
-            background: "linear-gradient(to right, #D4AF37, #f5deb3)",
+            background: "linear-gradient(to right, #be9b49, #f5deb3)",
             marginTop: "1.5rem",
             borderBottomLeftRadius: "0.5rem",
             borderBottomRightRadius: "0.5rem",
@@ -410,8 +410,8 @@ const DownloadableGiftCard = ({
         <button
           onClick={handleDownload}
           style={{
-            backgroundColor: "#1c2b21",
-            color: "#D4AF37",
+            backgroundColor: "#0f285b",
+            color: "#be9b49",
             padding: "0.5rem 1.5rem",
             borderRadius: "0.375rem",
             cursor: "pointer",

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   Heart,
@@ -162,13 +162,13 @@ export default function AdminDashboardCards() {
                 <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.color}`}></div>
                 <div className="p-6">
                   <div className={`inline-flex p-3 rounded-lg ${item.bgColor} mb-4 group-hover:scale-110 transition-transform`}>
-                    <Icon className={`h-6 w-6 text-[#1c2b21]`} />
+                    <Icon className={`h-6 w-6 text-[#0f285b]`} />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1c2b21] mb-2 group-hover:text-[#D4AF37] transition-colors">
+                  <h3 className="text-lg font-semibold text-[#0f285b] mb-2 group-hover:text-[#be9b49] transition-colors">
                     {item.title}
                   </h3>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">{item.description}</p>
-                  <div className="flex items-center text-[#D4AF37] font-medium text-sm group-hover:translate-x-1 transition-transform">
+                  <div className="flex items-center text-[#be9b49] font-medium text-sm group-hover:translate-x-1 transition-transform">
                     Access <span className="ml-1">→</span>
                   </div>
                 </div>

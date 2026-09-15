@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const SelectMembership = () => {
@@ -51,10 +51,10 @@ const SelectMembership = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 relative overflow-hidden">
         {/* Brand Accent */}
-        <div className="absolute -top-16 -left-16 w-40 h-40 bg-gradient-to-br from-[#D4AF37] to-[#1c2b21] rounded-full opacity-20 animate-spin-slow"></div>
-        <div className="absolute -bottom-16 -right-16 w-60 h-60 bg-gradient-to-tr from-[#D4AF37] to-[#1c2b21] rounded-full opacity-20 animate-pulse"></div>
+        <div className="absolute -top-16 -left-16 w-40 h-40 bg-gradient-to-br from-[#be9b49] to-[#0f285b] rounded-full opacity-20 animate-spin-slow"></div>
+        <div className="absolute -bottom-16 -right-16 w-60 h-60 bg-gradient-to-tr from-[#be9b49] to-[#0f285b] rounded-full opacity-20 animate-pulse"></div>
 
-        <h2 className="text-2xl font-bold text-[#1c2b21] mb-6 text-center">
+        <h2 className="text-2xl font-bold text-[#0f285b] mb-6 text-center">
           Select Membership Plan
         </h2>
         <p className="text-center text-gray-600 mb-6">
@@ -66,7 +66,7 @@ const SelectMembership = () => {
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#1c2b21] transition mb-6 text-gray-700 font-medium"
+          className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#be9b49] focus:border-[#0f285b] transition mb-6 text-gray-700 font-medium"
         >
           <option value="">-- Choose Plan --</option>
           {membershipOptions[role].map((plan) => (
@@ -85,7 +85,7 @@ const SelectMembership = () => {
           disabled={!selected}
           className={`w-full font-semibold py-3 rounded-xl shadow-lg transform transition-all
             ${selected
-              ? "bg-gradient-to-r from-[#1c2b21] to-[#3c4f3b] text-[#D4AF37] hover:shadow-2xl hover:scale-105"
+              ? "bg-gradient-to-r from-[#0f285b] to-[#163a82] text-[#be9b49] hover:shadow-2xl hover:scale-105"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"}
           `}
         >

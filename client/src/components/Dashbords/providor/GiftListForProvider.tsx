@@ -176,21 +176,21 @@ const GiftListForProvider = () => {
 
   return (
     <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center text-[#1c2b21]">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center text-[#0f285b]">
         Purchased Services & Gifts
       </h1>
 
       <input
         type="text"
         placeholder="Search purchases, gifts, or recipients..."
-        className="w-full mb-6 p-2 md:p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-sm md:text-base"
+        className="w-full mb-6 p-2 md:p-3 rounded-xl border border-[#E8E8E8] focus:outline-none focus:ring-2 focus:ring-[#EDC45B]/40 focus:border-[#EDC45B] text-sm md:text-base transition-all"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-200 shadow-md rounded-lg bg-white text-sm md:text-base">
-          <thead className="bg-[#D4AF37] text-[#1c2b21] text-left text-xs sm:text-sm">
+          <thead className="bg-[#0F285B] text-[#EDC45B] text-left text-xs sm:text-sm">
             <tr>
               <th className="px-2 md:px-4 py-2">Service</th>
               <th className="px-2 md:px-4 py-2">Buyer</th>
@@ -250,7 +250,7 @@ const GiftListForProvider = () => {
                         key={g.giftCode}
                         value={(g.deliveryStatus || "pending").toLowerCase()}
                         onChange={(e) => handleStatusChange(g.giftCode, e.target.value)}
-                        className="border rounded px-1 text-xs md:text-sm w-full mb-1 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                        className="border border-[#E8E8E8] rounded px-1 text-xs md:text-sm w-full mb-1 focus:outline-none focus:ring-1 focus:ring-[#EDC45B]"
                       >
                         <option value="pending">Pending</option>
                         <option value="delivered">Delivered</option>
@@ -296,7 +296,7 @@ const GiftListForProvider = () => {
                   <select
                     value={(g.deliveryStatus || "pending").toLowerCase()}
                     onChange={(e) => handleStatusChange(g.giftCode, e.target.value)}
-                    className="border rounded px-1 text-xs w-24 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                    className="border border-[#E8E8E8] rounded px-1 text-xs w-24 focus:outline-none focus:ring-1 focus:ring-[#EDC45B]"
                   >
                     <option value="pending">Pending</option>
                     <option value="delivered">Delivered</option>

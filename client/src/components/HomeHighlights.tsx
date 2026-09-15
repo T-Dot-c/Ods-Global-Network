@@ -1,4 +1,4 @@
-import { FaListAlt, FaUserFriends, FaCalendarAlt, FaPaperPlane } from "react-icons/fa";
+﻿import { FaListAlt, FaUserFriends, FaCalendarAlt, FaPaperPlane } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { useMemo } from "react";
@@ -63,7 +63,7 @@ const HomeHighlights = () => {
                 }}
               />
             </span>
-            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-2 bg-yellow-400 rounded-full opacity-60 blur-sm"></span>
+            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-2 bg-[#edc45b] rounded-full opacity-60 blur-sm"></span>
           </h2>
           <p className="mt-4 text-white/80 text-sm md:text-base max-w-xl mx-auto">
             {t("home.highlights.sectionSubtitle")}
@@ -93,7 +93,7 @@ const HomeHighlights = () => {
                   <p className="text-sm text-white mb-3">{t(item.descriptionKey)}</p>
                   <Link
                     to={item.link}
-                    className="inline-block bg-[#D4AF37] text-green font-semibold text-sm px-4 py-2 rounded-full hover:rounded-md hover:text-[#1c2b21] transition"
+                    className="inline-block bg-[#be9b49] text-green font-semibold text-sm px-4 py-2 rounded-full hover:rounded-md hover:text-[#0f285b] transition"
                   >
                     {t(item.actionKey)}
                   </Link>

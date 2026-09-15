@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import BASE_URL from "../../../api/api";
 
 // Define User type
@@ -110,7 +110,7 @@ const ManageMemberships = () => {
                         className={`mr-2 mb-1 px-3 py-1 rounded text-sm ${
                           loadingUserId === user._id
                             ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                            : "bg-[#1c2b21] text-white hover:bg-[#2e4033]"
+                            : "bg-[#0f285b] text-white hover:bg-[#2e4033]"
                         }`}
                       >
                         {loadingUserId === user._id ? "Updating..." : level}

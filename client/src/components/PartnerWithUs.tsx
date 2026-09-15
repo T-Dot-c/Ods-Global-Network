@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import axios from "axios";
 import BASE_URL from "../api/api";
 
@@ -128,15 +128,15 @@ export default function PartnerWithUs() {
   return (
     <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 py-10 sm:py-16 relative overflow-hidden">
       {/* Background Decorations */}
-      <div className="absolute top-0 left-0 w-24 sm:w-40 h-24 sm:h-40 bg-[#1c2b21] rounded-full opacity-30 animate-pulse z-0"></div>
-      <div className="absolute bottom-0 right-0 w-40 sm:w-60 h-40 sm:h-60 bg-[#1c2b21] rounded-full opacity-20 animate-spin-slow z-0"></div>
+      <div className="absolute top-0 left-0 w-24 sm:w-40 h-24 sm:h-40 bg-[#0f285b] rounded-full opacity-30 animate-pulse z-0"></div>
+      <div className="absolute bottom-0 right-0 w-40 sm:w-60 h-40 sm:h-60 bg-[#0f285b] rounded-full opacity-20 animate-spin-slow z-0"></div>
 
       <section className="z-10 w-full max-w-5xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 space-y-6 relative">
-        <div className="absolute -top-5 left-5 bg-[#D4AF37] text-white text-xs px-3 py-1 rounded-full shadow-md">
+        <div className="absolute -top-5 left-5 bg-[#be9b49] text-white text-xs px-3 py-1 rounded-full shadow-md">
           Partner With Us
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-[#1c2b21] mb-6">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-[#0f285b] mb-6">
           Invest / Partner With Us
         </h2>
 
@@ -276,7 +276,7 @@ export default function PartnerWithUs() {
 
           {/* Submit */}
           <div className="sm:col-span-2 text-center mt-6">
-            <button type="submit" className="bg-[#1c2b21] text-white px-6 py-3 rounded hover:bg-[#0f1a14] transition w-full sm:w-auto">
+            <button type="submit" className="bg-[#0f285b] text-white px-6 py-3 rounded hover:bg-[#091838] transition w-full sm:w-auto">
               Submit
             </button>
           </div>

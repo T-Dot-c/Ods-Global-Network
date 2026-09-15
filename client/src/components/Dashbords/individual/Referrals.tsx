@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../api/api";
 import { Users, Share2, Copy, CheckCircle, TrendingUp, Gift } from "lucide-react";
@@ -113,8 +113,8 @@ const Referrals = ({ userId }: ReferralsProps) => {
     return (
       <div className="p-6 bg-white rounded-xl shadow-md border border-gray-100">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]"></div>
-          <span className="ml-3 text-[#1c2b21]">Loading referral data...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be9b49]"></div>
+          <span className="ml-3 text-[#0f285b]">Loading referral data...</span>
         </div>
       </div>
     );
@@ -143,61 +143,61 @@ const Referrals = ({ userId }: ReferralsProps) => {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-        <h2 className="text-2xl font-bold text-[#1c2b21] mb-6 flex items-center">
-          <Users className="w-6 h-6 mr-3 text-[#D4AF37]" />
+        <h2 className="text-2xl font-bold text-[#0f285b] mb-6 flex items-center">
+          <Users className="w-6 h-6 mr-3 text-[#be9b49]" />
           Referral Program
         </h2>
         
         {/* Referral Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-r from-[#1c2b21] to-[#1c2b21] rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-r from-[#0f285b] to-[#0f285b] rounded-lg p-4 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#D4AF37] text-sm font-medium">Total Referrals</p>
+                <p className="text-[#be9b49] text-sm font-medium">Total Referrals</p>
                 <p className="text-2xl font-bold">{referralData.referredUsers.length}</p>
               </div>
-              <Users className="w-8 h-8 text-[#D4AF37]" />
+              <Users className="w-8 h-8 text-[#be9b49]" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] rounded-lg p-4 text-[#1c2b21]">
+          <div className="bg-gradient-to-r from-[#be9b49] to-[#be9b49] rounded-lg p-4 text-[#0f285b]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#1c2b21] text-sm font-medium">Link Clicks</p>
+                <p className="text-[#0f285b] text-sm font-medium">Link Clicks</p>
                 <p className="text-2xl font-bold">{referralData.referralClicks}</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-[#1c2b21]" />
+              <TrendingUp className="w-8 h-8 text-[#0f285b]" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-[#1c2b21] to-[#1c2b21] rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-r from-[#0f285b] to-[#0f285b] rounded-lg p-4 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#D4AF37] text-sm font-medium">Total Earnings</p>
+                <p className="text-[#be9b49] text-sm font-medium">Total Earnings</p>
                 <p className="text-2xl font-bold">ETB {referralData.totalEarnings}</p>
               </div>
-              <Gift className="w-8 h-8 text-[#D4AF37]" />
+              <Gift className="w-8 h-8 text-[#be9b49]" />
             </div>
           </div>
         </div>
 
         {/* Referral Code Section */}
         <div className="bg-[#f5f5f5] rounded-lg p-4 mb-6">
-          <h3 className="text-lg font-semibold text-[#1c2b21] mb-3">Your Referral Code</h3>
+          <h3 className="text-lg font-semibold text-[#0f285b] mb-3">Your Referral Code</h3>
           <div className="flex items-center space-x-3">
             <div className="flex-1 bg-white rounded-lg p-3 border border-gray-200">
-              <code className="text-[#1c2b21] font-mono text-lg">{referralData.referralCode}</code>
+              <code className="text-[#0f285b] font-mono text-lg">{referralData.referralCode}</code>
             </div>
             <button
               onClick={copyReferralLink}
-              className="bg-[#D4AF37] hover:bg-[#1c2b21] text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-[#be9b49] hover:bg-[#0f285b] text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
             >
               {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'Copied!' : 'Copy'}</span>
             </button>
             <button
               onClick={shareReferralLink}
-              className="bg-[#1c2b21] hover:bg-[#D4AF37] text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-[#0f285b] hover:bg-[#be9b49] text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
             >
               <Share2 className="w-4 h-4" />
               <span>Share</span>
@@ -210,11 +210,11 @@ const Referrals = ({ userId }: ReferralsProps) => {
 
         {/* Referred Users */}
         <div>
-          <h3 className="text-lg font-semibold text-[#1c2b21] mb-4">Referred Users</h3>
+          <h3 className="text-lg font-semibold text-[#0f285b] mb-4">Referred Users</h3>
           {referralData.referredUsers.length === 0 ? (
             <div className="text-center py-8">
               <Users className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h4 className="text-lg font-semibold text-[#1c2b21] mb-2">No referrals yet</h4>
+              <h4 className="text-lg font-semibold text-[#0f285b] mb-2">No referrals yet</h4>
               <p className="text-gray-600">Start sharing your referral code to earn rewards!</p>
             </div>
           ) : (
@@ -223,16 +223,16 @@ const Referrals = ({ userId }: ReferralsProps) => {
                 <div key={user.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-[#D4AF37] rounded-full flex items-center justify-center text-[#1c2b21] font-bold">
+                      <div className="w-10 h-10 bg-[#be9b49] rounded-full flex items-center justify-center text-[#0f285b] font-bold">
                         {user.fullName.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-medium text-[#1c2b21]">{user.fullName}</p>
+                        <p className="font-medium text-[#0f285b]">{user.fullName}</p>
                         <p className="text-sm text-gray-600">{user.email}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="inline-block bg-[#D4AF37] text-[#1c2b21] text-xs font-medium px-2 py-1 rounded-full">
+                      <span className="inline-block bg-[#be9b49] text-[#0f285b] text-xs font-medium px-2 py-1 rounded-full">
                         {user.role}
                       </span>
                       <p className="text-xs text-gray-500 mt-1">

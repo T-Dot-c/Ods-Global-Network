@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 
 export default function CommunitySelection() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export default function CommunitySelection() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen">
-      <h2 className="text-3xl sm:text-4xl font-extrabold mb-6 sm:mb-8 text-center text-[#1c2b21] tracking-wide">
+      <h2 className="text-3xl sm:text-4xl font-extrabold mb-6 sm:mb-8 text-center text-[#0f285b] tracking-wide">
         Engage with Our Communities
       </h2>
       <p className="max-w-3xl mx-auto text-center text-gray-600 text-sm sm:text-base mb-10">
@@ -23,7 +23,7 @@ export default function CommunitySelection() {
         {/* Support Community */}
         <div
           onClick={() => navigate("/community/support")}
-          className={`${cardBaseClasses} border-[#1c2b21]`}
+          className={`${cardBaseClasses} border-[#0f285b]`}
           role="button"
           tabIndex={0}
           onKeyDown={() => navigate("/community/support")}
@@ -37,7 +37,7 @@ export default function CommunitySelection() {
         {/* Hemodialysis Patient Form */}
         <div
           onClick={() => navigate("/community/kidney")}
-          className={`${cardBaseClasses} border-[#1c2b21]`}
+          className={`${cardBaseClasses} border-[#0f285b]`}
           role="button"
           tabIndex={0}
           onKeyDown={() => navigate("/community/kidney")}

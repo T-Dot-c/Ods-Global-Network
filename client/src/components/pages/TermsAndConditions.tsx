@@ -1,8 +1,8 @@
-// src/pages/TermsAndConditions.tsx
+﻿// src/pages/TermsAndConditions.tsx
 const TermsAndConditions = () => {
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 text-gray-800 leading-7">
-      <h1 className="text-3xl font-bold mb-6 text-[#1c2b21]">
+      <h1 className="text-3xl font-bold mb-6 text-[#0f285b]">
         Terms & Conditions
       </h1>
 
@@ -12,7 +12,7 @@ const TermsAndConditions = () => {
         the use of our gifting services for both corporate and individual users.
       </p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         1. Service Overview
       </h2>
       <p className="mb-4">
@@ -22,7 +22,7 @@ const TermsAndConditions = () => {
         across a range of occasions.
       </p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         2. Gift Givers
       </h2>
       <ul className="list-disc pl-5 mb-4">
@@ -34,7 +34,7 @@ const TermsAndConditions = () => {
         </li>
       </ul>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         3. Gift Receivers
       </h2>
       <ul className="list-disc pl-5 mb-4">
@@ -46,7 +46,7 @@ const TermsAndConditions = () => {
         </li>
       </ul>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         4. Corporate Gifting Occasions
       </h2>
       <ul className="list-disc pl-5 mb-4">
@@ -60,7 +60,7 @@ const TermsAndConditions = () => {
         <li>Corporate Gifting for Him / Her</li>
       </ul>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         5. Individual Gifting Occasions
       </h2>
       <ul className="list-disc pl-5 mb-4">
@@ -74,7 +74,7 @@ const TermsAndConditions = () => {
         <li>Friendship & Relationship Gifts</li>
       </ul>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         6. Payments & Delivery
       </h2>
       <p className="mb-4">
@@ -82,7 +82,7 @@ const TermsAndConditions = () => {
         payment success. In case of failure, no gift will be processed.
       </p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         7. Limitations
       </h2>
       <p className="mb-4">
@@ -90,7 +90,7 @@ const TermsAndConditions = () => {
         including payment processors or delivery partners.
       </p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#1c2b21]">
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-[#0f285b]">
         8. Contact Information
       </h2>
       <p>
