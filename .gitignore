@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads (user-generated content)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# PDFs (generated)
+server/pdfs/*
+!server/pdfs/.gitkeep

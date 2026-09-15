@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* ===== ODS Global Network — Official Brand Design Tokens (PDF Compliant) ===== */
+:root {
+  /* Deep Navy (PDF Page 5: #0F285B / RGB: 15, 40, 91) */
+  --ods-navy: #0f285b;
+  --ods-navy-dark: #091838;
+  --ods-navy-light: #163a82;
+  --ods-navy-deep: #0a1b3d;
+
+  /* Antique Gold & Signature Palette (PDF Page 5-6) */
+  --ods-gold-antique: #be9b49;  /* Antique Gold */
+  --ods-gold: #edc45b;          /* Bright Signature Gold */
+  --ods-gold-radiant: #f5e189;  /* Radiant Light Gold */
+  --ods-gold-deep: #8d7338;     /* Deep Rich Gold */
+  --ods-gold-mid: #bb9f54;      /* Medium Gold */
+
+  /* Soft Silver & Background (PDF Page 5) */
+  --ods-silver: #e8e8e8;
+  --ods-bg: #f8fafc;
+
+  /* Typography: Google Sans / Inter */
+  --font-primary: 'Google Sans', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== Global Base Styles ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-primary);
+  background-color: var(--ods-bg);
+  color: #0f285b;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
