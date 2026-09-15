@@ -1,0 +1,233 @@
+{
+  "nav": {
+    "blog": "Blog",
+    "latestBlogFallback": "View our latest blog",
+    "about": "About Us",
+    "signIn": "Sign In",
+    "support": "Customer Support & Help Center",
+    "requestService": "Request Service",
+    "home": "Home",
+    "services": "Services",
+    "programs": "Programs",
+    "giftOptions": "Gift Options",
+    "searchPlaceholder": "Search services, programs, or gifts by title, category, or location...",
+    "noResults": "No results found.",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "closeMenuOverlay": "Close menu",
+    "logoAlt": "ODS Global Network logo",
+    "language": "Language",
+    "english": "English",
+    "amharic": "Amharic",
+    "currentLanguageShort": "EN",
+    "programsMenu": {
+      "packages": "Packages"
+    },
+    "giftsMenu": {
+      "individual": "Individual Gifts",
+      "corporate": "Corporate Gifts",
+      "diaspora": "Ethiopian Diaspora"
+    },
+    "serviceCategories": {
+      "wellness": {
+        "label": "Wellness",
+        "description": "Relaxation, yoga, and spa treatments."
+      },
+      "health": {
+        "label": "Health",
+        "description": "Health consultations and screenings."
+      },
+      "homeMobile": {
+        "label": "Home Based/Mobile Services",
+        "description": "Enjoy services delivered to your home or location of choice."
+      },
+      "hotel": {
+        "label": "Hotel Rooms",
+        "description": "Book hotel stays and rooms."
+      }
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "ODS Global Network Gifting",
+      "subtitle": "Book, gift, and manage health, wellness, and hotel room services — all in one platform.",
+      "signIn": "Sign in",
+      "sendGift": "Send a Gift",
+      "imageAlt": "Digital innovation and wellness gifting"
+    },
+    "about": {
+      "heading": "About",
+      "headingAccent": "ODS Global Network",
+      "p1": "At <brand>ODS Global Network Gifting</brand>, we are a digital solutions platform dedicated to connecting users with trusted providers across wellness, home and mobile-based services, medical care, and hotel room services. Our mission is to make health, self-care, and comfort accessible anytime, anywhere.",
+      "p2": "Whether you’re booking a relaxing massage, scheduling a doctor’s consultation, requesting convenient home services, enjoying hotel room service, or sending a heartfelt wellness gift — ODS Global Network delivers seamless and reliable options right at your fingertips.",
+      "p3": "We also make gifting effortless. You can purchase a thoughtful wellness experience or send a personalized gift for any occasion, bringing joy and care to the people who matter most.",
+      "tagline": "“Ethiopian Blessings, Modern Gifting”"
+    },
+    "highlights": {
+      "sectionTitle": "Your Seamless Gifting Journey with <accent>ODS Global Network</accent>",
+      "sectionSubtitle": "Discover how ODS Global Network, a digital health and wellness platform, makes gifting joyful, thoughtful, and effortless — for everyone and every occasion.",
+      "illustrationAlt": "Wellness illustration",
+      "items": {
+        "browse": {
+          "title": "Browse Services by Category",
+          "description": "Explore curated health & wellness services — including spa, physiotherapy, diagnostics, and more.",
+          "action": "Explore Services"
+        },
+        "role": {
+          "title": "Choose Your Role",
+          "description": "Gift as an individual (for friends & family) or as a corporate (for employees, clients, or partners).",
+          "action": "Start Gifting"
+        },
+        "occasion": {
+          "title": "Pick the Occasion",
+          "description": "Celebrate festivals, milestones, or personal moments like birthdays, weddings, or thank-you gestures.",
+          "action": "View Occasions"
+        },
+        "personal": {
+          "title": "Send with a Personal Touch",
+          "description": "Customize your gift with messages, scheduling, and optional branding — we’ll handle the rest!",
+          "action": "How It Works"
+        }
+      }
+    },
+    "cards": {
+      "heading": "Work with <accent>ODS Global Network</accent>",
+      "partner": {
+        "title": "Invest/Partner With Us",
+        "body": "Are you an investor, VC, business company, healthcare service provider, or technology solutions provider? Join ODS Global Network to grow together.",
+        "cta": "Become a Partner →"
+      },
+      "community": {
+        "title": "Join ODS Global Network Community",
+        "body": "Are you Diaspora, Individual seeking to provide support & volunteer, Healthcare Professional, or a Fresh Graduate? Join ODS Global Network Community to connect, collaborate, and contribute.",
+        "cta": "Become a Member →",
+        "linkedin": "Follow us on LinkedIn"
+      },
+      "careers": {
+        "title": "Career Openings",
+        "body": "Looking for a full-time or freelance opportunity? Explore open roles and join our team.",
+        "cta": "View Openings →",
+        "linkedin": "See jobs on LinkedIn"
+      }
+    },
+    "giftShowcase": {
+      "title": "ODS Global Network Gifting",
+      "subtitle": "ODS Global Network Health and Wellness is your one-stop destination for meaningful corporate and individual gifting.",
+      "givers": {
+        "title": "Gift Givers",
+        "item1": "Corporate: Companies, Entities, Institutions",
+        "item2": "Individuals: Anyone with a reason to celebrate",
+        "button": "Start Gifting Now"
+      },
+      "receivers": {
+        "title": "Gift Receivers",
+        "item1": "Corporate: Employees, Clients, Partners",
+        "item2": "Individuals: Family, Friends, Loved Ones",
+        "button": "Enjoy Your Gift 🎁"
+      }
+    },
+    "festivities": {
+      "heroImageAlt": "Festivities hero",
+      "heroTitle": "Ethiopian & Global Celebrations",
+      "heroSubtitle": "Let’s celebrate culture, heritage, and unity together.",
+      "items": {
+        "ashenda": {
+          "title": "Ashenda",
+          "desc": "A celebration of girlhood, music, and tradition in Tigray."
+        },
+        "irreechaa": {
+          "title": "Irreechaa",
+          "desc": "Oromo thanksgiving festival honoring nature and unity."
+        },
+        "meskel": {
+          "title": "Meskel",
+          "desc": "The finding of the True Cross, celebrated with bonfires."
+        },
+        "timket": {
+          "title": "Timket",
+          "desc": "Epiphany celebration with processions and holy water."
+        },
+        "buhe": {
+          "title": "Buhe",
+          "desc": "Ethiopian Orthodox holiday celebrated with songs and bonfires."
+        },
+        "enkutatash": {
+          "title": "Enkutatash",
+          "desc": "Ethiopian New Year, marked with gift-giving and celebration."
+        },
+        "genna": {
+          "title": "Genna",
+          "desc": "Ethiopian Orthodox Christmas, celebrated on January 7th."
+        },
+        "fasika": {
+          "title": "Fasika",
+          "desc": "Ethiopian Easter, a significant religious celebration."
+        },
+        "mothersDay": {
+          "title": "Mother's Day",
+          "desc": "Celebrating the love and care of mothers around the world."
+        },
+        "fathersDay": {
+          "title": "Father's Day",
+          "desc": "Honoring fathers and paternal bonds."
+        },
+        "valentines": {
+          "title": "Valentine's Day",
+          "desc": "A day for love, affection, and romantic gestures."
+        },
+        "womensDay": {
+          "title": "International Women's Day",
+          "desc": "A global day celebrating women's achievements."
+        },
+        "worldHealth": {
+          "title": "World Health Day",
+          "desc": "Promoting health awareness and well-being globally."
+        }
+      }
+    }
+  },
+  "contactWidget": {
+    "headerMenu": "Swift communication",
+    "headerChat": "App chat",
+    "backTitle": "Back to options",
+    "closeAria": "Close",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "appChat": "App chat",
+    "emptyChat": "Send a message. We’ll reply as soon as we can.",
+    "typing": "Typing…",
+    "placeholder": "Type a message…",
+    "send": "Send",
+    "fabAria": "Contact options",
+    "fabTitle": "Contact us",
+    "botNoResponse": "Sorry, no response.",
+    "botError": "Error connecting. Try Phone, WhatsApp, or Email."
+  },
+  "footer": {
+    "companyName": "ODS Global Network Health & Wellness",
+    "tagline": "Your digital gateway to health and wellness services and gifting programs across Ethiopia.",
+    "quickLinks": "Quick Links",
+    "linkServices": "Services",
+    "linkGiftOptions": "Gift Options",
+    "linkPrograms": "Programs",
+    "linkSupport": "Customer Support & Help Center",
+    "connect": "Connect With Us",
+    "subscribe": "Subscribe",
+    "subscribeHint": "Join our mailing list for updates and offers.",
+    "emailPlaceholder": "Your Email",
+    "subscribeButton": "Subscribe",
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "partner": "Partner With Us",
+    "copyright": "© {{year}} ODS Global Network Health and Wellness. All rights reserved.",
+    "messages": {
+      "thankYou": "✅ Thank you for subscribing!",
+      "genericError": "⚠️ Something went wrong. Please try again.",
+      "alreadySubscribed": "⚠️ You're already subscribed to our updates.",
+      "failed": "❌ Subscription failed. Please try again."
+    }
+  }
+}

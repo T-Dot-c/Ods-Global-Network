@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { 
   Mail, 
   Lock, 
@@ -12,6 +14,8 @@ import {
 } from "lucide-react";
 
 export default function CustomerAuthRecovery() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [view, setView] = useState<"login" | "forgot" | "resetSuccess">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,13 +31,15 @@ export default function CustomerAuthRecovery() {
     setLoading(true);
 
     try {
-      // Simulate/trigger /api/auth/login
-      await new Promise(res => setTimeout(res, 900));
-      // Store session
-      localStorage.setItem("userRole", "individual");
-      localStorage.setItem("user", JSON.stringify({ email, fullName: "ODS Member", role: "individual" }));
-      localStorage.setItem("token", "sample-valid-token");
-      setSuccessMessage("Authentication successful. Redirecting to Customer Dashboard...");
+      const res = await login(email, password);
+      if (res.success) {
+        setSuccessMessage("Authentication successful. Redirecting to Dashboard...");
+        setTimeout(() => {
+          navigate(res.redirectPath);
+        }, 600);
+      } else {
+        setError(res.error || "Invalid email or password.");
+      }
     } catch (err: any) {
       setError(err.message || "Invalid email or password.");
     } finally {

@@ -1,5 +1,22 @@
-import { Routes, Route, Link } from 'react-router-dom';
-import Layout from './components/Layout';
+import { Routes, Route, useLocation } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./components/Home";
+import LoginForm from "./components/Auth/LoginForm";
+import RegisterForm from "./components/Auth/RegisterForm";
+import OAuthSuccessRedirect from "./components/Auth/OAuthSuccessRedirect";
+import ForgotPassword from "./components/Auth/ForgotPassword";
+import ResetPassword from "./components/Auth/ResetPassword";
+
+// Dashboards
+import Dashboard from "./components/Dashbords/Dashboard";
+import SuperAdminDashboard from "./components/Dashbords/Admin/SuperAdminDashboard";
+import MarketingDashboard from "./components/Dashbords/Admin/MarketingDashboard";
+import CustomerSupportDashboard from "./components/Dashbords/Admin/CustomerSupportDashboard";
+import ProviderDashboard from "./components/Dashbords/providor/ProviderDashbord";
+import CorporateDashboard from "./components/Dashbords/CorporateDashboard";
+import IndividualDashboard from "./components/Dashbords/individual/IndividualDashboard";
+import DiasporaDashboard from "./components/Dashbords/Diaspora/DiasporaDashboard";
+import PrivateRoute from "./components/Dashbords/PrivateRoute";
 
 // Merchant Management (Task 1)
 import {
@@ -7,226 +24,182 @@ import {
   MerchantDashboardView,
   MerchantProfileManagement,
   MerchantApprovalWorkflow,
-} from './components/MerchantManagement';
+} from "./components/MerchantManagement";
 
 // Customer Management (Task 2)
 import {
   CustomerRegistration,
   CustomerAuthRecovery,
   CustomerProfileManagement,
-} from './components/CustomerManagement';
+} from "./components/CustomerManagement";
 
-import {
-  Store,
-  Users,
-  Globe,
-  Heart,
-  Gift,
-  ArrowRight,
-  Shield,
-  LayoutDashboard,
-  User,
-  ClipboardCheck,
-  UserPlus,
-  LogIn,
-} from 'lucide-react';
+// Gifting & Services
+import GiftingOptions from "./components/GiftingOptions";
+import GiftDetails from "./components/GiftDetails";
+import SendGiftForm from "./components/Services/SendGiftForm";
+import CartPage from "./components/Services/CartPage";
+import ServiceList from "./components/Services/ServiceList";
+import ServiceDetail from "./components/Services/ServiceDetail";
+import AddService from "./components/Services/AddServiceForm";
+import SelectMembership from "./components/SelectMembership";
 
-/* ──────────────────────────────────────────────
-   Reference Home Page (Pixel-Matched to Screenshot)
-   ────────────────────────────────────────────── */
-function HomePage() {
-  return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
-      {/* Reference Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0d2350] via-[#0f285b] to-[#0a1b3d] text-white p-8 md:p-12 shadow-xl border border-blue-900/40">
-        {/* Subtle background glow */}
-        <div className="absolute -right-16 -top-16 w-72 h-72 bg-[#EDC45B]/10 rounded-full blur-3xl pointer-events-none" />
+// Admin features
+import ManageMemberships from "./components/Dashbords/Admin/ManageMemberships";
+import ManageServices from "./components/Dashbords/Admin/ManageServices";
+import AdminAddGift from "./components/Dashbords/Admin/AdminAddGift";
+import AdminAddProgram from "./components/Dashbords/Admin/AdminAddProgram";
+import BlogCreate from "./components/Dashbords/Admin/BlogCreate";
+import AdminBlogList from "./components/Dashbords/Admin/BlogList";
+import AdminSupportRequests from "./components/Dashbords/Admin/AdminSupportRequests";
+import AdminUserList from "./components/Dashbords/Admin/AdminUserList";
+import AdminJobPost from "./components/Dashbords/Admin/AdminJobPost";
+import AdminPurchaseList from "./components/Dashbords/Admin/AdminPurchaseList";
+import GiftListAndConfirm from "./components/GiftListAndConfirm";
+import ProviderVerification from "./components/Dashbords/Admin/ProviderVerification";
+import ReferralsDashboard from "./components/Dashbords/Admin/ReferralsDashboard";
+import SubscribersList from "./components/Dashbords/Admin/SubscribersList";
+import CommunityList from "./components/Dashbords/Admin/CommunityList";
+import DiasporaList from "./components/Dashbords/Admin/DiasporaList";
+import KidneyPatientList from "./components/Dashbords/Admin/KidneyPatientList";
+import DiplomaticCommunityList from "./components/Dashbords/Admin/DiplomaticCommunityList";
 
-        <div className="relative z-10 max-w-3xl">
-          {/* Tag badge */}
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-5 h-5 text-[#EDC45B]" />
-            <span className="text-xs font-black uppercase tracking-widest text-[#EDC45B]">
-              ODS GLOBAL NETWORK
-            </span>
-          </div>
+// Community & Programs
+import CommunitySelection from "./components/CommunitySelection";
+import KidneyPatientForm from "./components/KidneyPatientForm";
+import SupportCommunityForm from "./components/SupportCommunityForm";
+import DiasporaJoinForm from "./components/DiasporaJoinForm";
+import DiplomaticCommunityForm from "./components/DiplomaticCommunityForm";
+import HemodialysisPatientsList from "./components/HemodialysisPatientsList";
+import PremiumCommunitySubscription from "./components/PremiumCommunitySubscription";
+import WanawCommunityMembership from "./components/WanawCommunityMembership";
+import MembershipLookup from "./components/MembershipLookup";
+import RegisteredPartners from "./components/RegisteredPartners";
+import PartnerWithUs from "./components/PartnerWithUs";
+import Programs from "./components/pages/Programs";
+import BlogList from "./components/pages/BlogList";
+import BlogDetail from "./components/pages/BlogDetail";
+import JobsList from "./components/JobsList";
+import ApplyForm from "./components/ApplyForm";
+import ApplicationsList from "./components/ApplicationsList";
+import PaymentSuccess from "./components/pages/PaymentSuccess";
+import PaymentOptions from "./components/pages/PaymentOptions";
+import TermsAndConditions from "./components/pages/TermsAndConditions";
+import SupportPage from "./components/SupportPage";
+import CompanyInfo from "./components/CompanyInfo";
+import DiasporaTest from "./components/DiasporaTest";
+import PremiumSubscriptionPayment from "./components/pages/PremiumSubscriptionPayment";
+import Unauthorized from "./components/Unauthorized";
 
-          {/* Dual-Tone Main Headline */}
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
-            Healthcare & Wellness
-            <br />
-            <span className="text-[#EDC45B]">Management Platform</span>
-          </h1>
+// Service Requests
+import RequestServiceForm from "./components/ServiceRequests/RequestServiceForm";
+import MyRequestsPage from "./components/ServiceRequests/MyRequestsPage";
+import RequestProposalsPage from "./components/ServiceRequests/RequestProposalsPage";
+import BrowseRequestsPage from "./components/ServiceRequests/BrowseRequestsPage";
 
-          {/* Description */}
-          <p className="text-blue-100/90 text-sm md:text-base mt-5 leading-relaxed max-w-2xl font-normal">
-            The premier digital network connecting healthcare providers, wellness merchants,
-            and customers across Ethiopia and the diaspora. Manage registrations, approvals,
-            service bookings, and digital gift cards — all in one platform.
-          </p>
-
-          {/* Feature Pills Row */}
-          <div className="flex flex-wrap items-center gap-6 mt-8 pt-4 border-t border-white/10 text-xs font-medium text-blue-100">
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#EDC45B]" />
-              <span>Ethiopia & Diaspora</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-[#EDC45B]" />
-              <span>8 Healthcare Categories</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Gift className="w-4 h-4 text-[#EDC45B]" />
-              <span>Digital Gifting Platform</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Two Column Feature Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Merchant Management Card */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-[#0F285B] mb-5">
-              <Store className="w-6 h-6" />
-            </div>
-
-            <h2 className="text-2xl font-black text-[#0F285B] tracking-tight">
-              Merchant Management
-            </h2>
-
-            <p className="text-gray-500 text-sm mt-3 leading-relaxed">
-              Onboard healthcare and wellness providers. Multi-step registration, document verification,
-              compliance approval, and operations dashboard.
-            </p>
-          </div>
-
-          <div className="mt-8 space-y-2.5 pt-6 border-t border-gray-100">
-            <Link
-              to="/merchant/register"
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 hover:bg-amber-50/50 hover:border-amber-200 border border-gray-100 text-xs font-semibold text-gray-800 transition-all group"
-            >
-              <span className="flex items-center gap-2.5">
-                <Store className="w-4 h-4 text-[#0F285B]" />
-                Merchant Registration
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#EDC45B] group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              to="/merchant/dashboard"
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 hover:bg-amber-50/50 hover:border-amber-200 border border-gray-100 text-xs font-semibold text-gray-800 transition-all group"
-            >
-              <span className="flex items-center gap-2.5">
-                <LayoutDashboard className="w-4 h-4 text-[#0F285B]" />
-                Merchant Dashboard
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#EDC45B] group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              to="/merchant/profile"
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 hover:bg-amber-50/50 hover:border-amber-200 border border-gray-100 text-xs font-semibold text-gray-800 transition-all group"
-            >
-              <span className="flex items-center gap-2.5">
-                <User className="w-4 h-4 text-[#0F285B]" />
-                Merchant Profile & Branches
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#EDC45B] group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              to="/merchant/approval"
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 hover:bg-amber-50/50 hover:border-amber-200 border border-gray-100 text-xs font-semibold text-gray-800 transition-all group"
-            >
-              <span className="flex items-center gap-2.5">
-                <ClipboardCheck className="w-4 h-4 text-[#0F285B]" />
-                Approval Queue
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#EDC45B] group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Customer Management Card */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-[#0F285B] mb-5">
-              <Users className="w-6 h-6" />
-            </div>
-
-            <h2 className="text-2xl font-black text-[#0F285B] tracking-tight">
-              Customer Management
-            </h2>
-
-            <p className="text-gray-500 text-sm mt-3 leading-relaxed">
-              Customer registration for local and diaspora members. Login portal, password recovery,
-              membership cards, and 360° profile hub.
-            </p>
-          </div>
-
-          <div className="mt-8 space-y-2.5 pt-6 border-t border-gray-100">
-            <Link
-              to="/customer/register"
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 hover:bg-blue-50/50 hover:border-blue-200 border border-gray-100 text-xs font-semibold text-gray-800 transition-all group"
-            >
-              <span className="flex items-center gap-2.5">
-                <UserPlus className="w-4 h-4 text-[#0F285B]" />
-                Customer Registration
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#EDC45B] group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              to="/customer/login"
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 hover:bg-blue-50/50 hover:border-blue-200 border border-gray-100 text-xs font-semibold text-gray-800 transition-all group"
-            >
-              <span className="flex items-center gap-2.5">
-                <LogIn className="w-4 h-4 text-[#0F285B]" />
-                Login & Auth Recovery
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#EDC45B] group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              to="/customer/profile"
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 hover:bg-blue-50/50 hover:border-blue-200 border border-gray-100 text-xs font-semibold text-gray-800 transition-all group"
-            >
-              <span className="flex items-center gap-2.5">
-                <Users className="w-4 h-4 text-[#0F285B]" />
-                Customer Profile Hub
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#EDC45B] group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ──────────────────────────────────────────────
-   App Root Route Definitions
-   ────────────────────────────────────────────── */
 export default function App() {
-  return (
-    <Routes>
-      <Route element={<Layout />}>
-        {/* Reference Home */}
-        <Route path="/" element={<HomePage />} />
+  const location = useLocation();
+  const hideNavbarPaths = ["/login", "/register"];
 
-        {/* Merchant Management Routes */}
+  return (
+    <>
+      {!hideNavbarPaths.includes(location.pathname) && <Navbar />}
+
+      <Routes>
+        {/* Landing & Authentication */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<RegisterForm />} />
+        <Route path="/oauth-success" element={<OAuthSuccessRedirect />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Unified Role Dashboards (Single Host) */}
+        <Route path="/admin-dashboard" element={<SuperAdminDashboard />} />
+        <Route path="/marketing-dashboard" element={<MarketingDashboard />} />
+        <Route path="/support-dashboard" element={<CustomerSupportDashboard />} />
+        <Route path="/provider-dashboard" element={<ProviderDashboard />} />
+        <Route path="/corporate-dashboard" element={<CorporateDashboard />} />
+        <Route path="/individual-dashboard" element={<IndividualDashboard />} />
+        <Route path="/diaspora-dashboard" element={<DiasporaDashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* Task 1: Merchant Management Module Routes */}
         <Route path="/merchant/register" element={<MerchantRegistrationWorkflow />} />
         <Route path="/merchant/dashboard" element={<MerchantDashboardView />} />
         <Route path="/merchant/profile" element={<MerchantProfileManagement />} />
         <Route path="/merchant/approval" element={<MerchantApprovalWorkflow />} />
 
-        {/* Customer Management Routes */}
+        {/* Task 2: Customer Management Module Routes */}
         <Route path="/customer/register" element={<CustomerRegistration />} />
         <Route path="/customer/login" element={<CustomerAuthRecovery />} />
         <Route path="/customer/profile" element={<CustomerProfileManagement />} />
-      </Route>
-    </Routes>
+
+        {/* Services & Gifting */}
+        <Route path="/gifting-options" element={<GiftingOptions />} />
+        <Route path="/services" element={<ServiceList />} />
+        <Route path="/services/:id" element={<ServiceDetail />} />
+        <Route path="/membership/select" element={<SelectMembership />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/send-gift" element={<SendGiftForm />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/gifts/:slug" element={<GiftDetails />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="/company" element={<CompanyInfo />} />
+        <Route path="/programs" element={<Programs />} />
+        <Route path="/blogs" element={<BlogList />} />
+        <Route path="/blogs/:slug" element={<BlogDetail />} />
+        <Route path="/diaspora-test" element={<DiasporaTest />} />
+        <Route path="/payment-options" element={<PaymentOptions />} />
+        <Route path="/partner-with-us" element={<PartnerWithUs />} />
+        <Route path="/career/:jobId" element={<ApplyForm />} />
+        <Route path="/careers" element={<JobsList />} />
+
+        {/* Communities */}
+        <Route path="/community" element={<CommunitySelection />} />
+        <Route path="/community/kidney" element={<KidneyPatientForm />} />
+        <Route path="/community/membership" element={<WanawCommunityMembership />} />
+        <Route path="/community/diaspora" element={<DiasporaJoinForm />} />
+        <Route path="/community/support" element={<SupportCommunityForm />} />
+        <Route path="/community/diplomatic" element={<DiplomaticCommunityForm />} />
+        <Route path="/community/premium" element={<PremiumCommunitySubscription />} />
+        <Route path="/premium-subscription-payment" element={<PremiumSubscriptionPayment />} />
+        <Route path="/community/hemodialysis" element={<HemodialysisPatientsList />} />
+
+        {/* Admin Management Sub-Routes */}
+        <Route path="/admin/partner" element={<RegisteredPartners />} />
+        <Route path="/admin/manage-membership" element={<ManageMemberships />} />
+        <Route path="/admin/provider-verification" element={<ProviderVerification />} />
+        <Route path="/admin/Support-community" element={<MembershipLookup />} />
+        <Route path="/admin/community-list" element={<CommunityList />} />
+        <Route path="/admin/diaspora-list" element={<DiasporaList />} />
+        <Route path="/admin/patient-list" element={<KidneyPatientList />} />
+        <Route path="/admin/diplomatic-community-list" element={<DiplomaticCommunityList />} />
+        <Route path="/admin/gift-list-confirm" element={<GiftListAndConfirm />} />
+        <Route path="/admin/purchase-list" element={<AdminPurchaseList />} />
+        <Route path="/admin/subscrpition-list" element={<SubscribersList />} />
+        <Route path="/admin/manage-services" element={<ManageServices />} />
+        <Route path="/admin/add-program" element={<AdminAddProgram />} />
+        <Route path="/admin/user-lists" element={<AdminUserList />} />
+        <Route path="/admin/add-service" element={<AddService />} />
+        <Route path="/admin/referal-code" element={<ReferralsDashboard />} />
+        <Route path="/admin/add-gift" element={<AdminAddGift />} />
+        <Route path="/admin/blog-create" element={<BlogCreate />} />
+        <Route path="/admin/blog-list" element={<AdminBlogList />} />
+        <Route path="/admin/job-posting" element={<AdminJobPost />} />
+        <Route path="/admin/support-requests" element={<AdminSupportRequests />} />
+        <Route path="/admin/applicant-list" element={<ApplicationsList />} />
+
+        {/* Service Requests */}
+        <Route path="/request-service" element={<RequestServiceForm />} />
+        <Route path="/my-requests" element={<MyRequestsPage />} />
+        <Route path="/requests/:id" element={<RequestProposalsPage />} />
+        <Route path="/provider/requests" element={<BrowseRequestsPage />} />
+
+        {/* Fallback */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="*" element={<Home />} />
+      </Routes>
+    </>
   );
 }
