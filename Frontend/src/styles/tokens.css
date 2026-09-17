@@ -1,0 +1,53 @@
+:root {
+  /* Brand Core Colors - Aligned with Assets/ODS_BRAND_GUIDELINE.pdf */
+  --color-navy: #0f285b;
+  --color-navy-dark: #081738;
+  --color-navy-light: #183d8a;
+  --color-midnight: #050d20;
+
+  /* Metallic Gold Palette */
+  --color-gold-deep: #8d7338;
+  --color-gold-mid: #be9b49;
+  --color-gold-bright: #edc45b;
+  --color-gold-warm: #bb9f54;
+  --color-gold-highlight: #f5e189;
+  --color-gold: #be9b49;
+  --gradient-gold: linear-gradient(135deg, #8d7338 0%, #be9b49 25%, #edc45b 55%, #bb9f54 80%, #f5e189 100%);
+  --gradient-gold-hover: linear-gradient(135deg, #be9b49 0%, #edc45b 40%, #f5e189 100%);
+
+  /* Neutrals & Surfaces */
+  --color-white: #ffffff;
+  --color-bg-light: #f8faf9;
+  --color-bg-card-light: #ffffff;
+  --color-surface-dark: #081738;
+  --color-card-dark: #0d224d;
+  --color-border-dark: #1a3875;
+  --color-border-light: #e2e8f0;
+
+  /* Typography Colors */
+  --color-text-dark: #0f172a;
+  --color-text-light: #f8fafc;
+  --color-text-muted: #64748b;
+  --color-text-muted-dark: #94a3b8;
+
+  /* States */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Typography Families */
+  --font-heading: 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Elevations */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-gold: 0 10px 25px -5px rgba(190, 155, 73, 0.25);
+  --shadow-card-dark: 0 12px 32px 0 rgba(0, 0, 0, 0.35);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}

@@ -1,14 +1,22 @@
 # Dependencies
 node_modules/
+*/node_modules/
+*/*/node_modules/
+**/node_modules/**
 
 # Build outputs
 dist/
 build/
+*/dist/
+*/*/dist/
+**/dist/**
+**/build/**
 
 # Environment files
 .env
 .env.local
 .env.*.local
+*.env
 
 # Logs
 *.log
@@ -25,7 +33,11 @@ Thumbs.db
 # Uploads (user-generated content)
 server/uploads/*
 !server/uploads/.gitkeep
+resource/server/uploads/*
+!resource/server/uploads/.gitkeep
 
 # PDFs (generated)
 server/pdfs/*
 !server/pdfs/.gitkeep
+resource/server/pdfs/*
+!resource/server/pdfs/.gitkeep

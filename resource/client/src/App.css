@@ -1,0 +1,252 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@500;600&display=swap");
+
+/* If using Tailwind via PostCSS, use these instead of @import "tailwindcss" */
+@import "tailwindcss";
+
+/* =======================
+   Custom Colors
+========================== */
+.bg-green {
+  background-color: #1c2b21;
+}
+
+.text-gold {
+  color: #D4AF37;
+}
+
+/* =======================
+   Fade & Slide Animations
+========================== */
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-slide-in {
+  animation: fadeSlideIn 1.2s ease-out forwards;
+}
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeSlideUp {
+  animation: fadeSlideUp 0.6s ease forwards;
+}
+
+.animate-fadeSlideUp-delay-1 {
+  animation-delay: 0.2s;
+}
+
+.animate-fadeSlideUp-delay-2 {
+  animation-delay: 0.4s;
+}
+
+.animate-fadeSlideUp-delay-3 {
+  animation-delay: 0.6s;
+}
+
+.animate-fadeSlideUp-delay-4 {
+  animation-delay: 0.8s;
+}
+
+/* =======================
+   Hover Effects
+========================== */
+.hover-scale {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* =======================
+   Bouncing Animation
+========================== */
+@keyframes bob {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-bob {
+  animation: bob 4s ease-in-out infinite;
+}
+
+/* =======================
+   Gift Bubble Animation
+========================== */
+.gift-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.bubbles::before,
+.bubbles::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.2);
+  animation: float 6s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.bubbles::before {
+  width: 120px;
+  height: 120px;
+  bottom: 10%;
+  left: 5%;
+}
+
+.bubbles::after {
+  width: 100px;
+  height: 100px;
+  top: 15%;
+  right: 10%;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.6;
+  }
+}
+
+/* =======================
+   Festival Scroll Section
+========================== */
+.scroll-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.scroll-content {
+  display: flex;
+  gap: 10rem;
+  flex-wrap: nowrap;
+  animation: scroll-left 20s linear infinite;
+}
+
+@media (max-width: 767px) {
+  .scroll-content {
+    animation: none;
+    overflow-x: auto;
+  }
+}
+
+.festival-block {
+  flex-shrink: 0;
+  padding: 1rem;
+  width: 160px;
+  background-color: rgba(255, 215, 0, 0.1);
+  border: 1px solid #D4AF37;
+  border-radius: 1rem;
+  color: gold;
+  text-align: center;
+}
+
+/* Infinite scroll animation */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* =======================
+   Social Icons (Optional)
+========================== */
+.social-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  opacity: 0.9;
+  overflow: hidden;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+}
+
+.scrolling-icons {
+  display: flex;
+  gap: 80px;
+  white-space: nowrap;
+  animation: scrollLeft 20s linear infinite;
+  padding-left: 100%;
+}
+
+.scrolling-icons svg {
+  color: white;
+  font-size: 1.25rem;
+  transition: color 0.3s ease;
+}
+
+.scrolling-icons svg:hover {
+  color: #D4AF37;
+}
+
+@keyframes scrollLeft {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 2px solid #ccc;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' fill='none' stroke='%23254E70' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: border 0.3s, box-shadow 0.3s;
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: #D4AF37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+}
