@@ -18,7 +18,7 @@ All files, assets, source code, documentation, and configurations must strictly 
 4. **`./System Directive`** — Governance rules, standing instructions, and templates
 5. **`./Progress`** — Implementation plans and directive outputs
 6. **`./Assets`** — Official brand identity, fonts, vectors, and guidelines
-7. **`./Status`** — Real-time project status and milestone tracking
+7. **`./Status`** — Real-time project status and milestone tracking only when i commit to github it will update its file.
 
 **Rule**: Never create any new folders, scratch files, or configuration files outside these 7 directories at the root level.
 
@@ -68,7 +68,7 @@ For each Action Plan, produce a corresponding Implementation Plan using the stru
 2. **`./Frontend` and `./Backend`**: Sole active code workspaces.
 3. **`./Progress`**: Central repository for all implementation plans, phase tracking, and directive outputs.
 4. **`./Assets`**: Single source of truth for brand standards, vector logos (`./Assets/brand/vector`), fonts (`./Assets/fonts`), and guidelines.
-5. **`./Status`**: Real-time progress and milestone dashboard (`./Status/PROJECT_STATUS.md`).
+5. **`./Status`**: Real-time progress and milestone dashboard (`./Status/PROJECT_STATUS.md`).( only when i commit to github it will update its file.)
 
 ---
 

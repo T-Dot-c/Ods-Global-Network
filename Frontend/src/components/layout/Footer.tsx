@@ -3,8 +3,9 @@ import React from 'react';
 export const Footer: React.FC = () => {
   return (
     <footer
+      id="contact"
       style={{
-        backgroundColor: 'var(--color-navy-dark)',
+        backgroundColor: '#0f285b',
         borderTop: '1px solid var(--color-border-dark)',
         paddingTop: '64px',
         paddingBottom: '40px',
@@ -21,7 +22,7 @@ export const Footer: React.FC = () => {
             marginBottom: '48px',
           }}
         >
-          {/* Col 1: Brand & Mission */}
+          {/* Col 1: Brand & Mission & Contact */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <img
               src="/assets/brand/vector/ods-logo-gold-primary.svg"
@@ -29,22 +30,8 @@ export const Footer: React.FC = () => {
               style={{ height: '44px', objectFit: 'contain', alignSelf: 'flex-start' }}
             />
             <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: 'var(--color-text-muted-dark)' }}>
-              ODS Global Network is the premier digital ecosystem uniting accredited healthcare providers, diagnostic centers, wellness retreats, and rapid ambulance response into one verified network.
+              ODS Global Net brings customers, merchants, and service providers together through a seamless digital ecosystem designed to make discovering, booking, managing, and paying for services easier.
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--color-success)',
-                }}
-              />
-              <span style={{ fontSize: '0.85rem', color: 'var(--color-gold-highlight)' }}>
-                PCI-DSS & HIPAA Compliant Architecture
-              </span>
-            </div>
           </div>
 
           {/* Col 2: Services & Providers */}
@@ -59,13 +46,13 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 3: Wanaw Ecosystem */}
+          {/* Col 3: ODS Global Network Ecosystem */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <h4 style={{ color: 'var(--color-gold-bright)', fontSize: '1rem' }}>Ecosystem & Portals</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
               <li>Customer Appointment Engine</li>
               <li>Merchant Onboarding & KYC</li>
-              <li>Wanaw Digital Gift Cards</li>
+              <li>ODS Global Network Digital Gift Cards</li>
               <li>Provider Availability Scheduling</li>
               <li>Executive Operations Dashboard</li>
             </ul>
@@ -127,11 +114,6 @@ export const Footer: React.FC = () => {
           }}
         >
           <p>© {new Date().getFullYear()} ODS Global Network. All rights reserved.</p>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <span>Security Directives</span>
-            <span>Privacy Policy</span>
-            <span>Provider Compliance</span>
-          </div>
         </div>
       </div>
     </footer>

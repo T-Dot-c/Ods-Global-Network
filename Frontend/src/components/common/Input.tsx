@@ -6,6 +6,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  compact?: boolean;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -14,6 +15,7 @@ export const Input: React.FC<InputProps> = ({
   helperText,
   leftIcon,
   rightIcon,
+  compact = false,
   id,
   style,
   ...props
@@ -21,11 +23,11 @@ export const Input: React.FC<InputProps> = ({
   const inputId = id || `input-${label.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? '4px' : '6px', width: '100%' }}>
       <label
         htmlFor={inputId}
         style={{
-          fontSize: '0.875rem',
+          fontSize: compact ? '0.8rem' : '0.875rem',
           fontWeight: 500,
           color: 'var(--color-text-light)',
           display: 'flex',
@@ -40,7 +42,7 @@ export const Input: React.FC<InputProps> = ({
           <span
             style={{
               position: 'absolute',
-              left: '12px',
+              left: compact ? '10px' : '12px',
               display: 'flex',
               alignItems: 'center',
               color: 'var(--color-text-muted-dark)',
@@ -55,13 +57,19 @@ export const Input: React.FC<InputProps> = ({
           id={inputId}
           style={{
             width: '100%',
-            padding: leftIcon ? '12px 14px 12px 40px' : '12px 14px',
-            paddingRight: rightIcon ? '42px' : '14px',
+            padding: compact
+              ? leftIcon
+                ? '8px 10px 8px 34px'
+                : '8px 12px'
+              : leftIcon
+              ? '12px 14px 12px 40px'
+              : '12px 14px',
+            paddingRight: rightIcon ? (compact ? '36px' : '42px') : '12px',
             backgroundColor: 'rgba(8, 23, 56, 0.85)',
             border: error ? '1.5px solid var(--color-danger)' : '1px solid var(--color-border-dark)',
-            borderRadius: '10px',
+            borderRadius: compact ? '7px' : '10px',
             color: 'var(--color-text-light)',
-            fontSize: '0.95rem',
+            fontSize: compact ? '0.875rem' : '0.95rem',
             outline: 'none',
             transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
             ...style,

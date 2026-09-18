@@ -19,7 +19,6 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
-  const [role, setRole] = useState<'customer' | 'merchant' | 'admin'>('customer');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +26,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const [errors, setErrors] = useState<{ identifier?: string; password?: string; general?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [detectedRole, setDetectedRole] = useState<'customer' | 'merchant' | 'admin'>('customer');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,11 +48,52 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
+
+      // Automatically determine user portal based on account credentials
+      const lower = identifier.toLowerCase().trim();
+      let autoRole: 'customer' | 'merchant' | 'admin' = 'customer';
+
+      if (lower.includes('admin')) {
+        autoRole = 'admin';
+      } else if (
+        lower.includes('provider') ||
+        lower.includes('merchant') ||
+        lower.includes('clinic') ||
+        lower.includes('hospital') ||
+        lower.includes('doctor') ||
+        lower.includes('pharmacy') ||
+        lower.includes('lab') ||
+        lower.includes('wellness') ||
+        lower.includes('ambulance') ||
+        lower.includes('care')
+      ) {
+        autoRole = 'merchant';
+      } else {
+        autoRole = 'customer';
+      }
+
+      setDetectedRole(autoRole);
+
       setTimeout(() => {
         setIsSubmitting(false);
         setLoginSuccess(true);
-      }, 1000);
+      }, 900);
     }
+  };
+
+  const roleMeta = {
+    customer: {
+      name: 'Customer Portal',
+      icon: <UserCheck size={18} color="var(--color-gold-bright)" />,
+    },
+    merchant: {
+      name: 'Provider & Merchant Portal',
+      icon: <Building2 size={18} color="var(--color-gold-bright)" />,
+    },
+    admin: {
+      name: 'Administrator Portal',
+      icon: <KeyRound size={18} color="var(--color-gold-bright)" />,
+    },
   };
 
   return (
@@ -141,8 +182,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               <UserCheck size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>Role-Based Access Control</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>Strict segregation of Customer, Provider, and Admin permissions</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>Automatic Portal Routing</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>Instant authentication and routing to Customer, Provider, or Admin portals</div>
             </div>
           </div>
         </div>
@@ -166,81 +207,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           <div style={{ marginBottom: '32px' }}>
             <h2 style={{ fontSize: '1.9rem', color: '#ffffff', marginBottom: '8px' }}>Sign in to your Account</h2>
             <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.95rem' }}>
-              Select your portal role and enter your credentials below.
+              Enter your credentials below to automatically access your designated portal.
             </p>
-          </div>
-
-          {/* Role Pill Selector */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              backgroundColor: 'var(--color-navy-dark)',
-              padding: '4px',
-              borderRadius: '12px',
-              marginBottom: '28px',
-              border: '1px solid var(--color-border-dark)',
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setRole('customer')}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                color: role === 'customer' ? 'var(--color-navy-dark)' : 'var(--color-text-muted-dark)',
-                backgroundColor: role === 'customer' ? 'var(--color-gold-bright)' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all var(--transition-fast)',
-              }}
-            >
-              <UserCheck size={14} /> Customer
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setRole('merchant')}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                color: role === 'merchant' ? 'var(--color-navy-dark)' : 'var(--color-text-muted-dark)',
-                backgroundColor: role === 'merchant' ? 'var(--color-gold-bright)' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all var(--transition-fast)',
-              }}
-            >
-              <Building2 size={14} /> Provider
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setRole('admin')}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                color: role === 'admin' ? 'var(--color-navy-dark)' : 'var(--color-text-muted-dark)',
-                backgroundColor: role === 'admin' ? 'var(--color-gold-bright)' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all var(--transition-fast)',
-              }}
-            >
-              <KeyRound size={14} /> Admin
-            </button>
           </div>
 
           {loginSuccess ? (
@@ -263,8 +231,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               <h3 style={{ fontSize: '1.4rem', color: '#ffffff', marginBottom: '8px' }}>
                 Authentication Successful
               </h3>
-              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.9rem', marginBottom: '24px' }}>
-                Redirecting securely to your <span style={{ color: 'var(--color-gold-bright)' }}>{role.toUpperCase()}</span> portal session...
+
+              {/* Automatically Detected Portal Badge */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 16px',
+                  borderRadius: '999px',
+                  backgroundColor: 'rgba(190, 155, 73, 0.15)',
+                  border: '1px solid var(--color-gold-mid)',
+                  margin: '12px auto 18px',
+                }}
+              >
+                {roleMeta[detectedRole].icon}
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-bright)' }}>
+                  {roleMeta[detectedRole].name}
+                </span>
+              </div>
+
+              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.6 }}>
+                Welcome back! Your credentials have been authenticated. Redirecting securely to your portal session...
               </p>
               <Button variant="gold" size="sm" onClick={() => onNavigate('home')}>
                 Return to Dashboard
@@ -273,8 +261,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <Input
-                label={role === 'merchant' ? 'Business Email or Phone' : 'Email or Mobile Number'}
-                placeholder={role === 'merchant' ? 'admin@clinic.com' : 'you@example.com'}
+                label="Email or Mobile Number"
+                placeholder="name@example.com or +251..."
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 error={errors.identifier}
@@ -320,7 +308,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               </div>
 
               <Button type="submit" variant="gold" size="lg" fullWidth disabled={isSubmitting}>
-                {isSubmitting ? 'Authenticating...' : `Sign In as ${role === 'merchant' ? 'Provider' : role === 'admin' ? 'Administrator' : 'Customer'}`}
+                {isSubmitting ? 'Authenticating...' : 'Sign In'}
               </Button>
             </form>
           )}
