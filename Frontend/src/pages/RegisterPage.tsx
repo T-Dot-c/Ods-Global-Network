@@ -1298,138 +1298,98 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             <Card
               style={{
                 textAlign: 'center',
-                padding: '36px 24px',
+                padding: '48px 32px',
                 backgroundColor: '#ffffff',
                 border: '1px solid var(--color-border-light)',
-                boxShadow: 'var(--shadow-lg)',
+                borderRadius: '16px',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.08)',
+                maxWidth: '520px',
+                margin: '20px auto',
               }}
             >
+              {/* Checkmark icon (✓) */}
               <div
                 style={{
-                  width: '56px',
-                  height: '56px',
+                  width: '64px',
+                  height: '64px',
                   borderRadius: '50%',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: 'var(--color-success)',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '2px solid rgba(16, 185, 129, 0.3)',
+                  color: '#10b981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 16px',
+                  margin: '0 auto 24px',
                 }}
               >
-                <CheckCircle2 size={32} />
+                <CheckCircle2 size={36} />
               </div>
 
-              <h3 style={{ fontSize: '1.5rem', color: 'var(--color-navy-dark)', fontWeight: 700, marginBottom: '6px' }}>
-                {role === 'customer' && 'Account Created & Active'}
-                {role === 'merchant' && 'Application Submitted!'}
-                {role === 'provider' && 'Application Submitted!'}
+              {/* Title */}
+              <h3
+                style={{
+                  fontSize: '1.65rem',
+                  color: 'var(--color-navy-dark)',
+                  fontWeight: 800,
+                  marginBottom: '14px',
+                  fontFamily: 'var(--font-heading)',
+                }}
+              >
+                Registration Successful
               </h3>
 
+              {/* Message */}
               <div
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 16px',
-                  borderRadius: '999px',
-                  backgroundColor: 'rgba(190, 155, 73, 0.12)',
-                  border: '1px solid var(--color-gold-mid)',
-                  margin: '8px auto 16px',
+                  color: 'var(--color-text-muted)',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.65,
+                  marginBottom: '32px',
                 }}
               >
-                {currentRoleConfig.icon}
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-deep)' }}>
-                  {role === 'customer' && 'Your Customer Account Has Been Created'}
-                  {role === 'merchant' && 'Your Merchant Account Has Been Created'}
-                  {role === 'provider' && 'Your Service Provider Account Has Been Created'}
-                </span>
+                <p style={{ margin: '0 0 4px' }}>Your account has been created successfully.</p>
+                <p style={{ margin: 0 }}>You can now sign in using your credentials.</p>
               </div>
 
-              {/* Role-aware body copy */}
-              {role === 'customer' && (
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '24px' }}>
-                  Welcome, {custFirstName}! Your account is active and ready to use. Sign in below to discover and book verified medical services.
-                </p>
-              )}
-
-              {role === 'merchant' && (
-                <>
-                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '16px' }}>
-                    Your Merchant account has been created and submitted for review.
-                  </p>
-                  <div
-                    style={{
-                      backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                      border: '1px solid rgba(245, 158, 11, 0.3)',
-                      borderRadius: '10px',
-                      padding: '12px 16px',
-                      marginBottom: '20px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      gap: '10px',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem', marginTop: '1px' }}>⏳</span>
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '3px' }}>
-                        Pending Compliance Review
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#78350f', lineHeight: 1.5 }}>
-                        Your account is currently pending review by our compliance team. You may sign in once approved. You will be notified via the email address provided.
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {role === 'provider' && (
-                <>
-                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '16px' }}>
-                    Your Service Provider account has been created and submitted for accreditation.
-                  </p>
-                  <div
-                    style={{
-                      backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                      border: '1px solid rgba(245, 158, 11, 0.3)',
-                      borderRadius: '10px',
-                      padding: '12px 16px',
-                      marginBottom: '20px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      gap: '10px',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem', marginTop: '1px' }}>⏳</span>
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '3px' }}>
-                        Pending Accreditation Verification
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#78350f', lineHeight: 1.5 }}>
-                        Your account is currently pending accreditation verification. Our accreditation team will review your submitted documents and credentials. You will be notified once the review is complete.
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                <Button variant="gold" size="sm" onClick={() => onNavigate('login')}>
-                  Go to Login
-                </Button>
+              {/* Primary Action Button: Sign In → */}
+              <div style={{ marginBottom: '20px' }}>
                 <Button
-                  size="sm"
+                  variant="gold"
+                  size="lg"
+                  onClick={() => onNavigate('login')}
                   style={{
-                    background: '#f1f5f9',
-                    color: 'var(--color-navy-dark)',
-                    border: '1px solid #cbd5e1',
+                    minWidth: '220px',
+                    padding: '12px 36px',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    boxShadow: '0 4px 14px rgba(190, 155, 73, 0.35)',
                   }}
+                >
+                  Sign In →
+                </Button>
+              </div>
+
+              {/* Secondary Link: Return to Home */}
+              <div>
+                <button
+                  type="button"
                   onClick={() => onNavigate('home')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: '6px 12px',
+                    transition: 'color 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-navy-dark)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#64748b')}
                 >
                   Return to Home
-                </Button>
+                </button>
               </div>
             </Card>
           )}

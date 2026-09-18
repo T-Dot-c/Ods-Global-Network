@@ -55,7 +55,7 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ onNavigate }) =>
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: 'var(--color-navy)',
+        backgroundColor: '#ffffff', // Pure white solid background
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -66,13 +66,16 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ onNavigate }) =>
         overflow: 'hidden',
       }}
     >
-      {/* Background texture overlay */}
+      {/* Subtle Background Texture */}
       <div
         style={{
           position: 'absolute',
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           backgroundImage: 'url(/assets/brand/raster/brand-pattern.png)',
-          opacity: 0.04,
+          opacity: 0.015, // Extremely subtle 1.5% opacity watermark
           backgroundSize: '360px',
           pointerEvents: 'none',
         }}
