@@ -376,11 +376,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '40px 24px',
-          overflowY: 'auto',
-          maxHeight: '100vh',
         }}
       >
-        <div style={{ width: '100%', maxWidth: '440px' }}>
+        <div style={{ width: '100%', maxWidth: '660px' }}>
           {/* ========================================================================= */}
           {/* STEP 1: COMPACT SELECT REGISTRATION TYPE SCREEN */}
           {/* ========================================================================= */}
@@ -551,7 +549,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                 {role === 'customer' && (
                   <>
                     {renderSectionHeader('Personal Information')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="First Name"
@@ -570,7 +568,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Email Address"
@@ -593,7 +591,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Country</label>
                         <select style={compactSelectStyle} value={custCountry} onChange={(e) => setCustCountry(e.target.value)}>
@@ -615,7 +613,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Account Information')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <Input
                           compact
@@ -652,7 +650,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Preferences')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Preferred Language</label>
                         <select style={compactSelectStyle} value={custLanguage} onChange={(e) => setCustLanguage(e.target.value)}>
@@ -716,7 +714,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       leftIcon={<Briefcase size={14} />}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Business Type ▾</label>
                         <select style={compactSelectStyle} value={merchType} onChange={(e) => setMerchType(e.target.value)}>
@@ -749,7 +747,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Business Phone"
@@ -782,7 +780,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     />
 
                     {renderSectionHeader('Business Location')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Country</label>
                         <select style={compactSelectStyle} value={merchCountry} onChange={(e) => setMerchCountry(e.target.value)}>
@@ -800,7 +798,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="City"
@@ -876,7 +874,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       error={errors.merchContactPerson}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Account Email"
@@ -897,7 +895,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <Input
                           compact
@@ -946,7 +944,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       leftIcon={<Building2 size={14} />}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Provider Type ▾</label>
                         <select style={compactSelectStyle} value={provType} onChange={(e) => setProvType(e.target.value)}>
@@ -983,7 +981,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Official Phone"
@@ -1016,7 +1014,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     />
 
                     {renderSectionHeader('Location')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="City / Region"
@@ -1051,7 +1049,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       onChange={(e) => setProvServicesOffered(e.target.value)}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Operating Hours</label>
                         <select style={compactSelectStyle} value={provOperatingHours} onChange={(e) => setProvOperatingHours(e.target.value)}>
@@ -1112,7 +1110,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       error={errors.provContactPerson}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Account Email"
@@ -1133,7 +1131,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <Input
                           compact
@@ -1182,7 +1180,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       leftIcon={<Building size={14} />}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Organization Type ▾</label>
                         <select style={compactSelectStyle} value={orgType} onChange={(e) => setOrgType(e.target.value)}>
@@ -1215,7 +1213,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Official Phone"
@@ -1247,7 +1245,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     />
 
                     {renderSectionHeader('Location')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Country</label>
                         <select style={compactSelectStyle} value={orgCountry} onChange={(e) => setOrgCountry(e.target.value)}>
@@ -1274,7 +1272,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     />
 
                     {renderSectionHeader('Representative Information')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Representative Name"
@@ -1292,7 +1290,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Representative Email"
@@ -1345,7 +1343,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Account')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <Input
                           compact
