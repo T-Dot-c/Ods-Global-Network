@@ -4,7 +4,7 @@ import { Menu, X, ChevronDown, Globe } from 'lucide-react';
 
 interface HeaderProps {
   currentView: string;
-  onNavigate: (view: 'home' | 'login' | 'register') => void;
+  onNavigate: (view: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {

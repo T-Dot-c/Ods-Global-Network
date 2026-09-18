@@ -12,13 +12,18 @@ import {
   UserCheck,
   Building2,
   KeyRound,
+  Stethoscope,
 } from 'lucide-react';
+import { useAuth, UserRole } from '../context/AuthContext';
+
+const API_BASE = 'http://localhost:3001';
 
 interface LoginPageProps {
-  onNavigate: (view: 'home' | 'login' | 'register') => void;
+  onNavigate: (view: string) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
+  const { login } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,9 +31,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const [errors, setErrors] = useState<{ identifier?: string; password?: string; general?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-  const [detectedRole, setDetectedRole] = useState<'customer' | 'merchant' | 'admin'>('customer');
+  const [detectedRole, setDetectedRole] = useState<UserRole>('customer');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { identifier?: string; password?: string } = {};
 
@@ -45,50 +50,56 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     }
 
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
-    if (Object.keys(newErrors).length === 0) {
-      setIsSubmitting(true);
+    setIsSubmitting(true);
+    setErrors({});
 
-      // Automatically determine user portal based on account credentials
-      const lower = identifier.toLowerCase().trim();
-      let autoRole: 'customer' | 'merchant' | 'admin' = 'customer';
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: identifier.trim(), password }),
+      });
 
-      if (lower.includes('admin')) {
-        autoRole = 'admin';
-      } else if (
-        lower.includes('provider') ||
-        lower.includes('merchant') ||
-        lower.includes('clinic') ||
-        lower.includes('hospital') ||
-        lower.includes('doctor') ||
-        lower.includes('pharmacy') ||
-        lower.includes('lab') ||
-        lower.includes('wellness') ||
-        lower.includes('ambulance') ||
-        lower.includes('care')
-      ) {
-        autoRole = 'merchant';
-      } else {
-        autoRole = 'customer';
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrors({ general: data.message || 'Invalid email or password.' });
+        setIsSubmitting(false);
+        return;
       }
 
-      setDetectedRole(autoRole);
+      // Store user in context and navigate to role dashboard
+      login(data.user);
+      setDetectedRole(data.user.role as UserRole);
+      setLoginSuccess(true);
 
+      // Brief success flash, then navigate to role-specific dashboard
       setTimeout(() => {
-        setIsSubmitting(false);
-        setLoginSuccess(true);
+        const role = data.user.role;
+        const targetRoute = role === 'customer' ? 'dashboard' : `${role}/dashboard`;
+        onNavigate(targetRoute);
       }, 900);
+    } catch {
+      setErrors({ general: 'Unable to connect to the server. Please try again.' });
+      setIsSubmitting(false);
     }
   };
 
-  const roleMeta = {
+  const roleMeta: Record<UserRole, { name: string; icon: React.ReactNode }> = {
     customer: {
       name: 'Customer Portal',
       icon: <UserCheck size={18} color="var(--color-gold-bright)" />,
     },
     merchant: {
-      name: 'Provider & Merchant Portal',
+      name: 'Merchant Portal',
       icon: <Building2 size={18} color="var(--color-gold-bright)" />,
+    },
+    provider: {
+      name: 'Service Provider Portal',
+      icon: <Stethoscope size={18} color="var(--color-gold-bright)" />,
     },
     admin: {
       name: 'Administrator Portal',
@@ -196,23 +207,51 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       {/* RIGHT COLUMN: LOGIN FORM */}
       <div
         style={{
+          backgroundColor: '#ffffff',
           flex: '1 1 55%',
+          position: 'relative',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '40px 24px',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ width: '100%', maxWidth: '440px' }}>
+        {/* Subtle Background Texture */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: 'url(/assets/brand/raster/brand-pattern.png)',
+            opacity: 0.015,
+            backgroundSize: '360px',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: '440px' }}>
           <div style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '1.9rem', color: '#ffffff', marginBottom: '8px' }}>Sign in to your Account</h2>
-            <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.95rem' }}>
+            <h2 style={{ fontSize: '1.9rem', color: 'var(--color-navy-dark)', fontWeight: 700, marginBottom: '8px' }}>
+              Sign in to your Account
+            </h2>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', lineHeight: 1.5 }}>
               Enter your credentials below to automatically access your designated portal.
             </p>
           </div>
 
           {loginSuccess ? (
-            <Card style={{ textAlign: 'center', padding: '36px 24px' }}>
+            <Card
+              style={{
+                textAlign: 'center',
+                padding: '36px 24px',
+                backgroundColor: '#ffffff',
+                border: '1px solid var(--color-border-light)',
+                boxShadow: 'var(--shadow-lg)',
+              }}
+            >
               <div
                 style={{
                   width: '56px',
@@ -228,7 +267,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               >
                 <ShieldCheck size={32} />
               </div>
-              <h3 style={{ fontSize: '1.4rem', color: '#ffffff', marginBottom: '8px' }}>
+              <h3 style={{ fontSize: '1.4rem', color: 'var(--color-navy-dark)', fontWeight: 700, marginBottom: '8px' }}>
                 Authentication Successful
               </h3>
 
@@ -240,18 +279,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                   gap: '8px',
                   padding: '6px 16px',
                   borderRadius: '999px',
-                  backgroundColor: 'rgba(190, 155, 73, 0.15)',
+                  backgroundColor: 'rgba(190, 155, 73, 0.12)',
                   border: '1px solid var(--color-gold-mid)',
                   margin: '12px auto 18px',
                 }}
               >
                 {roleMeta[detectedRole].icon}
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-bright)' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-deep)' }}>
                   {roleMeta[detectedRole].name}
                 </span>
               </div>
 
-              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.6 }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.6 }}>
                 Welcome back! Your credentials have been authenticated. Redirecting securely to your portal session...
               </p>
               <Button variant="gold" size="sm" onClick={() => onNavigate('home')}>
@@ -261,6 +300,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <Input
+                theme="light"
                 label="Email or Mobile Number"
                 placeholder="name@example.com or +251..."
                 value={identifier}
@@ -271,6 +311,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               />
 
               <Input
+                theme="light"
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your account password"
@@ -282,7 +323,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{ color: 'var(--color-text-muted-dark)', display: 'flex' }}
+                    style={{ color: 'var(--color-text-muted)', display: 'flex' }}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -292,20 +333,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-muted-dark)', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-muted)', cursor: 'pointer', fontWeight: 500 }}>
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    style={{ accentColor: 'var(--color-gold-mid)' }}
+                    style={{ accentColor: 'var(--color-gold-deep)' }}
                   />
                   Remember session
                 </label>
 
-                <a href="#forgot" style={{ color: 'var(--color-gold-bright)' }}>
+                <a href="#forgot" style={{ color: 'var(--color-gold-deep)', fontWeight: 600 }}>
                   Forgot password?
                 </a>
               </div>
+
+              {/* General API error banner */}
+              {errors.general && (
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    color: '#dc2626',
+                    fontSize: '0.85rem',
+                    fontWeight: 500,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {errors.general}
+                </div>
+              )}
 
               <Button type="submit" variant="gold" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? 'Authenticating...' : 'Sign In'}
@@ -313,11 +372,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             </form>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '0.9rem', color: 'var(--color-text-muted-dark)' }}>
+          <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
             New to ODS Global Network?{' '}
             <button
               onClick={() => onNavigate('register')}
-              style={{ color: 'var(--color-gold-bright)', fontWeight: 600 }}
+              style={{ color: 'var(--color-gold-deep)', fontWeight: 700 }}
             >
               Create an Account
             </button>

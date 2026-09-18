@@ -91,6 +91,7 @@ img {
 .gold-gradient-text {
   background: var(--gradient-gold);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }

@@ -4,6 +4,7 @@ import { Input } from '../components/common/Input';
 import { Card } from '../components/common/Card';
 import {
   User,
+  UserCheck,
   Mail,
   Phone,
   Lock,
@@ -22,11 +23,13 @@ import {
   Building,
 } from 'lucide-react';
 
+const API_BASE = 'http://localhost:3001';
+
 interface RegisterPageProps {
-  onNavigate: (view: 'home' | 'login' | 'register') => void;
+  onNavigate: (view: string) => void;
 }
 
-type RegistrationRole = 'customer' | 'merchant' | 'provider' | 'organization';
+type RegistrationRole = 'customer' | 'merchant' | 'provider';
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   // Step & Role State
@@ -47,7 +50,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const [custEmailVerify, setCustEmailVerify] = useState(true);
   const [custPhoneVerify, setCustPhoneVerify] = useState(true);
 
-  // Merchant State
+  // Merchant State (Holds both standard businesses and organizations/institutions)
   const [merchName, setMerchName] = useState('');
   const [merchType, setMerchType] = useState('Retailer');
   const [merchCategory, setMerchCategory] = useState('Health & Medical Supplies');
@@ -70,7 +73,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     regCert: false,
     tradeLicense: false,
     tinDoc: false,
+    charterDoc: false,
+    operatingDoc: false,
   });
+
+  const isOrgType = merchType === 'Organization / Institution';
+
+  const handleMerchTypeChange = (newType: string) => {
+    setMerchType(newType);
+    if (newType === 'Organization / Institution') {
+      setMerchCategory('Corporation / Enterprise');
+    } else {
+      setMerchCategory('Health & Medical Supplies');
+    }
+  };
 
   // Service Provider State
   const [provName, setProvName] = useState('');
@@ -96,28 +112,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     boardCert: false,
   });
 
-  // Business / Organization State
-  const [orgName, setOrgName] = useState('');
-  const [orgType, setOrgType] = useState('Corporation / Enterprise');
-  const [orgIndustry, setOrgIndustry] = useState('Healthcare & Life Sciences');
-  const [orgDesc, setOrgDesc] = useState('');
-  const [orgWebsite, setOrgWebsite] = useState('');
-  const [orgEmail, setOrgEmail] = useState('');
-  const [orgPhone, setOrgPhone] = useState('');
-  const [orgCountry, setOrgCountry] = useState('Ethiopia');
-  const [orgCity, setOrgCity] = useState('Addis Ababa');
-  const [orgAddress, setOrgAddress] = useState('');
-  const [orgRepName, setOrgRepName] = useState('');
-  const [orgRepRole, setOrgRepRole] = useState('');
-  const [orgRepEmail, setOrgRepEmail] = useState('');
-  const [orgRepPhone, setOrgRepPhone] = useState('');
-  const [orgPassword, setOrgPassword] = useState('');
-  const [orgConfirmPassword, setOrgConfirmPassword] = useState('');
-  const [orgDocsUploaded, setOrgDocsUploaded] = useState<Record<string, boolean>>({
-    registration: false,
-    operatingLicense: false,
-  });
-
   // UI / Validation State
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -137,8 +131,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const getActivePassword = () => {
     if (role === 'customer') return custPassword;
     if (role === 'merchant') return merchPassword;
-    if (role === 'provider') return provPassword;
-    return orgPassword;
+    return provPassword;
   };
 
   const currentStrength = getPasswordStrength(getActivePassword());
@@ -147,32 +140,26 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     {
       key: 'customer',
       title: 'Customer',
-      desc: 'Discover, book appointments, purchase gift cards, and manage health services.',
-      icon: <User size={18} color="var(--color-gold-bright)" />,
+      desc: 'Discover and book verified medical appointments, emergency care, and wellness services.',
+      icon: <User size={18} color="var(--color-gold-deep)" />,
     },
     {
       key: 'merchant',
-      title: 'Merchant',
-      desc: 'Sell pharmaceutical goods, medical equipment, and wellness products online.',
-      icon: <Briefcase size={18} color="var(--color-gold-bright)" />,
+      title: 'Merchant & Institutions',
+      desc: 'List medical equipment, pharmaceuticals, wellness items, manage orders — or register institutional accounts (enterprise, NGO, diplomatic mission, government agency).',
+      icon: <Briefcase size={18} color="var(--color-gold-deep)" />,
     },
     {
       key: 'provider',
       title: 'Service Provider',
-      desc: 'Accredited hospitals, clinics, diagnostic labs, specialists, and wellness retreats.',
-      icon: <Stethoscope size={18} color="var(--color-gold-bright)" />,
-    },
-    {
-      key: 'organization',
-      title: 'Business / Organization',
-      desc: 'Corporations, embassies, NGOs, and institutions managing enterprise healthcare benefits.',
-      icon: <Building size={18} color="var(--color-gold-bright)" />,
+      desc: 'Hospitals, diagnostic labs, specialty clinics, ambulances, and home care providers.',
+      icon: <Stethoscope size={18} color="var(--color-gold-deep)" />,
     },
   ];
 
   const currentRoleConfig = roleOptions.find((r) => r.key === role) || roleOptions[0];
 
-  const validateAndSubmit = (e: React.FormEvent) => {
+  const validateAndSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -186,12 +173,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       if (custPassword.length < 8) newErrors.custPassword = 'Min 8 chars required';
       if (custPassword !== custConfirmPassword) newErrors.custConfirm = 'Passwords do not match';
     } else if (role === 'merchant') {
-      if (!merchName.trim()) newErrors.merchName = 'Business name is required';
+      if (!merchName.trim()) {
+        newErrors.merchName = isOrgType ? 'Organization name is required' : 'Business name is required';
+      }
       if (!merchPhone.trim()) newErrors.merchPhone = 'Phone is required';
       if (!merchEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(merchEmail)) {
         newErrors.merchEmail = 'Valid email is required';
       }
-      if (!merchContactPerson.trim()) newErrors.merchContactPerson = 'Contact person is required';
+      if (!merchContactPerson.trim()) {
+        newErrors.merchContactPerson = isOrgType ? 'Representative name is required' : 'Contact person is required';
+      }
       if (merchPassword.length < 8) newErrors.merchPassword = 'Min 8 chars required';
       if (merchPassword !== merchConfirmPassword) newErrors.merchConfirm = 'Passwords do not match';
     } else if (role === 'provider') {
@@ -203,24 +194,96 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       if (!provContactPerson.trim()) newErrors.provContactPerson = 'Contact person is required';
       if (provPassword.length < 8) newErrors.provPassword = 'Min 8 chars required';
       if (provPassword !== provConfirmPassword) newErrors.provConfirm = 'Passwords do not match';
-    } else if (role === 'organization') {
-      if (!orgName.trim()) newErrors.orgName = 'Organization name is required';
-      if (!orgEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orgEmail)) {
-        newErrors.orgEmail = 'Valid email is required';
-      }
-      if (!orgRepName.trim()) newErrors.orgRepName = 'Representative is required';
-      if (orgPassword.length < 8) newErrors.orgPassword = 'Min 8 chars required';
-      if (orgPassword !== orgConfirmPassword) newErrors.orgConfirm = 'Passwords do not match';
     }
 
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
-      setTimeout(() => {
+
+      let payload: Record<string, any> = {};
+
+      if (role === 'customer') {
+        payload = {
+          role: 'customer',
+          full_name: `${custFirstName.trim()} ${custLastName.trim()}`.trim(),
+          email: custEmail.trim(),
+          phone: custPhone.trim(),
+          password: custPassword,
+          country: custCountry,
+          city: custCity,
+          preferred_language: custLanguage === 'Amharic' ? 'am' : 'en',
+          notification_preference: custNotifications.toLowerCase().includes('sms') ? 'sms' : 'email',
+        };
+      } else if (role === 'merchant') {
+        payload = {
+          role: 'merchant',
+          full_name: merchContactPerson.trim() || merchName.trim(),
+          email: merchEmail.trim(),
+          phone: merchPhone.trim(),
+          password: merchPassword,
+          business_name: merchName.trim(),
+          business_type: isOrgType ? 'organization' : merchType.toLowerCase(),
+          category: merchCategory,
+          business_phone: merchPhone.trim(),
+          business_email: merchEmail.trim(),
+          website: merchWebsite.trim() || null,
+          description: merchDesc.trim() || null,
+          country: merchCountry,
+          region_state: merchRegion,
+          city: merchCity,
+          postal_code: merchPostal.trim() || null,
+          address_line: merchAddress.trim() || null,
+          contact_person_name: merchContactPerson.trim(),
+          contact_person_email: merchContactEmail.trim() || null,
+          contact_person_phone: merchContactPhone.trim() || null,
+        };
+      } else if (role === 'provider') {
+        payload = {
+          role: 'provider',
+          full_name: provContactPerson.trim() || provName.trim(),
+          email: provEmail.trim(),
+          phone: provPhone.trim(),
+          password: provPassword,
+          provider_name: provName.trim(),
+          provider_type: provType,
+          service_category: provCategory,
+          official_phone: provPhone.trim(),
+          official_email: provEmail.trim(),
+          website: provWebsite.trim() || null,
+          description: provDesc.trim() || null,
+          services_offered: provServicesOffered.trim() || null,
+          operating_hours: provOperatingHours,
+          availability: provAvailability,
+          city: provCity,
+          address_line: provAddress.trim() || null,
+          contact_person_name: provContactPerson.trim(),
+          contact_person_email: provContactEmail.trim() || null,
+          contact_person_phone: provContactPhone.trim() || null,
+        };
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          setErrors({ general: data.message || 'Registration failed. Please check your information.' });
+          setIsSubmitting(false);
+          return;
+        }
+
         setIsSubmitting(false);
         setSubmittedSuccess(true);
-      }, 1000);
+      } catch (err: any) {
+        setErrors({ general: 'Network error: Unable to reach authentication server. Please check your connection.' });
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -228,19 +291,19 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const compactSelectStyle: React.CSSProperties = {
     width: '100%',
     padding: '8px 10px',
-    backgroundColor: 'rgba(8, 23, 56, 0.85)',
-    border: '1px solid var(--color-border-dark)',
-    borderRadius: '7px',
-    color: 'var(--color-text-light)',
+    backgroundColor: '#ffffff',
+    border: '1.5px solid #cbd5e1',
+    borderRadius: '8px',
+    color: 'var(--color-text-dark)',
     fontSize: '0.86rem',
     outline: 'none',
   };
 
   // Compact Section title divider helper
   const renderSectionHeader = (title: string, subtitle?: string) => (
-    <div style={{ margin: '14px 0 8px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '4px' }}>
-      <h4 style={{ fontSize: '0.92rem', color: 'var(--color-gold-bright)', fontWeight: 700 }}>{title}</h4>
-      {subtitle && <p style={{ fontSize: '0.76rem', color: 'var(--color-text-muted-dark)' }}>{subtitle}</p>}
+    <div style={{ margin: '16px 0 8px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '4px' }}>
+      <h4 style={{ fontSize: '0.92rem', color: 'var(--color-navy-dark)', fontWeight: 700 }}>{title}</h4>
+      {subtitle && <p style={{ fontSize: '0.76rem', color: 'var(--color-text-muted)' }}>{subtitle}</p>}
     </div>
   );
 
@@ -258,13 +321,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
               style={{
                 flex: 1,
                 borderRadius: '2px',
-                backgroundColor: idx < currentStrength ? colors[currentStrength - 1] : 'rgba(255,255,255,0.1)',
+                backgroundColor: idx < currentStrength ? colors[currentStrength - 1] : '#e2e8f0',
                 transition: 'background-color 0.2s ease',
               }}
             />
           ))}
         </div>
-        <span style={{ fontSize: '0.72rem', color: colors[currentStrength - 1] || 'var(--color-text-muted-dark)' }}>
+        <span style={{ fontSize: '0.72rem', color: colors[currentStrength - 1] || 'var(--color-text-muted)', fontWeight: 500 }}>
           Password strength: {labels[currentStrength - 1] || 'Weak'}
         </span>
       </div>
@@ -274,10 +337,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        maxHeight: '100vh',
         backgroundColor: 'var(--color-navy)',
         display: 'flex',
         alignItems: 'stretch',
+        overflow: 'hidden',
       }}
     >
       {/* LEFT COLUMN: BRAND SHOWCASE (Desktop) */}
@@ -293,6 +358,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           justifyContent: 'space-between',
           borderRight: '1px solid var(--color-border-dark)',
           overflow: 'hidden',
+          height: '100vh',
+          maxHeight: '100vh',
+          boxSizing: 'border-box',
+          flexShrink: 0,
         }}
       >
         {/* Background Texture */}
@@ -328,114 +397,136 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
           <img
             src="/assets/brand/vector/ods-logo-gold-primary.svg"
-            alt="ODS Global Net"
+            alt="ODS Global Network"
             style={{ height: '54px', marginBottom: '36px' }}
           />
 
           <h2 style={{ fontSize: '2.2rem', color: '#ffffff', marginBottom: '16px', lineHeight: 1.25 }}>
-            Join the Premier <span className="gold-gradient-text">Connected Ecosystem</span>
+            Secure Gateway to <span className="gold-gradient-text">Premier Health & Wellness</span>
           </h2>
-          <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.95rem', lineHeight: 1.5, maxWidth: '360px' }}>
-            Empower your healthcare, commerce, or organization with verified digital credentialing and online appointments.
+          <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1rem', lineHeight: 1.6, maxWidth: '440px' }}>
+            Access verified medical consultations, manage executive hospital appointments, or administer your merchant operations dashboard.
           </p>
         </div>
 
         {/* Feature badges */}
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: '14px', margin: '32px 0' }}>
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: '16px', margin: '40px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(190, 155, 73, 0.15)', color: 'var(--color-gold-bright)' }}>
               <ShieldCheck size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>End-to-End Encryption</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>Strict credential verification & privacy</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>Bank-Grade Security</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>HMAC-signed sessions & end-to-end data encryption</div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(190, 155, 73, 0.15)', color: 'var(--color-gold-bright)' }}>
-              <CheckCircle2 size={20} />
+              <UserCheck size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>Accelerated Onboarding</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>Rapid account activation & portal routing</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>Automatic Portal Routing</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>Instant authentication and routing to Customer, Provider, or Admin portals</div>
             </div>
           </div>
         </div>
 
         <div style={{ position: 'relative', zIndex: 2, fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>
-          © {new Date().getFullYear()} ODS Global Net. All rights reserved.
+          © {new Date().getFullYear()} ODS Global Network. All transactions protected.
         </div>
       </div>
 
       {/* RIGHT COLUMN: DYNAMIC REGISTRATION FORM */}
       <div
         style={{
+          backgroundColor: '#ffffff',
           flex: '1 1 55%',
+          position: 'relative',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
           padding: '40px 24px',
+          height: '100vh',
+          maxHeight: '100vh',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+          color: 'var(--color-text-dark)',
         }}
       >
-        <div style={{ width: '100%', maxWidth: '660px' }}>
+        {/* Subtle Background Texture */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: 'url(/assets/brand/raster/brand-pattern.png)',
+            opacity: 0.015,
+            backgroundSize: '360px',
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: currentStep === 'form' ? '760px' : '660px', margin: '0 auto', paddingBottom: '40px' }}>
           {/* ========================================================================= */}
           {/* STEP 1: COMPACT SELECT REGISTRATION TYPE SCREEN */}
           {/* ========================================================================= */}
           {currentStep === 'select' && !submittedSuccess && (
             <div
               style={{
-                backgroundColor: 'rgba(8, 23, 56, 0.95)',
-                border: '1px solid var(--color-border-dark)',
-                borderRadius: '14px',
-                padding: '30px 24px',
-                boxShadow: 'var(--shadow-card-dark)',
+                backgroundColor: '#ffffff',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                padding: '100px 24px',
+                width: '100%',
+                margin: '0 auto',
               }}
             >
-              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '1.75rem', color: '#ffffff', marginBottom: '6px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+                <h2 style={{ fontSize: '1.9rem', color: 'var(--color-navy-dark)', fontWeight: 700, marginBottom: '8px' }}>
                   Create Your ODS Account
                 </h2>
-                <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.88rem' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', lineHeight: 1.5 }}>
                   Select how you want to use ODS Global Net.
                 </p>
               </div>
 
               {/* Role Dropdown */}
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-gold-bright)', marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-navy-dark)', marginBottom: '8px' }}>
                   Registering as ▾
                 </label>
                 <select
-                  style={{ ...compactSelectStyle, padding: '10px 12px', fontSize: '0.92rem', fontWeight: 500 }}
+                  style={{ ...compactSelectStyle, padding: '11px 14px', fontSize: '0.92rem', fontWeight: 500 }}
                   value={role}
                   onChange={(e) => setRole(e.target.value as RegistrationRole)}
                 >
                   <option value="customer">Customer (Discover & Book Services)</option>
-                  <option value="merchant">Merchant (Products, Supplies & Retail)</option>
+                  <option value="merchant">Merchant & Institutions (Suppliers, Retail & Enterprises)</option>
                   <option value="provider">Service Provider (Hospitals, Clinics & Specialists)</option>
-                  <option value="organization">Business / Organization (Enterprise & Institutions)</option>
                 </select>
 
                 {/* Role Description Preview Card */}
                 <div
                   style={{
-                    marginTop: '12px',
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(190, 155, 73, 0.08)',
-                    border: '1px solid rgba(190, 155, 73, 0.2)',
+                    marginTop: '14px',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(15, 40, 91, 0.03)',
+                    border: '1px solid #e2e8f0',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
+                    gap: '14px',
                   }}
                 >
                   <div
                     style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      backgroundColor: 'rgba(190, 155, 73, 0.2)',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(190, 155, 73, 0.12)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -445,25 +536,29 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     {currentRoleConfig.icon}
                   </div>
                   <div>
-                    <h5 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>{currentRoleConfig.title}</h5>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted-dark)' }}>{currentRoleConfig.desc}</p>
+                    <h5 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--color-navy-dark)', marginBottom: '2px' }}>
+                      {currentRoleConfig.title}
+                    </h5>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.45 }}>
+                      {currentRoleConfig.desc}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <Button size="md" variant="gold" fullWidth onClick={() => setCurrentStep('form')}>
                   Continue Registration <ArrowRight size={16} />
                 </Button>
 
-                <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--color-text-muted-dark)' }}>
+                <div style={{ textAlign: 'center', fontSize: '0.88rem', color: 'var(--color-text-muted)' }}>
                   Already have an account?{' '}
                   <button
                     onClick={() => onNavigate('login')}
-                    style={{ color: 'var(--color-gold-bright)', fontWeight: 600 }}
+                    style={{ color: 'var(--color-gold-deep)', fontWeight: 700 }}
                   >
-                    Login
+                    Sign In
                   </button>
                 </div>
               </div>
@@ -476,11 +571,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           {currentStep === 'form' && !submittedSuccess && (
             <div
               style={{
-                backgroundColor: 'rgba(8, 23, 56, 0.95)',
-                border: '1px solid var(--color-border-dark)',
-                borderRadius: '14px',
-                padding: '24px',
-                boxShadow: 'var(--shadow-card-dark)',
+                backgroundColor: '#ffffff',
+                padding: '28px 28px',
               }}
             >
               {/* Top Quick Role Selector Bar */}
@@ -489,20 +581,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  backgroundColor: 'rgba(15, 40, 91, 0.6)',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--color-border-dark)',
-                  marginBottom: '16px',
+                  backgroundColor: '#f8fafc',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: '18px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted-dark)' }}>Role:</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Role:</span>
                   <select
                     style={{
                       backgroundColor: 'transparent',
-                      color: 'var(--color-gold-bright)',
-                      fontSize: '0.85rem',
+                      color: 'var(--color-navy-dark)',
+                      fontSize: '0.88rem',
                       fontWeight: 700,
                       border: 'none',
                       outline: 'none',
@@ -511,35 +603,52 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     value={role}
                     onChange={(e) => setRole(e.target.value as RegistrationRole)}
                   >
-                    <option value="customer" style={{ background: '#081738', color: '#fff' }}>Customer</option>
-                    <option value="merchant" style={{ background: '#081738', color: '#fff' }}>Merchant</option>
-                    <option value="provider" style={{ background: '#081738', color: '#fff' }}>Service Provider</option>
-                    <option value="organization" style={{ background: '#081738', color: '#fff' }}>Organization</option>
+                    <option value="customer">Customer</option>
+                    <option value="merchant">Merchant & Institutions</option>
+                    <option value="provider">Service Provider</option>
                   </select>
                 </div>
 
                 <button
                   onClick={() => setCurrentStep('select')}
                   style={{
-                    fontSize: '0.78rem',
-                    color: 'var(--color-gold-mid)',
-                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    color: 'var(--color-gold-deep)',
+                    fontWeight: 700,
                   }}
                 >
                   Overview ▾
                 </button>
               </div>
 
-              <div style={{ marginBottom: '14px' }}>
-                <h3 style={{ fontSize: '1.4rem', color: '#ffffff', marginBottom: '4px' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <h3 style={{ fontSize: '1.5rem', color: 'var(--color-navy-dark)', fontWeight: 700, marginBottom: '4px' }}>
                   {role === 'customer' && 'Customer Registration'}
-                  {role === 'merchant' && 'Merchant Registration'}
+                  {role === 'merchant' && (isOrgType ? 'Organization / Institution Registration' : 'Merchant Registration')}
                   {role === 'provider' && 'Service Provider Registration'}
-                  {role === 'organization' && 'Organization Registration'}
                 </h3>
-                <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.82rem' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
                   Enter your details below to activate your account.
                 </p>
+                {errors.general && (
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      padding: '10px 14px',
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #f87171',
+                      borderRadius: '8px',
+                      color: '#b91c1c',
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+                    <span>{errors.general}</span>
+                  </div>
+                )}
               </div>
 
               <form onSubmit={validateAndSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -549,7 +658,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                 {role === 'customer' && (
                   <>
                     {renderSectionHeader('Personal Information')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       <Input
                         compact
                         label="First Name"
@@ -566,9 +675,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         onChange={(e) => setCustLastName(e.target.value)}
                         error={errors.custLastName}
                       />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Email Address"
@@ -589,9 +695,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         error={errors.custPhone}
                         leftIcon={<Phone size={14} />}
                       />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Country</label>
                         <select style={compactSelectStyle} value={custCountry} onChange={(e) => setCustCountry(e.target.value)}>
@@ -613,7 +716,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Account Information')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       <div>
                         <Input
                           compact
@@ -650,7 +753,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Preferences')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Preferred Language</label>
                         <select style={compactSelectStyle} value={custLanguage} onChange={(e) => setCustLanguage(e.target.value)}>
@@ -671,22 +774,22 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Verification')}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--color-text-muted)', cursor: 'pointer', fontWeight: 500 }}>
                         <input
                           type="checkbox"
                           checked={custEmailVerify}
                           onChange={(e) => setCustEmailVerify(e.target.checked)}
-                          style={{ accentColor: 'var(--color-gold-mid)' }}
+                          style={{ accentColor: 'var(--color-gold-deep)' }}
                         />
                         Send email verification link
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--color-text-muted)', cursor: 'pointer', fontWeight: 500 }}>
                         <input
                           type="checkbox"
                           checked={custPhoneVerify}
                           onChange={(e) => setCustPhoneVerify(e.target.checked)}
-                          style={{ accentColor: 'var(--color-gold-mid)' }}
+                          style={{ accentColor: 'var(--color-gold-deep)' }}
                         />
                         Send OTP SMS code to verify phone
                       </label>
@@ -699,58 +802,66 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                 )}
 
                 {/* ------------------------------------------------------------- */}
-                {/* OPTION 2: MERCHANT FORM */}
+                {/* OPTION 2: MERCHANT & INSTITUTIONS FORM */}
                 {/* ------------------------------------------------------------- */}
                 {role === 'merchant' && (
                   <>
-                    {renderSectionHeader('Business Information')}
-                    <Input
-                      compact
-                      label="Business / Merchant Name"
-                      placeholder="e.g. Apex Health Supplies Ltd."
-                      value={merchName}
-                      onChange={(e) => setMerchName(e.target.value)}
-                      error={errors.merchName}
-                      leftIcon={<Briefcase size={14} />}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    {renderSectionHeader(
+                      isOrgType ? 'Institutional Information' : 'Business Information',
+                      isOrgType ? 'Enterprise, NGO, diplomatic mission, or government details' : 'Storefront, supplier, or distributor operations'
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                      <Input
+                        compact
+                        label={isOrgType ? 'Organization / Institution Name' : 'Business / Merchant Name'}
+                        placeholder={isOrgType ? 'e.g. African Union Mission / Global Bank' : 'e.g. Apex Health Supplies Ltd.'}
+                        value={merchName}
+                        onChange={(e) => setMerchName(e.target.value)}
+                        error={errors.merchName}
+                        leftIcon={isOrgType ? <Building size={14} /> : <Briefcase size={14} />}
+                      />
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Business Type ▾</label>
-                        <select style={compactSelectStyle} value={merchType} onChange={(e) => setMerchType(e.target.value)}>
+                        <select style={compactSelectStyle} value={merchType} onChange={(e) => handleMerchTypeChange(e.target.value)}>
                           <option value="Retailer">Retailer / Storefront</option>
+                          <option value="Pharmacy Supplier">Pharmacy Supplier</option>
+                          <option value="Equipment Vendor">Equipment Vendor</option>
                           <option value="Wholesaler">Wholesaler / Distributor</option>
                           <option value="Medical Supply">Medical Supply</option>
                           <option value="Wellness eCommerce">Wellness eCommerce</option>
+                          <option value="Organization / Institution">Organization / Institution</option>
                         </select>
                       </div>
-
                       <div>
-                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Category ▾</label>
+                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>
+                          {isOrgType ? 'Industry / Sector ▾' : 'Category / Industry ▾'}
+                        </label>
                         <select style={compactSelectStyle} value={merchCategory} onChange={(e) => setMerchCategory(e.target.value)}>
-                          <option value="Health & Medical Supplies">Health & Medical Supplies</option>
-                          <option value="Pharmaceuticals">Pharmaceuticals</option>
-                          <option value="Diagnostic Equipment">Diagnostic Equipment</option>
-                          <option value="Wellness & Nutrition">Wellness & Nutrition</option>
+                          {isOrgType ? (
+                            <>
+                              <option value="Corporation / Enterprise">Corporation / Enterprise</option>
+                              <option value="Embassy / Diplomatic Mission">Embassy / Diplomatic</option>
+                              <option value="NGO / Non-Profit">NGO / Non-Profit</option>
+                              <option value="Government Agency">Government Agency</option>
+                              <option value="Healthcare & Life Sciences">Healthcare & Life Sciences</option>
+                              <option value="Banking & Financial">Banking & Financial</option>
+                              <option value="Corporate Health Benefits">Corporate Health Benefits</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="Health & Medical Supplies">Health & Medical Supplies</option>
+                              <option value="Pharmaceuticals">Pharmaceuticals</option>
+                              <option value="Diagnostic Equipment">Diagnostic Equipment</option>
+                              <option value="Wellness & Nutrition">Wellness & Nutrition</option>
+                              <option value="Personal Protective Equipment (PPE)">Personal Protective Equipment (PPE)</option>
+                              <option value="Rehabilitation & Therapy">Rehabilitation & Therapy</option>
+                            </>
+                          )}
                         </select>
                       </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 500 }}>Description</label>
-                      <textarea
-                        rows={2}
-                        style={{ ...compactSelectStyle, resize: 'vertical' }}
-                        placeholder="Overview of products and operations..."
-                        value={merchDesc}
-                        onChange={(e) => setMerchDesc(e.target.value)}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
-                        label="Business Phone"
+                        label={isOrgType ? 'Official Phone' : 'Business Phone'}
                         type="tel"
                         placeholder="+251-11-..."
                         value={merchPhone}
@@ -760,32 +871,44 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                       <Input
                         compact
-                        label="Business Email"
+                        label={isOrgType ? 'Official Email' : 'Business Email'}
                         type="email"
-                        placeholder="orders@merchant.com"
+                        placeholder={isOrgType ? 'admin@enterprise.org' : 'orders@merchant.com'}
                         value={merchEmail}
                         onChange={(e) => setMerchEmail(e.target.value)}
                         error={errors.merchEmail}
                         leftIcon={<Mail size={14} />}
                       />
+                      <Input
+                        compact
+                        label="Website (Optional)"
+                        placeholder={isOrgType ? 'https://www.organization.org' : 'https://www.merchant.com'}
+                        value={merchWebsite}
+                        onChange={(e) => setMerchWebsite(e.target.value)}
+                        leftIcon={<Globe size={14} />}
+                      />
+                      <div style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                          {isOrgType ? 'Organization Scope & Mission' : 'Description'}
+                        </label>
+                        <textarea
+                          rows={2}
+                          style={{ ...compactSelectStyle, resize: 'vertical' }}
+                          placeholder={isOrgType ? 'Institutional mission or employee health scope...' : 'Overview of products and operations...'}
+                          value={merchDesc}
+                          onChange={(e) => setMerchDesc(e.target.value)}
+                        />
+                      </div>
                     </div>
 
-                    <Input
-                      compact
-                      label="Website (Optional)"
-                      placeholder="https://www.merchant.com"
-                      value={merchWebsite}
-                      onChange={(e) => setMerchWebsite(e.target.value)}
-                      leftIcon={<Globe size={14} />}
-                    />
-
-                    {renderSectionHeader('Business Location')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    {renderSectionHeader(isOrgType ? 'Headquarters Location' : 'Business Location')}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Country</label>
                         <select style={compactSelectStyle} value={merchCountry} onChange={(e) => setMerchCountry(e.target.value)}>
                           <option value="Ethiopia">Ethiopia</option>
                           <option value="Kenya">Kenya</option>
+                          <option value="International">International</option>
                           <option value="Other">Other</option>
                         </select>
                       </div>
@@ -796,9 +919,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         value={merchRegion}
                         onChange={(e) => setMerchRegion(e.target.value)}
                       />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="City"
@@ -813,89 +933,91 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         value={merchPostal}
                         onChange={(e) => setMerchPostal(e.target.value)}
                       />
+                      <Input
+                        compact
+                        label={isOrgType ? 'Headquarters Address' : 'Physical Address'}
+                        placeholder={isOrgType ? 'HQ Tower / Campus' : 'Bole Sub-City, Worda 03'}
+                        value={merchAddress}
+                        onChange={(e) => setMerchAddress(e.target.value)}
+                        leftIcon={<MapPin size={14} />}
+                      />
+                      <Input
+                        compact
+                        label="Map Location / GPS Pin"
+                        placeholder="e.g. 9.0107° N, 38.7612° E"
+                        value={merchMapLocation}
+                        onChange={(e) => setMerchMapLocation(e.target.value)}
+                      />
                     </div>
 
-                    <Input
-                      compact
-                      label="Physical Address"
-                      placeholder="Bole Sub-City, Worda 03"
-                      value={merchAddress}
-                      onChange={(e) => setMerchAddress(e.target.value)}
-                      leftIcon={<MapPin size={14} />}
-                    />
-
-                    <Input
-                      compact
-                      label="Map Location / GPS Pin"
-                      placeholder="e.g. 9.0107° N, 38.7612° E"
-                      value={merchMapLocation}
-                      onChange={(e) => setMerchMapLocation(e.target.value)}
-                    />
-
-                    {renderSectionHeader('Business Documents')}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {[
-                        { key: 'regCert', label: 'Registration Certificate' },
-                        { key: 'tradeLicense', label: 'Valid Trade License' },
-                        { key: 'tinDoc', label: 'TIN Document' },
-                      ].map((doc) => (
+                    {renderSectionHeader(isOrgType ? 'Institutional Documents' : 'Business Documents')}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                      {(isOrgType
+                        ? [
+                            { key: 'charterDoc', label: 'Institutional Charter / Legal Registration' },
+                            { key: 'operatingDoc', label: 'Delegation / Operating License' },
+                          ]
+                        : [
+                            { key: 'regCert', label: 'Registration Certificate' },
+                            { key: 'tradeLicense', label: 'Valid Trade License' },
+                            { key: 'tinDoc', label: 'TIN Document' },
+                          ]
+                      ).map((doc) => (
                         <div
                           key={doc.key}
                           onClick={() => setMerchDocsUploaded((prev) => ({ ...prev, [doc.key]: !prev[doc.key] }))}
                           style={{
-                            border: '1px dashed var(--color-border-dark)',
-                            padding: '8px 12px',
-                            borderRadius: '6px',
+                            border: '1.5px dashed #cbd5e1',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
                             display: 'flex',
+                            flexDirection: 'column',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
+                            gap: '8px',
                             cursor: 'pointer',
-                            backgroundColor: merchDocsUploaded[doc.key] ? 'rgba(16, 185, 129, 0.1)' : 'rgba(8, 23, 56, 0.5)',
+                            backgroundColor: merchDocsUploaded[doc.key] ? 'rgba(16, 185, 129, 0.08)' : '#f8fafc',
+                            transition: 'all var(--transition-fast)',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Upload size={14} color="var(--color-gold-bright)" />
-                            <span style={{ fontSize: '0.82rem', color: '#ffffff' }}>{doc.label}</span>
+                            <Upload size={15} color="var(--color-gold-deep)" />
+                            <span style={{ fontSize: '0.82rem', color: 'var(--color-navy-dark)', fontWeight: 600, lineHeight: 1.3 }}>{doc.label}</span>
                           </div>
-                          <span style={{ fontSize: '0.75rem', color: merchDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-mid)' }}>
+                          <span style={{ fontSize: '0.78rem', color: merchDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700 }}>
                             {merchDocsUploaded[doc.key] ? '✓ Uploaded' : 'Upload'}
                           </span>
                         </div>
                       ))}
                     </div>
 
-                    {renderSectionHeader('Account Information')}
-                    <Input
-                      compact
-                      label="Contact Person"
-                      placeholder="Representative Full Name"
-                      value={merchContactPerson}
-                      onChange={(e) => setMerchContactPerson(e.target.value)}
-                      error={errors.merchContactPerson}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    {renderSectionHeader(isOrgType ? 'Representative & Account Information' : 'Account Information')}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       <Input
                         compact
-                        label="Account Email"
+                        label={isOrgType ? 'Representative Name' : 'Contact Person'}
+                        placeholder={isOrgType ? 'e.g. Dr. Hanna Tesfaye (Head of HR)' : 'Representative Full Name'}
+                        value={merchContactPerson}
+                        onChange={(e) => setMerchContactPerson(e.target.value)}
+                        error={errors.merchContactPerson}
+                      />
+                      <Input
+                        compact
+                        label={isOrgType ? 'Representative Email' : 'Account Email'}
                         type="email"
-                        placeholder="rep@merchant.com"
+                        placeholder={isOrgType ? 'rep@enterprise.org' : 'rep@merchant.com'}
                         value={merchContactEmail}
                         onChange={(e) => setMerchContactEmail(e.target.value)}
                         leftIcon={<Mail size={14} />}
                       />
                       <Input
                         compact
-                        label="Account Phone"
+                        label={isOrgType ? 'Representative Phone' : 'Account Phone'}
                         type="tel"
                         placeholder="+251-911-..."
                         value={merchContactPhone}
                         onChange={(e) => setMerchContactPhone(e.target.value)}
                         leftIcon={<Phone size={14} />}
                       />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <Input
                           compact
@@ -909,7 +1031,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         />
                         {renderPasswordStrength()}
                       </div>
-
                       <Input
                         compact
                         label="Confirm Password"
@@ -923,7 +1044,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     <Button type="submit" variant="gold" size="md" fullWidth disabled={isSubmitting} style={{ marginTop: '14px' }}>
-                      {isSubmitting ? 'Submitting Application...' : 'Register as Merchant'}
+                      {isSubmitting
+                        ? isOrgType
+                          ? 'Registering Organization...'
+                          : 'Submitting Application...'
+                        : isOrgType
+                        ? 'Register Organization'
+                        : 'Register as Merchant'}
                     </Button>
                   </>
                 )}
@@ -934,17 +1061,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                 {role === 'provider' && (
                   <>
                     {renderSectionHeader('Provider Information')}
-                    <Input
-                      compact
-                      label="Provider / Organization Name"
-                      placeholder="e.g. St. Michael Hospital"
-                      value={provName}
-                      onChange={(e) => setProvName(e.target.value)}
-                      error={errors.provName}
-                      leftIcon={<Building2 size={14} />}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                      <Input
+                        compact
+                        label="Provider / Organization Name"
+                        placeholder="e.g. St. Michael Hospital"
+                        value={provName}
+                        onChange={(e) => setProvName(e.target.value)}
+                        error={errors.provName}
+                        leftIcon={<Building2 size={14} />}
+                      />
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Provider Type ▾</label>
                         <select style={compactSelectStyle} value={provType} onChange={(e) => setProvType(e.target.value)}>
@@ -958,7 +1084,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                           <option value="Diagnostic Center">Diagnostic Center</option>
                         </select>
                       </div>
-
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Service Category ▾</label>
                         <select style={compactSelectStyle} value={provCategory} onChange={(e) => setProvCategory(e.target.value)}>
@@ -968,20 +1093,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                           <option value="Therapeutic Wellness">Therapeutic Wellness</option>
                         </select>
                       </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 500 }}>Provider Description</label>
-                      <textarea
-                        rows={2}
-                        style={{ ...compactSelectStyle, resize: 'vertical' }}
-                        placeholder="Summary of specialties and credentials..."
-                        value={provDesc}
-                        onChange={(e) => setProvDesc(e.target.value)}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <Input
                         compact
                         label="Official Phone"
@@ -1002,19 +1113,28 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         error={errors.provEmail}
                         leftIcon={<Mail size={14} />}
                       />
+                      <Input
+                        compact
+                        label="Website (Optional)"
+                        placeholder="https://www.hospital.org"
+                        value={provWebsite}
+                        onChange={(e) => setProvWebsite(e.target.value)}
+                        leftIcon={<Globe size={14} />}
+                      />
+                      <div style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 500 }}>Provider Description</label>
+                        <textarea
+                          rows={2}
+                          style={{ ...compactSelectStyle, resize: 'vertical' }}
+                          placeholder="Summary of specialties and credentials..."
+                          value={provDesc}
+                          onChange={(e) => setProvDesc(e.target.value)}
+                        />
+                      </div>
                     </div>
 
-                    <Input
-                      compact
-                      label="Website (Optional)"
-                      placeholder="https://www.hospital.org"
-                      value={provWebsite}
-                      onChange={(e) => setProvWebsite(e.target.value)}
-                      leftIcon={<Globe size={14} />}
-                    />
-
                     {renderSectionHeader('Location')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       <Input
                         compact
                         label="City / Region"
@@ -1029,27 +1149,25 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         value={provServiceLocation}
                         onChange={(e) => setProvServiceLocation(e.target.value)}
                       />
+                      <Input
+                        compact
+                        label="Facility Address"
+                        placeholder="Africa Avenue, Kirkos"
+                        value={provAddress}
+                        onChange={(e) => setProvAddress(e.target.value)}
+                        leftIcon={<MapPin size={14} />}
+                      />
                     </div>
 
-                    <Input
-                      compact
-                      label="Facility Address"
-                      placeholder="Africa Avenue, Kirkos"
-                      value={provAddress}
-                      onChange={(e) => setProvAddress(e.target.value)}
-                      leftIcon={<MapPin size={14} />}
-                    />
-
                     {renderSectionHeader('Services & Hours')}
-                    <Input
-                      compact
-                      label="Services Offered"
-                      placeholder="e.g. Cardiology, MRI, ICU"
-                      value={provServicesOffered}
-                      onChange={(e) => setProvServicesOffered(e.target.value)}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                      <Input
+                        compact
+                        label="Services Offered"
+                        placeholder="e.g. Cardiology, MRI, ICU"
+                        value={provServicesOffered}
+                        onChange={(e) => setProvServicesOffered(e.target.value)}
+                      />
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Operating Hours</label>
                         <select style={compactSelectStyle} value={provOperatingHours} onChange={(e) => setProvOperatingHours(e.target.value)}>
@@ -1058,7 +1176,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                           <option value="Daily 9:00 AM - 6:00 PM">Daily 9AM - 6PM</option>
                         </select>
                       </div>
-
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Availability</label>
                         <select style={compactSelectStyle} value={provAvailability} onChange={(e) => setProvAvailability(e.target.value)}>
@@ -1070,7 +1187,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Documents')}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       {[
                         { key: 'license', label: 'Accreditation / Operating License' },
                         { key: 'boardCert', label: 'Medical Board Certification' },
@@ -1079,21 +1196,23 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                           key={doc.key}
                           onClick={() => setProvDocsUploaded((prev) => ({ ...prev, [doc.key]: !prev[doc.key] }))}
                           style={{
-                            border: '1px dashed var(--color-border-dark)',
-                            padding: '8px 12px',
-                            borderRadius: '6px',
+                            border: '1.5px dashed #cbd5e1',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
                             display: 'flex',
+                            flexDirection: 'column',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
+                            gap: '8px',
                             cursor: 'pointer',
-                            backgroundColor: provDocsUploaded[doc.key] ? 'rgba(16, 185, 129, 0.1)' : 'rgba(8, 23, 56, 0.5)',
+                            backgroundColor: provDocsUploaded[doc.key] ? 'rgba(16, 185, 129, 0.08)' : '#f8fafc',
+                            transition: 'all var(--transition-fast)',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Upload size={14} color="var(--color-gold-bright)" />
-                            <span style={{ fontSize: '0.82rem', color: '#ffffff' }}>{doc.label}</span>
+                            <Upload size={15} color="var(--color-gold-deep)" />
+                            <span style={{ fontSize: '0.82rem', color: 'var(--color-navy-dark)', fontWeight: 600, lineHeight: 1.3 }}>{doc.label}</span>
                           </div>
-                          <span style={{ fontSize: '0.75rem', color: provDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-mid)' }}>
+                          <span style={{ fontSize: '0.78rem', color: provDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700 }}>
                             {provDocsUploaded[doc.key] ? '✓ Uploaded' : 'Upload'}
                           </span>
                         </div>
@@ -1101,16 +1220,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {renderSectionHeader('Account Information')}
-                    <Input
-                      compact
-                      label="Contact Person"
-                      placeholder="Medical Director or Operations Manager"
-                      value={provContactPerson}
-                      onChange={(e) => setProvContactPerson(e.target.value)}
-                      error={errors.provContactPerson}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                      <Input
+                        compact
+                        label="Contact Person"
+                        placeholder="Medical Director or Operations Manager"
+                        value={provContactPerson}
+                        onChange={(e) => setProvContactPerson(e.target.value)}
+                        error={errors.provContactPerson}
+                      />
                       <Input
                         compact
                         label="Account Email"
@@ -1129,9 +1247,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         onChange={(e) => setProvContactPhone(e.target.value)}
                         leftIcon={<Phone size={14} />}
                       />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                       <div>
                         <Input
                           compact
@@ -1145,7 +1260,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         />
                         {renderPasswordStrength()}
                       </div>
-
                       <Input
                         compact
                         label="Confirm Password"
@@ -1163,227 +1277,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     </Button>
                   </>
                 )}
-
-                {/* ------------------------------------------------------------- */}
-                {/* OPTION 4: BUSINESS / ORGANIZATION FORM */}
-                {/* ------------------------------------------------------------- */}
-                {role === 'organization' && (
-                  <>
-                    {renderSectionHeader('Organization Information')}
-                    <Input
-                      compact
-                      label="Organization Name"
-                      placeholder="e.g. African Union Mission / Global Bank"
-                      value={orgName}
-                      onChange={(e) => setOrgName(e.target.value)}
-                      error={errors.orgName}
-                      leftIcon={<Building size={14} />}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Organization Type ▾</label>
-                        <select style={compactSelectStyle} value={orgType} onChange={(e) => setOrgType(e.target.value)}>
-                          <option value="Corporation / Enterprise">Corporation / Enterprise</option>
-                          <option value="Embassy / Diplomatic Mission">Embassy / Diplomatic</option>
-                          <option value="NGO / Non-Profit">NGO / Non-Profit</option>
-                          <option value="Government Agency">Government Agency</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Industry ▾</label>
-                        <select style={compactSelectStyle} value={orgIndustry} onChange={(e) => setOrgIndustry(e.target.value)}>
-                          <option value="Healthcare & Life Sciences">Healthcare & Life Sciences</option>
-                          <option value="Diplomatic & International">Diplomatic & International</option>
-                          <option value="Banking & Financial">Banking & Financial</option>
-                          <option value="Corporate Health Benefits">Corporate Health Benefits</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 500 }}>Description</label>
-                      <textarea
-                        rows={2}
-                        style={{ ...compactSelectStyle, resize: 'vertical' }}
-                        placeholder="Institutional mission or employee health scope..."
-                        value={orgDesc}
-                        onChange={(e) => setOrgDesc(e.target.value)}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <Input
-                        compact
-                        label="Official Phone"
-                        type="tel"
-                        placeholder="+251-11-..."
-                        value={orgPhone}
-                        onChange={(e) => setOrgPhone(e.target.value)}
-                        leftIcon={<Phone size={14} />}
-                      />
-                      <Input
-                        compact
-                        label="Official Email"
-                        type="email"
-                        placeholder="admin@enterprise.org"
-                        value={orgEmail}
-                        onChange={(e) => setOrgEmail(e.target.value)}
-                        error={errors.orgEmail}
-                        leftIcon={<Mail size={14} />}
-                      />
-                    </div>
-
-                    <Input
-                      compact
-                      label="Website (Optional)"
-                      placeholder="https://www.organization.org"
-                      value={orgWebsite}
-                      onChange={(e) => setOrgWebsite(e.target.value)}
-                      leftIcon={<Globe size={14} />}
-                    />
-
-                    {renderSectionHeader('Location')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Country</label>
-                        <select style={compactSelectStyle} value={orgCountry} onChange={(e) => setOrgCountry(e.target.value)}>
-                          <option value="Ethiopia">Ethiopia</option>
-                          <option value="International">International</option>
-                        </select>
-                      </div>
-                      <Input
-                        compact
-                        label="City"
-                        placeholder="Addis Ababa"
-                        value={orgCity}
-                        onChange={(e) => setOrgCity(e.target.value)}
-                      />
-                    </div>
-
-                    <Input
-                      compact
-                      label="Headquarters Address"
-                      placeholder="HQ Tower / Campus"
-                      value={orgAddress}
-                      onChange={(e) => setOrgAddress(e.target.value)}
-                      leftIcon={<MapPin size={14} />}
-                    />
-
-                    {renderSectionHeader('Representative Information')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <Input
-                        compact
-                        label="Representative Name"
-                        placeholder="e.g. Dr. Hanna Tesfaye"
-                        value={orgRepName}
-                        onChange={(e) => setOrgRepName(e.target.value)}
-                        error={errors.orgRepName}
-                      />
-                      <Input
-                        compact
-                        label="Position / Role"
-                        placeholder="Head of HR"
-                        value={orgRepRole}
-                        onChange={(e) => setOrgRepRole(e.target.value)}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <Input
-                        compact
-                        label="Representative Email"
-                        type="email"
-                        placeholder="rep@enterprise.org"
-                        value={orgRepEmail}
-                        onChange={(e) => setOrgRepEmail(e.target.value)}
-                        leftIcon={<Mail size={14} />}
-                      />
-                      <Input
-                        compact
-                        label="Representative Phone"
-                        type="tel"
-                        placeholder="+251-911-..."
-                        value={orgRepPhone}
-                        onChange={(e) => setOrgRepPhone(e.target.value)}
-                        leftIcon={<Phone size={14} />}
-                      />
-                    </div>
-
-                    {renderSectionHeader('Documents')}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {[
-                        { key: 'registration', label: 'Institutional Charter / Legal Registration' },
-                        { key: 'operatingLicense', label: 'Delegation / Operating License' },
-                      ].map((doc) => (
-                        <div
-                          key={doc.key}
-                          onClick={() => setOrgDocsUploaded((prev) => ({ ...prev, [doc.key]: !prev[doc.key] }))}
-                          style={{
-                            border: '1px dashed var(--color-border-dark)',
-                            padding: '8px 12px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            backgroundColor: orgDocsUploaded[doc.key] ? 'rgba(16, 185, 129, 0.1)' : 'rgba(8, 23, 56, 0.5)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Upload size={14} color="var(--color-gold-bright)" />
-                            <span style={{ fontSize: '0.82rem', color: '#ffffff' }}>{doc.label}</span>
-                          </div>
-                          <span style={{ fontSize: '0.75rem', color: orgDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-mid)' }}>
-                            {orgDocsUploaded[doc.key] ? '✓ Uploaded' : 'Upload'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {renderSectionHeader('Account')}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <Input
-                          compact
-                          label="Password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Min 8 characters"
-                          value={orgPassword}
-                          onChange={(e) => setOrgPassword(e.target.value)}
-                          error={errors.orgPassword}
-                          leftIcon={<Lock size={14} />}
-                        />
-                        {renderPasswordStrength()}
-                      </div>
-
-                      <Input
-                        compact
-                        label="Confirm Password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Re-enter password"
-                        value={orgConfirmPassword}
-                        onChange={(e) => setOrgConfirmPassword(e.target.value)}
-                        error={errors.orgConfirm}
-                        leftIcon={<Lock size={16} />}
-                      />
-                    </div>
-
-                    <Button type="submit" variant="gold" size="md" fullWidth disabled={isSubmitting} style={{ marginTop: '14px' }}>
-                      {isSubmitting ? 'Registering Organization...' : 'Register Organization'}
-                    </Button>
-                  </>
-                )}
               </form>
 
-              <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '0.85rem', color: 'var(--color-text-muted-dark)' }}>
+              <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
                 Already registered?{' '}
                 <button
                   onClick={() => onNavigate('login')}
-                  style={{ color: 'var(--color-gold-bright)', fontWeight: 600 }}
+                  style={{ color: 'var(--color-gold-deep)', fontWeight: 700 }}
                 >
-                  Sign In to Your Portal
+                  Sign In
                 </button>
               </div>
             </div>
@@ -1393,11 +1295,19 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           {/* STEP 3: SUBMITTED SUCCESS STATE */}
           {/* ========================================================================= */}
           {submittedSuccess && (
-            <Card style={{ textAlign: 'center', padding: '36px 24px' }}>
+            <Card
+              style={{
+                textAlign: 'center',
+                padding: '36px 24px',
+                backgroundColor: '#ffffff',
+                border: '1px solid var(--color-border-light)',
+                boxShadow: 'var(--shadow-lg)',
+              }}
+            >
               <div
                 style={{
-                  width: '52px',
-                  height: '52px',
+                  width: '56px',
+                  height: '56px',
                   borderRadius: '50%',
                   background: 'rgba(16, 185, 129, 0.15)',
                   color: 'var(--color-success)',
@@ -1407,11 +1317,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   margin: '0 auto 16px',
                 }}
               >
-                <CheckCircle2 size={30} />
+                <CheckCircle2 size={32} />
               </div>
 
-              <h3 style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '6px' }}>
-                Registration Submitted
+              <h3 style={{ fontSize: '1.5rem', color: 'var(--color-navy-dark)', fontWeight: 700, marginBottom: '6px' }}>
+                {role === 'customer' && 'Account Created & Active'}
+                {role === 'merchant' && 'Application Submitted!'}
+                {role === 'provider' && 'Application Submitted!'}
               </h3>
 
               <div
@@ -1419,29 +1331,103 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '5px 14px',
+                  padding: '6px 16px',
                   borderRadius: '999px',
-                  backgroundColor: 'rgba(190, 155, 73, 0.15)',
+                  backgroundColor: 'rgba(190, 155, 73, 0.12)',
                   border: '1px solid var(--color-gold-mid)',
-                  margin: '6px auto 16px',
+                  margin: '8px auto 16px',
                 }}
               >
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-gold-bright)' }}>
-                  {currentRoleConfig.title} Account Created
+                {currentRoleConfig.icon}
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-deep)' }}>
+                  {role === 'customer' && 'Your Customer Account Has Been Created'}
+                  {role === 'merchant' && 'Your Merchant Account Has Been Created'}
+                  {role === 'provider' && 'Your Service Provider Account Has Been Created'}
                 </span>
               </div>
 
-              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '22px' }}>
-                {role === 'customer'
-                  ? 'Your customer account is active! You can now sign in to discover, book, manage, and pay for services.'
-                  : 'Your application has been received and queued for KYC & regulatory verification. Our team reviews submissions within our verified SLA.'}
-              </p>
+              {/* Role-aware body copy */}
+              {role === 'customer' && (
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '24px' }}>
+                  Welcome, {custFirstName}! Your account is active and ready to use. Sign in below to discover and book verified medical services.
+                </p>
+              )}
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              {role === 'merchant' && (
+                <>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '16px' }}>
+                    Your Merchant account has been created and submitted for review.
+                  </p>
+                  <div
+                    style={{
+                      backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      borderRadius: '10px',
+                      padding: '12px 16px',
+                      marginBottom: '20px',
+                      textAlign: 'left',
+                      display: 'flex',
+                      gap: '10px',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem', marginTop: '1px' }}>⏳</span>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '3px' }}>
+                        Pending Compliance Review
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#78350f', lineHeight: 1.5 }}>
+                        Your account is currently pending review by our compliance team. You may sign in once approved. You will be notified via the email address provided.
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {role === 'provider' && (
+                <>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '16px' }}>
+                    Your Service Provider account has been created and submitted for accreditation.
+                  </p>
+                  <div
+                    style={{
+                      backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      borderRadius: '10px',
+                      padding: '12px 16px',
+                      marginBottom: '20px',
+                      textAlign: 'left',
+                      display: 'flex',
+                      gap: '10px',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem', marginTop: '1px' }}>⏳</span>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '3px' }}>
+                        Pending Accreditation Verification
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#78350f', lineHeight: 1.5 }}>
+                        Your account is currently pending accreditation verification. Our accreditation team will review your submitted documents and credentials. You will be notified once the review is complete.
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                 <Button variant="gold" size="sm" onClick={() => onNavigate('login')}>
-                  Proceed to Login
+                  Go to Login
                 </Button>
-                <Button variant="outline-gold" size="sm" onClick={() => onNavigate('home')}>
+                <Button
+                  size="sm"
+                  style={{
+                    background: '#f1f5f9',
+                    color: 'var(--color-navy-dark)',
+                    border: '1px solid #cbd5e1',
+                  }}
+                  onClick={() => onNavigate('home')}
+                >
                   Return to Home
                 </Button>
               </div>

@@ -7,62 +7,71 @@
 ---
 
 ## Original User Prompt
+
 > use System Directive\SYSTEM_DIRECTIVE.md .only ignore Status folder. TASK 01: Build 3 Frontend Pages — Home, Login, Register
 >
 > PROJECT: ODS Global Network
-> ROOT: All paths are relative to the project root (Ods-Global-Network). 
+> ROOT: All paths are relative to the project root (Ods-Global-Network).
 > Absolute paths are strictly forbidden in any file, config, comment, or output.
 >
-> ## Objective
+> ### Objective
+>
 > Build three production-ready pages for our new frontend, built from scratch in ./Frontend:
+>
 > 1. Home Page
 > 2. Login Page
 > 3. Register Page
 >
-> ## Sources to Use
+> ### Sources to Use
 >
 > **Brand & Design (mandatory):**
+>
 > - Pull all visual identity — colors, logo, typography, spacing, tone — strictly from ./Assets.
-> - Do not invent brand colors, fonts, or logos. If something needed is missing from ./Assets, 
+> - Do not invent brand colors, fonts, or logos. If something needed is missing from ./Assets,
 >   flag it in the Implementation Plan instead of guessing.
 >
 > **Content & Domain Inspiration (reference only, do not copy code or architecture):**
-> - Read ./resource/KPIs & SCOPES ODS GLOBAL NET.txt for the platform's purpose, KPIs, 
->   target users, and scope — use this to inform page copy, messaging, and value propositions 
+>
+> - Read ./resource/KPIs & SCOPES ODS GLOBAL NET.txt for the platform's purpose, KPIs,
+>   target users, and scope — use this to inform page copy, messaging, and value propositions
 >   on the Home page.
-> - You may reference ./resource for UX/content inspiration only (e.g., what fields a 
+> - You may reference ./resource for UX/content inspiration only (e.g., what fields a
 >   registration form needs, what roles exist, what a login flow typically looks like).
-> - ./resource is READ-ONLY legacy reference. Do NOT copy its code, its security patterns, 
->   or its architecture. Per the audit findings, that codebase has known P0/P1 security 
->   issues (e.g., JWT in URL, hardcoded fallback secrets, tokens in localStorage) — 
+> - ./resource is READ-ONLY legacy reference. Do NOT copy its code, its security patterns,
+>   or its architecture. Per the audit findings, that codebase has known P0/P1 security
+>   issues (e.g., JWT in URL, hardcoded fallback secrets, tokens in localStorage) —
 >   none of these patterns are to be replicated.
 >
-> ## Constraints
+> ### Constraints
+>
 > - Do not touch ./resource, ./System Directive, or ./Assets — read-only for this task.
 > - New pages go into ./Frontend only.
-> - Follow whatever architecture/stack decision is defined in ./System Directive 
+> - Follow whatever architecture/stack decision is defined in ./System Directive
 >   (check there first; if no stack is specified yet, propose one in your Implementation Plan).
-> - Registration form fields, roles, and validation logic should be informed by the KPIs/Scopes 
+> - Registration form fields, roles, and validation logic should be informed by the KPIs/Scopes
 >   document and resource audit — but re-designed securely from scratch, not ported as-is.
 >
-> ## Required Workflow (mandatory — do not skip steps)
-> 1. **Action Plan** — Summarize your understanding of Home/Login/Register requirements, 
+> ### Required Workflow (mandatory — do not skip steps)
+>
+> 1. **Action Plan** — Summarize your understanding of Home/Login/Register requirements,
 >    proposed component structure, and what you'll pull from Assets/resource.
 > 2. **Implementation Plan** — Write a detailed implementation plan to:
 >    ./Progress/YYYY-MM-DD_HHMM_task01-home-login-register.md
-> 3. **Wait for approval** — Do not write any code until you receive the exact phrase: 
+> 3. **Wait for approval** — Do not write any code until you receive the exact phrase:
 >    "Approved: proceed"
 > 4. **Execution** — Build the 3 pages inside ./Frontend.
-> 5. **Documentation Update** — Update ./Status with what was accomplished, and note any 
+> 5. **Documentation Update** — Update ./Status with what was accomplished, and note any
 >    open questions or missing Assets.
 >
-> ## Output for Step 1 (start here)
-> Produce the Action Plan now. Do not proceed to the Implementation Plan or any code 
+> ### Output for Step 1 (start here)
+>
+> Produce the Action Plan now. Do not proceed to the Implementation Plan or any code
 > until I review and confirm the Action Plan.
 
 ---
 
 ## Action Plan (High-Level Summary)
+
 We built a production-ready frontend foundation from scratch in `./Frontend` containing three responsive pages (Home, Login, and Register), strictly pulling visual styling from `./Assets` and domain requirements from `./resource/KPIs & SCOPES ODS GLOBAL NET .txt`.
 
 1. **Scaffold the Frontend Foundation**: Bootstrapped a clean, lightweight React + TypeScript application with Vite inside `./Frontend` with strictly relative paths and zero external dependencies outside necessary tooling.
@@ -77,9 +86,11 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ## Implementation Details
 
 ### Phase 1: Frontend Scaffolding & Design System Setup
+
 **Rationale:** Establishing a clean, performant React + TypeScript foundation in `./Frontend` with variable font bindings and official brand tokens ensures visual consistency and prevents technical debt.
 
 **Steps:**
+
 - [x] Initialize Vite + React (TypeScript) project files inside `./Frontend` (`package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`).
 - [x] Configure global design tokens in `./Frontend/src/styles/tokens.css` with exact hex colors, typography scales, shadows, and borders matching `./Assets/BRAND_GUIDELINES.md`.
 - [x] Bind `@font-face` declarations in `./Frontend/src/styles/fonts.css` linking to `GoogleSansFlex-Variable.ttf` and `Inter-Variable.ttf` from `./Assets/fonts`.
@@ -94,9 +105,11 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ---
 
 ### Phase 2: Home Page Implementation
+
 **Rationale:** The Home Page communicates the unified value proposition of ODS Global Network / Wanaw Health & Wellness, driving customer appointments and merchant onboarding as outlined in project KPIs.
 
 **Steps:**
+
 - [x] Build `./Frontend/src/pages/HomePage.tsx` integrating luxury dark/light contrast surfaces.
 - [x] Implement `HeroSection`:
   - Headline: *"Elevate Your Well-Being with ODS Global Network"*.
@@ -113,9 +126,11 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ---
 
 ### Phase 3: Login Page Implementation
+
 **Rationale:** Provides an accessible, security-hardened authentication experience for all platform roles without repeating legacy vulnerabilities (no tokens in URLs, no plaintext tokens).
 
 **Steps:**
+
 - [x] Build `./Frontend/src/pages/LoginPage.tsx` with a responsive split-screen layout.
 - [x] Left Brand Column: Displays the ODS Gold vector logo (`ods-logo-gold-primary.svg`), subtle luxury brand pattern (`brand-pattern.png`), and platform security badges.
 - [x] Right Form Column:
@@ -129,9 +144,11 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ---
 
 ### Phase 4: Register Page Implementation
+
 **Rationale:** Onboards customers and service providers through a structured multi-role registration flow aligned with the platform's merchant verification and customer portal KPIs.
 
 **Steps:**
+
 - [x] Build `./Frontend/src/pages/RegisterPage.tsx` with tabbed onboarding architecture.
 - [x] Tab 1: **Customer Registration**:
   - Full Name, Email Address, Phone Number, Password, Password Confirmation.
@@ -148,9 +165,11 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ---
 
 ### Phase 5: Routing, Verification & Documentation
+
 **Rationale:** Ties the 3 pages together with smooth client-side page switching, validates visual aesthetics against brand guidelines, and updates tracking documentation.
 
 **Steps:**
+
 - [x] Configure top-level view router in `./Frontend/src/App.tsx` allowing seamless switching between Home (`home`), Login (`login`), and Register (`register`).
 - [x] Test desktop, tablet, and mobile responsiveness.
 - [x] Validate typography rendering (`Google Sans Flex` and `Inter`) and vector icon scaling.
@@ -159,6 +178,7 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ---
 
 ## Verification Checklist
+
 - [x] Vite dev server starts with zero errors in `./Frontend`
 - [x] Home page renders responsive Hero, Category Grid, Gifting Banner, and Partner Trust Bar
 - [x] Login page renders split-screen layout with role selection and validation states
@@ -173,6 +193,7 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ---
 
 ## Approval
+
 **Approval status:** Approved  
 **Approved by:** User  
 **Approval phrase received:** "Approved: proceed"  
@@ -181,6 +202,7 @@ We built a production-ready frontend foundation from scratch in `./Frontend` con
 ---
 
 ## Post-Execution Notes
+
 - Successfully bootstrapped modern Vite + React + TypeScript web application in `./Frontend` with zero third-party component dependencies beyond React and `lucide-react`.
 - All CSS tokens accurately map to ODS Royal Navy (`#0F285B`), Wanaw Forest Green (`#1C2B21`), and Metallic Gold Gradient (`#8D7338` → `#F5E189`).
 - Production build command `npm run build` ran cleanly with exit code 0 (`tsc && vite build`).

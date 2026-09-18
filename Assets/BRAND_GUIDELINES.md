@@ -10,7 +10,7 @@
 
 The `./Assets` directory is organized into a standardized, developer-ready hierarchy using paths relative to the project root:
 
-```
+```text
 ./Assets/
 ├── ODS_BRAND_GUIDELINE.pdf        # Official Corporate Brand Manual (PDF)
 ├── BRAND_GUIDELINES.md            # Living developer guide & color token reference
@@ -75,6 +75,7 @@ The `./Assets` directory is organized into a standardized, developer-ready hiera
 Derived from vector source gradients and corporate identity:
 
 ### Primary Brand Colors (Extracted from ODS_BRAND_GUIDELINE.pdf)
+
 | Role | Color Name | Hex Code | Purpose & Usage |
 | :--- | :--- | :--- | :--- |
 | **Document & Brand Background** | ODS Deep Navy Blue | `#0F285B` | Official document background across all pages in PDF (RGB: 15, 40, 91) |
@@ -85,13 +86,14 @@ Derived from vector source gradients and corporate identity:
 | **Pure White** | Crisp White | `#FFFFFF` | Light mode cards, high-contrast typography |
 
 ### Metallic Gold Gradient Palette (Extracted from Vector Mark)
+
 | Gradient Stop | Color Name | Hex Code | Visual Tone |
 | :--- | :--- | :--- | :--- |
 | `0.05` | Deep Bronze Gold | `#8D7338` | Shadow and depth in metallic elements |
 | `0.27` | Classic Gold | `#BE9B49` | Rich mid-tone gold |
 | `0.54` | Luminous Gold | `#EDC45B` | Vibrant core gold shine |
 | `0.79` | Warm Metallic | `#BB9F54` | Subtle metallic sheen |
-| `1.00` | Champagne Highlight| `#F5E189` | Edge reflection and highlight glare |
+| `1.00` | Champagne Highlight | `#F5E189` | Edge reflection and highlight glare |
 
 ---
 
@@ -112,6 +114,7 @@ The official brand fonts are stored in `./Assets/fonts`:
 ---
 
 ## 4. UI Implementation Rules
+
 - **Logo Choice**:
   - On dark backgrounds (`#1C2B21` or `#0A110D`): Use `./Assets/brand/vector/ods-logo-gold-primary.svg` or `ods-mark-gold.svg`.
   - On clean light backgrounds (`#FFFFFF` or `#F8FAF9`): Use `./Assets/brand/vector/ods-logo-blue-primary.svg` or `ods-mark-blue.svg`.
