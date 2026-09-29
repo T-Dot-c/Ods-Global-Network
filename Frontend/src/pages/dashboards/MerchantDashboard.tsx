@@ -28,16 +28,16 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({ onNavigate
   ];
 
   const statCards: StatCardItem[] = [
-    { label: 'Services', value: 0, subtext: 'Catalog items', icon: <Briefcase size={22} /> },
-    { label: 'Bookings', value: 0, subtext: 'Received orders', icon: <Calendar size={22} /> },
-    { label: 'Customers', value: 0, subtext: 'Registered clients', icon: <Users size={22} /> },
+    { label: 'Services Catalog', value: 0, subtext: 'Active service listings', icon: <Briefcase size={22} /> },
+    { label: 'Orders & Bookings', value: 0, subtext: 'Incoming client reservations', icon: <Calendar size={22} /> },
+    { label: 'Client Accounts', value: 0, subtext: 'Registered customers served', icon: <Users size={22} /> },
   ];
 
   const quickActions: QuickActionItem[] = [
-    { label: 'Manage Business', icon: <Building2 size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Edit business profile & credentials.') },
-    { label: 'Manage Services', icon: <Layers size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Add or modify services catalog.') },
-    { label: 'View Bookings', icon: <Calendar size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Check incoming orders & reservations.') },
-    { label: 'Update Availability', icon: <Clock size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Set store hours and fulfillment schedule.') },
+    { label: 'Business Profile', icon: <Building2 size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Manage merchant business identity & trade license.') },
+    { label: 'Manage Catalog', icon: <Layers size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Add or update health and wellness offerings.') },
+    { label: 'View Bookings', icon: <Calendar size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Manage appointment schedules and customer requests.') },
+    { label: 'Operating Hours', icon: <Clock size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Configure business availability and time slots.') },
   ];
 
   return (

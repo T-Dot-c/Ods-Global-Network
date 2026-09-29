@@ -11,7 +11,7 @@
  */
 import React from 'react';
 import { useAuth, UserRole, ApprovalStatus } from '../../context/AuthContext';
-import { LogOut, ShieldCheck } from 'lucide-react';
+import { LogOut, ShieldCheck, CheckCircle2, Clock, Construction } from 'lucide-react';
 
 interface DashboardShellProps {
   onNavigate: (view: string) => void;
@@ -173,7 +173,12 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ onNavigate }) =>
                 letterSpacing: '0.03em',
               }}
             >
-              {user.approval_status === 'approved' ? '✓' : '⏳'} Status: {statusStyle.label}
+              {user.approval_status === 'approved' ? (
+                <CheckCircle2 size={14} color={statusStyle.text} />
+              ) : (
+                <Clock size={14} color={statusStyle.text} />
+              )}
+              <span>Status: {statusStyle.label}</span>
             </span>
           )}
         </div>
@@ -197,7 +202,9 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ onNavigate }) =>
             marginBottom: '32px',
           }}
         >
-          <div style={{ fontSize: '1.5rem', marginBottom: '10px' }}>🚧</div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+            <Construction size={28} color="var(--color-gold-bright)" />
+          </div>
           <p
             style={{
               fontSize: '0.9rem',

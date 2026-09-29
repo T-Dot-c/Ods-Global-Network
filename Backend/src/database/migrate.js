@@ -44,14 +44,14 @@ async function run() {
       .filter(f => f.endsWith('.sql'))
       .sort();
 
-    console.log(`\n📂 Found ${files.length} migration file(s) in ./migrations/\n`);
+    console.log(`\n[Migrations] Found ${files.length} migration file(s) in ./migrations/\n`);
 
     let ran = 0;
     let skipped = 0;
 
     for (const file of files) {
       if (applied.has(file)) {
-        console.log(`  ⏭  Skipping (already applied): ${file}`);
+        console.log(`  [Skipped] (already applied): ${file}`);
         skipped++;
         continue;
       }
@@ -67,17 +67,17 @@ async function run() {
           [file]
         );
         await client.query('COMMIT');
-        console.log(`  ✅  Applied: ${file}`);
+        console.log(`  [Applied] ${file}`);
         ran++;
       } catch (err) {
         await client.query('ROLLBACK');
-        console.error(`  ❌  Failed:  ${file}`);
+        console.error(`  [Failed]  ${file}`);
         console.error(`      ${err.message}`);
         process.exit(1);
       }
     }
 
-    console.log(`\n✅ Migration complete. Applied: ${ran}  |  Skipped: ${skipped}\n`);
+    console.log(`\n[Migrations] Complete. Applied: ${ran}  |  Skipped: ${skipped}\n`);
   } finally {
     client.release();
     await pool.end();
@@ -85,6 +85,6 @@ async function run() {
 }
 
 run().catch(err => {
-  console.error('\n❌ Migration runner error:', err.message);
+  console.error('\n[Error] Migration runner error:', err.message);
   process.exit(1);
 });

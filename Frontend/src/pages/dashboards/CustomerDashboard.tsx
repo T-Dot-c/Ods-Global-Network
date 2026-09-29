@@ -28,16 +28,16 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ onNavigate
   ];
 
   const statCards: StatCardItem[] = [
-    { label: 'Bookings', value: 0, subtext: 'Scheduled sessions', icon: <Calendar size={22} /> },
-    { label: 'Payments', value: 0, subtext: 'Total transactions', icon: <CreditCard size={22} /> },
-    { label: 'Gift Cards', value: 0, subtext: 'Active balances', icon: <Gift size={22} /> },
+    { label: 'Bookings', value: 0, subtext: 'Upcoming appointments & tests', icon: <Calendar size={22} /> },
+    { label: 'Payments', value: 0, subtext: 'Transactions & invoices', icon: <CreditCard size={22} /> },
+    { label: 'Gift Vouchers', value: 0, subtext: 'Active balances & redemptions', icon: <Gift size={22} /> },
   ];
 
   const quickActions: QuickActionItem[] = [
-    { label: 'Find Services', icon: <Search size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Explore verified medical and wellness services.') },
-    { label: 'Book Appointment', icon: <PlusCircle size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Schedule appointment modal.') },
-    { label: 'Buy Gift Card', icon: <Gift size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Purchase wellness gift cards.') },
-    { label: 'View History', icon: <History size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Viewing past appointments & transactions.') },
+    { label: 'Find Services', icon: <Search size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Discover verified hospitals, clinics, pharmacies & wellness centers.') },
+    { label: 'Book Appointment', icon: <PlusCircle size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Schedule medical consultations & laboratory tests.') },
+    { label: 'Buy Gift Card', icon: <Gift size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Purchase ODS Basic or VIP digital wellness vouchers.') },
+    { label: 'View History', icon: <History size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Inspect past appointments, treatments & payments.') },
   ];
 
   return (

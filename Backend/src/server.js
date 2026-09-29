@@ -17,6 +17,14 @@ const app  = express();
 const PORT = process.env.PORT || 3001;
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 
+/* ── Environment & Security Validation ──────────────────────── */
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'CHANGE_ME_IN_PRODUCTION' || process.env.JWT_SECRET.length < 32) {
+    console.error('[FATAL SECURITY ERROR] In production, JWT_SECRET must be set to a secure string of at least 32 characters.');
+    process.exit(1);
+  }
+}
+
 /* ── Security headers ─────────────────────────────────────── */
 app.use(helmet());
 
@@ -69,7 +77,7 @@ app.use((err, _req, res, _next) => {
 
 /* ── Start ────────────────────────────────────────────────── */
 app.listen(PORT, () => {
-  console.log(`✅ ODS API running on http://localhost:${PORT}`);
+  console.log(`[ODS API] Running on http://localhost:${PORT}`);
   console.log(`   CORS origin: ${FRONTEND_ORIGIN}`);
   console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
 });

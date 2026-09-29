@@ -38,51 +38,51 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
-  // 04. Services & Provider Categories (9 Categories)
+  // 04. Services & Provider Categories (9 Authoritative Categories from Section 4)
   const serviceCategories = [
     {
       title: 'Hospitals',
-      description: 'Connect with healthcare institutions and access available services.',
+      description: 'Comprehensive inpatient care, specialized surgery, emergency medicine, and accredited clinical facilities.',
       icon: <Building2 size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Clinics',
-      description: 'Discover clinics and manage appointments through the platform.',
+      description: 'Outpatient consultations, routine checkups, specialized family practice, and urgent care clinics.',
       icon: <StethoscopeIcon size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Pharmacies',
-      description: 'Connect with pharmacies and access available services.',
+      description: 'Prescription fulfillment, licensed digital dispensaries, certified pharmaceutical delivery, and wellness supplies.',
       icon: <Pill size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Laboratories',
-      description: 'Find laboratory and diagnostic service providers.',
+      description: 'Advanced pathology screening, clinical blood diagnostics, molecular testing, and verified lab results.',
       icon: <Activity size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Wellness Centers',
-      description: 'Discover wellness and personal care services.',
+      description: 'Therapeutic spas, stress management, holistic physiotherapy, mindfulness, yoga, and restorative personal care.',
       icon: <HeartPulse size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Ambulance Services',
-      description: 'Access available ambulance and emergency transportation services.',
+      description: '24/7 rapid emergency medical response, certified paramedic dispatch, and safe patient transfer logistics.',
       icon: <Truck size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Home Care',
-      description: 'Connect with home-based care providers.',
+      description: 'Licensed visiting nurses, elder care companions, post-op support, and compassionate home healthcare.',
       icon: <UserCheck size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Specialists',
-      description: 'Find specialized professionals and services.',
+      description: 'Board-certified medical specialists across cardiology, dermatology, pediatrics, internal medicine, and surgery.',
       icon: <Award size={26} color="var(--color-navy)" />,
     },
     {
       title: 'Diagnostic Centers',
-      description: 'Access diagnostic and related healthcare services.',
+      description: 'State-of-the-art medical imaging, ultrasound, MRI, CT scanning, and comprehensive executive health screenings.',
       icon: <BarChart3 size={26} color="var(--color-navy)" />,
     },
   ];
@@ -319,7 +319,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           >
             <Sparkles size={16} color="var(--color-gold-bright)" />
             <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-highlight)', letterSpacing: '1px' }}>
-              ONE PLATFORM. CONNECTED SERVICES.
+              &ldquo;ETHIOPIAN BLESSINGS, MODERN GIFTING&rdquo;
             </span>
           </div>
 
@@ -348,7 +348,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               lineHeight: 1.7,
             }}
           >
-            ODS Global Net brings customers, merchants, and service providers together through a seamless digital ecosystem designed to make discovering, booking, managing, and paying for services easier.
+            Book, gift, and manage health, wellness, and hotel room services &mdash; all in one platform. Connecting customers, accredited healthcare merchants, and specialized providers across Ethiopia.
           </p>
 
           {/* Action CTAs */}
@@ -373,6 +373,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               }}
             >
               Explore Services
+            </Button>
+            <Button
+              size="lg"
+              variant="outline-gold"
+              onClick={() => {
+                const el = document.getElementById('gifting');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              <Gift size={18} /> Send a Gift
             </Button>
           </div>
 
@@ -400,6 +410,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <span style={{ color: 'var(--color-border-dark)' }}>•</span>
             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-gold-bright)', letterSpacing: '0.5px' }}>
               Pay
+            </span>
+            <span style={{ color: 'var(--color-border-dark)' }}>•</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-gold-bright)', letterSpacing: '0.5px' }}>
+              Gift
             </span>
             <span style={{ color: 'var(--color-border-dark)' }}>•</span>
             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-gold-bright)', letterSpacing: '0.5px' }}>
@@ -453,12 +467,29 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               <h2 style={{ fontSize: '2.5rem', lineHeight: 1.2, marginBottom: '22px' }}>
                 A Smarter Way to <span className="gold-gradient-text">Access and Manage</span> Services
               </h2>
-              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1.05rem', lineHeight: 1.8, marginBottom: '20px' }}>
-                ODS Global Net is a digital platform designed to simplify how people discover and access services while giving businesses and service providers the tools they need to manage their operations digitally.
+              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1.02rem', lineHeight: 1.8, marginBottom: '16px' }}>
+                At <strong style={{ color: '#ffffff' }}>ODS Global Network Gifting</strong>, we are a pioneering digital platform connecting users with trusted providers across medical care, wellness spas, 24/7 ambulance services, diagnostic laboratories, and hospitality. Headquartered in Addis Ababa, Ethiopia, we make health, self-care, and comfort accessible anytime, anywhere.
               </p>
-              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1.05rem', lineHeight: 1.8, marginBottom: '32px' }}>
-                From finding trusted service providers to booking appointments, making payments, managing accounts, and receiving notifications, ODS Global Net brings essential services together in one connected platform.
+              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1.02rem', lineHeight: 1.8, marginBottom: '24px' }}>
+                Whether booking a specialized doctor's consultation, ordering prescription deliveries, scheduling rapid lab tests, or sending cultural wellness vouchers to loved ones, ODS Global Net delivers seamless, reliable options right at your fingertips.
               </p>
+
+              {/* Mission & Vision Mini-Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
+                <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)', borderLeft: '4px solid var(--color-gold-bright)', padding: '16px', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-bright)', textTransform: 'uppercase', marginBottom: '6px' }}>Our Mission</div>
+                  <p style={{ fontSize: '0.88rem', color: '#cbd5e1', lineHeight: '1.6' }}>
+                    Connecting people to better healthcare through one intelligent digital platform that makes quality care accessible, convenient, and connected for everyone.
+                  </p>
+                </div>
+                <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)', borderLeft: '4px solid var(--color-gold-bright)', padding: '16px', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-gold-bright)', textTransform: 'uppercase', marginBottom: '6px' }}>Our Vision</div>
+                  <p style={{ fontSize: '0.88rem', color: '#cbd5e1', lineHeight: '1.6' }}>
+                    To become the leading digital healthcare ecosystem transforming how Africa accesses, delivers, and experiences healthcare.
+                  </p>
+                </div>
+              </div>
+
               <Button
                 variant="gold"
                 onClick={() => {
@@ -1205,7 +1236,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 Give More With <span className="gold-gradient-text">ODS Gift Cards</span>
               </h2>
               <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1.05rem', lineHeight: 1.7, marginBottom: '28px' }}>
-                Purchase and redeem digital gift cards through the ODS Global Net platform. Manage balances, transactions, and expiry information from one place.
+                Transform healthcare and self-care into meaningful digital experiences. Whether gifting as an individual (for family and diaspora relatives) or as an organization (for corporate wellness and rewards), ODS Global Net delivers seamless digital redemption.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '36px' }}>
@@ -1217,9 +1248,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 ))}
               </div>
 
-              <Button size="lg" variant="gold" onClick={() => onNavigate('register')}>
-                Explore Gift Cards <ArrowRight size={18} />
-              </Button>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <Button size="lg" variant="gold" onClick={() => onNavigate('register')}>
+                  Purchase Gift Card <ArrowRight size={18} />
+                </Button>
+                <Button size="lg" variant="outline-gold" onClick={() => onNavigate('login')}>
+                  Redeem Voucher
+                </Button>
+              </div>
             </div>
 
             {/* Voucher Card Mockup */}
@@ -1244,7 +1280,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 ETB 5,000.00
               </div>
               <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.9rem', marginBottom: '32px' }}>
-                Valid at accredited hospitals, clinics, diagnostic centers & spas across the ODS Global Net.
+                Valid at accredited hospitals, clinics, diagnostic centers &amp; spas across the ODS Global Net.
               </p>
 
               <div
@@ -1266,6 +1302,75 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </div>
                 <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>Active</div>
               </div>
+            </div>
+          </div>
+
+          {/* Gifting Packages: Basic vs. VIP */}
+          <div style={{ marginTop: '64px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(190, 155, 73, 0.3)', borderRadius: '16px', padding: '32px' }}>
+              <div style={{ color: 'var(--color-gold-bright)', fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>
+                Basic Gift Packages
+              </div>
+              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '16px' }}>
+                Affordable wellness treatments, diagnostic checkups, or hotel room stay packages ideal for individuals, employee tokens, or diaspora family support.
+              </p>
+              <div style={{ color: '#e2e8f0', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle2 size={14} color="var(--color-gold-bright)" style={{ flexShrink: 0 }} />
+                <span>Individual &amp; Corporate • Instant Code SMS • Flexible Balance</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)', border: '1px solid var(--color-gold-bright)', borderRadius: '16px', padding: '32px', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: '-10px', right: '20px', backgroundColor: 'var(--color-gold-bright)', color: 'var(--color-navy-dark)', fontSize: '0.75rem', fontWeight: 700, padding: '2px 10px', borderRadius: '999px', textTransform: 'uppercase' }}>
+                Premium Experience
+              </div>
+              <div style={{ color: 'var(--color-gold-bright)', fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>
+                VIP Gift Experiences
+              </div>
+              <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '16px' }}>
+                Exclusive, customizable experiences featuring executive health evaluations, specialist consultations, therapeutic spa retreats, and luxury hospitality stays.
+              </p>
+              <div style={{ color: '#e2e8f0', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle2 size={14} color="var(--color-gold-bright)" style={{ flexShrink: 0 }} />
+                <span>Dedicated Care Coordinator • Priority Booking • VIP Partner Access</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Celebrations & Occasions Strip */}
+          <div style={{ marginTop: '48px', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.9rem', color: 'var(--color-gold-bright)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, marginBottom: '16px' }}>
+              Curated For Ethiopian &amp; Global Celebrations
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
+              {[
+                'Enkutatash (New Year)',
+                'Meskel',
+                'Timket (Epiphany)',
+                'Genna (Christmas)',
+                'Fasika (Easter)',
+                'Irreechaa',
+                'Ashenda',
+                "Mother's Day",
+                "Father's Day",
+                "Valentine's Day",
+                'Corporate Milestones',
+              ].map((occ, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    backgroundColor: 'rgba(190, 155, 73, 0.12)',
+                    border: '1px solid rgba(190, 155, 73, 0.25)',
+                    color: '#e2e8f0',
+                    fontSize: '0.82rem',
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    fontWeight: 500,
+                  }}
+                >
+                  {occ}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -1630,7 +1735,289 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 16. CALL TO ACTION */}
+      {/* 16. WORK WITH ODS GLOBAL NETWORK (From Cards.tsx & PartnerWithUs.tsx) */}
+      {/* ========================================================================= */}
+      <section
+        id="work-with-us"
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          padding: '100px 0',
+          borderBottom: '1px solid var(--color-border-dark)',
+          backgroundColor: 'var(--color-navy)',
+        }}
+      >
+        {patternBg}
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 56px' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                borderRadius: '999px',
+                background: 'rgba(190, 155, 73, 0.15)',
+                border: '1px solid var(--color-gold-mid)',
+                marginBottom: '16px',
+              }}
+            >
+              <Briefcase size={16} color="var(--color-gold-bright)" />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-gold-bright)' }}>
+                STRATEGIC PARTNERSHIPS
+              </span>
+            </div>
+            <h2 style={{ fontSize: '2.4rem', marginBottom: '16px' }}>
+              Work With <span className="gold-gradient-text">ODS Global Network</span>
+            </h2>
+            <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1.05rem', lineHeight: 1.7 }}>
+              Join our growing healthcare and digital technology ecosystem across Ethiopia and the diaspora.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '28px',
+            }}
+          >
+            {/* Card 1: Partner */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                color: 'var(--color-navy)',
+                padding: '36px 28px',
+                borderRadius: '16px',
+                boxShadow: 'var(--shadow-md)',
+                borderLeft: '5px solid var(--color-navy)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '12px' }}>
+                Invest / Partner With Us
+              </h3>
+              <p style={{ color: '#4b5563', fontSize: '0.95rem', lineHeight: 1.6, flex: 1, marginBottom: '24px' }}>
+                Are you an investor, venture capital firm, business enterprise, healthcare institution, or technology solutions provider? Join ODS Global Network to grow and innovate together.
+              </p>
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => onNavigate('register')}
+              >
+                Become a Partner &rarr;
+              </Button>
+            </div>
+
+            {/* Card 2: Community */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                color: 'var(--color-navy)',
+                padding: '36px 28px',
+                borderRadius: '16px',
+                boxShadow: 'var(--shadow-md)',
+                borderLeft: '5px solid var(--color-gold-bright)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '12px' }}>
+                Join ODS Global Network Community
+              </h3>
+              <p style={{ color: '#4b5563', fontSize: '0.95rem', lineHeight: 1.6, flex: 1, marginBottom: '24px' }}>
+                Are you in the Diaspora, an individual seeking to volunteer, a medical professional, or a fresh graduate? Connect, collaborate, and contribute with our national healthcare mission.
+              </p>
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => onNavigate('register')}
+              >
+                Become a Member &rarr;
+              </Button>
+            </div>
+
+            {/* Card 3: Careers */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                color: 'var(--color-navy)',
+                padding: '36px 28px',
+                borderRadius: '16px',
+                boxShadow: 'var(--shadow-md)',
+                borderLeft: '5px solid var(--color-navy)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '12px' }}>
+                Career Openings
+              </h3>
+              <p style={{ color: '#4b5563', fontSize: '0.95rem', lineHeight: 1.6, flex: 1, marginBottom: '24px' }}>
+                Looking for full-time or specialist opportunities in digital health, logistics, or operations? Explore open roles and build the future of connected healthtech in Africa.
+              </p>
+              <Button
+                variant="outline-gold"
+                size="sm"
+                onClick={() => onNavigate('register')}
+              >
+                View Openings &rarr;
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 17. CUSTOMER SUPPORT & FAQ (From SupportPage.tsx) */}
+      {/* ========================================================================= */}
+      <section
+        id="faq"
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          padding: '100px 0',
+          borderBottom: '1px solid var(--color-border-dark)',
+          backgroundColor: 'var(--color-navy-dark)',
+        }}
+      >
+        {patternBg}
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 56px' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                borderRadius: '999px',
+                background: 'rgba(190, 155, 73, 0.15)',
+                border: '1px solid var(--color-gold-mid)',
+                marginBottom: '16px',
+              }}
+            >
+              <LifeBuoy size={16} color="var(--color-gold-bright)" />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-gold-bright)' }}>
+                HELP CENTER &amp; FAQS
+              </span>
+            </div>
+            <h2 style={{ fontSize: '2.4rem', marginBottom: '16px' }}>
+              Frequently Asked <span className="gold-gradient-text">Questions</span>
+            </h2>
+            <p style={{ color: 'var(--color-text-muted-dark)', fontSize: '1.05rem', lineHeight: 1.7 }}>
+              Everything you need to know about navigating, booking, and gifting on ODS Global Net.
+            </p>
+          </div>
+
+          <div style={{ maxWidth: '880px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {[
+              {
+                q: 'How do I book an appointment or service on ODS Global Net?',
+                a: 'Browse our verified provider directory across hospitals, clinics, pharmacies, laboratories, and wellness centers. Select your preferred practitioner or facility, choose a convenient date/time slot, and confirm instantly with your account.',
+              },
+              {
+                q: 'How do ODS Digital Gift Cards and Vouchers work?',
+                a: 'You can choose between Basic and VIP gift experiences for individuals or corporate teams. The recipient receives a secure digital code via SMS or email, which can be redeemed at accredited partner facilities across Ethiopia.',
+              },
+              {
+                q: 'What payment methods are supported on the platform?',
+                a: 'We support all major payment channels including Telebirr, local debit cards, international credit cards (Visa/Mastercard), direct bank transfer, and digital wallets integrated securely via Chapa.',
+              },
+              {
+                q: 'Can members of the Ethiopian Diaspora send gifts and medical care to relatives in Ethiopia?',
+                a: 'Yes! ODS Global Net is purpose-built to connect diaspora families with their loved ones. You can securely purchase medical checkups, wellness packages, or voucher credits from abroad using international payment methods.',
+              },
+              {
+                q: 'How can healthcare providers and merchants join the network?',
+                a: 'Service providers and merchants can register through our onboarding portal. After submitting accreditation licenses and completing our digital KYC verification, you gain instant access to your dedicated provider dashboard.',
+              },
+            ].map((faq, idx) => (
+              <div
+                key={idx}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(190, 155, 73, 0.25)',
+                  borderRadius: '14px',
+                  padding: '24px 28px',
+                }}
+              >
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-gold-bright)', marginBottom: '8px' }}>
+                  {faq.q}
+                </h4>
+                <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.7, margin: 0 }}>
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Direct Support Contact Bar */}
+          <div
+            style={{
+              maxWidth: '880px',
+              margin: '40px auto 0',
+              padding: '24px',
+              backgroundColor: 'rgba(18, 49, 104, 0.7)',
+              border: '1px solid var(--color-gold-mid)',
+              borderRadius: '16px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '16px',
+            }}
+          >
+            <div>
+              <div style={{ color: '#ffffff', fontWeight: 700, fontSize: '1rem', marginBottom: '4px' }}>
+                Need additional assistance?
+              </div>
+              <div style={{ color: 'var(--color-text-muted-dark)', fontSize: '0.88rem' }}>
+                Our Addis Ababa support team is available via Phone, WhatsApp, and Email.
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <a
+                href="tel:+251-960-606-042"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: 'var(--color-gold-bright)',
+                  color: 'var(--color-navy-dark)',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                +251 960 606 042
+              </a>
+              <a
+                href="mailto:info@odsglobal.net"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  border: '1px solid var(--color-gold-bright)',
+                  color: 'var(--color-gold-bright)',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                info@odsglobal.net
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 18. CALL TO ACTION */}
       {/* ========================================================================= */}
       <section
         id="cta-connect"

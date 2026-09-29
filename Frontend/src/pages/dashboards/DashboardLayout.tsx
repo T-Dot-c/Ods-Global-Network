@@ -6,6 +6,10 @@ import {
   LogOut,
   Settings,
   AlertCircle,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ClipboardList,
 } from 'lucide-react';
 
 export interface SidebarItem {
@@ -39,10 +43,10 @@ interface DashboardLayoutProps {
   onNavigate: (view: string) => void;
 }
 
-const STATUS_CONFIG: Record<ApprovalStatus, { bg: string; text: string; border: string; label: string; icon: string }> = {
-  pending:  { bg: 'rgba(245, 158, 11, 0.12)', text: '#b45309', border: 'rgba(245, 158, 11, 0.4)', label: 'Pending Review', icon: '⏳' },
-  approved: { bg: 'rgba(16, 185, 129, 0.12)', text: '#065f46', border: 'rgba(16, 185, 129, 0.4)', label: 'Approved',       icon: '✓' },
-  rejected: { bg: 'rgba(239, 68, 68, 0.12)',  text: '#b91c1c', border: 'rgba(239, 68, 68, 0.4)',  label: 'Rejected',       icon: '✕' },
+const STATUS_CONFIG: Record<ApprovalStatus, { bg: string; text: string; border: string; label: string; icon: React.ReactNode }> = {
+  pending:  { bg: 'rgba(245, 158, 11, 0.12)', text: '#b45309', border: 'rgba(245, 158, 11, 0.4)', label: 'Pending Review', icon: <Clock size={14} color="#b45309" /> },
+  approved: { bg: 'rgba(16, 185, 129, 0.12)', text: '#065f46', border: 'rgba(16, 185, 129, 0.4)', label: 'Approved',       icon: <CheckCircle2 size={14} color="#065f46" /> },
+  rejected: { bg: 'rgba(239, 68, 68, 0.12)',  text: '#b91c1c', border: 'rgba(239, 68, 68, 0.4)',  label: 'Rejected',       icon: <XCircle size={14} color="#b91c1c" /> },
 };
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -480,7 +484,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     fontWeight: 700,
                   }}
                 >
-                  <span>{statusConfig.icon}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>{statusConfig.icon}</span>
                   <span>Approval Status: {statusConfig.label}</span>
                 </div>
               )}
@@ -707,7 +711,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   fontSize: '0.88rem',
                 }}
               >
-                <div style={{ fontSize: '1.6rem', marginBottom: '8px' }}>📋</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                  <ClipboardList size={30} color="#64748b" />
+                </div>
                 <div style={{ fontWeight: 500, color: 'var(--color-navy-dark)' }}>No recent activity to display yet.</div>
                 <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
                   Your upcoming interactions and logs will appear here.

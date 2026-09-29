@@ -21,6 +21,7 @@ import {
   Upload,
   Stethoscope,
   Building,
+  AlertTriangle,
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:3001';
@@ -645,7 +646,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       gap: '8px',
                     }}
                   >
-                    <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+                    <AlertTriangle size={18} color="#b45309" style={{ flexShrink: 0 }} />
                     <span>{errors.general}</span>
                   </div>
                 )}
@@ -983,8 +984,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                             <Upload size={15} color="var(--color-gold-deep)" />
                             <span style={{ fontSize: '0.82rem', color: 'var(--color-navy-dark)', fontWeight: 600, lineHeight: 1.3 }}>{doc.label}</span>
                           </div>
-                          <span style={{ fontSize: '0.78rem', color: merchDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700 }}>
-                            {merchDocsUploaded[doc.key] ? '✓ Uploaded' : 'Upload'}
+                          <span style={{ fontSize: '0.78rem', color: merchDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            {merchDocsUploaded[doc.key] ? (
+                              <>
+                                <CheckCircle2 size={13} color="#10b981" />
+                                <span>Uploaded</span>
+                              </>
+                            ) : (
+                              'Upload'
+                            )}
                           </span>
                         </div>
                       ))}
@@ -1212,8 +1220,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                             <Upload size={15} color="var(--color-gold-deep)" />
                             <span style={{ fontSize: '0.82rem', color: 'var(--color-navy-dark)', fontWeight: 600, lineHeight: 1.3 }}>{doc.label}</span>
                           </div>
-                          <span style={{ fontSize: '0.78rem', color: provDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700 }}>
-                            {provDocsUploaded[doc.key] ? '✓ Uploaded' : 'Upload'}
+                          <span style={{ fontSize: '0.78rem', color: provDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            {provDocsUploaded[doc.key] ? (
+                              <>
+                                <CheckCircle2 size={13} color="#10b981" />
+                                <span>Uploaded</span>
+                              </>
+                            ) : (
+                              'Upload'
+                            )}
                           </span>
                         </div>
                       ))}

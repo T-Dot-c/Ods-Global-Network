@@ -28,16 +28,16 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
   ];
 
   const statCards: StatCardItem[] = [
-    { label: 'Services', value: 0, subtext: 'Clinical offerings', icon: <Stethoscope size={22} /> },
-    { label: 'Appointments', value: 0, subtext: 'Scheduled patients', icon: <Calendar size={22} /> },
-    { label: 'Availability', value: 'Active', subtext: 'Duty roster active', icon: <CalendarCheck size={22} /> },
+    { label: 'Clinical Services', value: 0, subtext: 'Healthcare specialties listed', icon: <Stethoscope size={22} /> },
+    { label: 'Patient Queue', value: 0, subtext: 'Scheduled appointments', icon: <Calendar size={22} /> },
+    { label: 'Roster Availability', value: 'Active', subtext: 'Consultation schedule live', icon: <CalendarCheck size={22} /> },
   ];
 
   const quickActions: QuickActionItem[] = [
-    { label: 'Manage Profile', icon: <User size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Update healthcare provider profile.') },
-    { label: 'Manage Services', icon: <Layers size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Add or edit medical care specialties.') },
-    { label: 'View Appointments', icon: <Calendar size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Check upcoming appointments queue.') },
-    { label: 'Set Availability', icon: <Clock size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Configure consultation hours.') },
+    { label: 'Provider Profile', icon: <User size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Update facility accreditation & healthcare provider profile.') },
+    { label: 'Manage Services', icon: <Layers size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Configure medical, wellness, laboratory, or home care offerings.') },
+    { label: 'View Schedule', icon: <Calendar size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Inspect real-time patient appointments & booking calendar.') },
+    { label: 'Duty Hours', icon: <Clock size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Configure consultation shifts, walk-in windows & time slots.') },
   ];
 
   return (

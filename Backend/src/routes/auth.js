@@ -27,6 +27,24 @@ const COOKIE_SECURE   = process.env.COOKIE_SECURE === 'true';
 const MAX_FAILURES    = 5;
 const LOCKOUT_MINUTES = 15;
 
+/* ── RFC 5322 Compliant Email Validation Regex ────────────── */
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+/* ── Whitelist of Permitted Document Types for Polymorphic Uploads ── */
+const ALLOWED_DOCUMENT_TYPES = Object.freeze([
+  'registration_certificate',
+  'trade_license',
+  'tin',
+  'accreditation_license',
+  'medical_board_certification',
+  'institutional_charter',
+  'delegation_license'
+]);
+
+function isValidDocumentType(type) {
+  return typeof type === 'string' && ALLOWED_DOCUMENT_TYPES.includes(type.trim().toLowerCase());
+}
+
 /* ─────────────────────────────────────────────────────────────
    Helper — issue session cookie
    ───────────────────────────────────────────────────────────── */
@@ -109,14 +127,25 @@ router.post('/register', async (req, res) => {
   } = req.body;
 
   const validRoles = ['customer', 'merchant', 'provider'];
-  if (!email || !password || !full_name || !role) {
+  if (!email || !password || !full_name || !role || typeof email !== 'string' || typeof password !== 'string' || typeof full_name !== 'string') {
     return res.status(400).json({ success: false, message: 'Full name, email, password, and role are required.' });
   }
   if (!validRoles.includes(role)) {
     return res.status(400).json({ success: false, message: 'Invalid role.' });
   }
-  if (password.length < 8) {
-    return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+  const trimmedName = full_name.trim();
+  if (trimmedName.length === 0 || trimmedName.length > 128) {
+    return res.status(400).json({ success: false, message: 'Full name must be between 1 and 128 characters.' });
+  }
+  const trimmedEmail = email.toLowerCase().trim();
+  if (trimmedEmail.length > 255 || !EMAIL_REGEX.test(trimmedEmail)) {
+    return res.status(400).json({ success: false, message: 'Please provide a valid email address (up to 255 characters).' });
+  }
+  if (password.length < 8 || password.length > 128) {
+    return res.status(400).json({ success: false, message: 'Password must be between 8 and 128 characters.' });
+  }
+  if (phone && (typeof phone !== 'string' || phone.trim().length > 32)) {
+    return res.status(400).json({ success: false, message: 'Phone number cannot exceed 32 characters.' });
   }
 
   const client = await pool.connect();
@@ -125,7 +154,7 @@ router.post('/register', async (req, res) => {
 
     // Duplicate email check
     const existing = await client.query(
-      'SELECT id FROM users WHERE email = $1', [email.toLowerCase().trim()]
+      'SELECT id FROM users WHERE email = $1', [trimmedEmail]
     );
     if (existing.rows.length > 0) {
       await client.query('ROLLBACK');
@@ -140,9 +169,9 @@ router.post('/register', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, email, full_name, phone, role, created_at`,
       [
-        email.toLowerCase().trim(),
+        trimmedEmail,
         password_hash,
-        full_name.trim(),
+        trimmedName,
         phone ? phone.trim() : null,
         role,
         preferred_language || 'en',
@@ -253,8 +282,13 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
     return res.status(400).json({ success: false, message: 'Email and password are required.' });
+  }
+
+  // Bounds checking to prevent bcrypt DoS through excessive payload lengths
+  if (email.length > 255 || password.length > 128) {
+    return res.status(401).json({ success: false, message: 'Invalid email or password.' });
   }
 
   try {
@@ -372,5 +406,8 @@ router.post('/logout', (_req, res) => {
   });
   return res.json({ success: true, message: 'Logged out successfully.' });
 });
+
+router.ALLOWED_DOCUMENT_TYPES = ALLOWED_DOCUMENT_TYPES;
+router.isValidDocumentType = isValidDocumentType;
 
 module.exports = router;

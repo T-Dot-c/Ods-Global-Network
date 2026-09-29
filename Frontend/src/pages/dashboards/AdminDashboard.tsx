@@ -41,10 +41,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   ];
 
   const quickActions: QuickActionItem[] = [
-    { label: 'Review Registrations', icon: <ShieldCheck size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Opening compliance review queue.') },
-    { label: 'Manage Users', icon: <UserCheck size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Access user role management.') },
-    { label: 'View Transactions', icon: <CreditCard size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Inspect audit transaction ledger.') },
-    { label: 'View Reports', icon: <FileText size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Generate platform health reports.') },
+    { label: 'KYC Compliance Queue', icon: <ShieldCheck size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Opening merchant and provider compliance review queue.') },
+    { label: 'Manage Roles & Users', icon: <UserCheck size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Manage user access permissions & authentication status.') },
+    { label: 'Transactions & Gateways', icon: <CreditCard size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Inspect Chapa and banking transaction audit ledger.') },
+    { label: 'Analytics & Reports', icon: <FileText size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Generate platform health, revenue & operational reports.') },
   ];
 
   return (

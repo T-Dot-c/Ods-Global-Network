@@ -48,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
     { label: 'Pharmacies', anchor: '#services' },
     { label: 'Laboratories', anchor: '#services' },
     { label: 'Wellness Centers', anchor: '#services' },
+    { label: 'Ambulance Services', anchor: '#services' },
     { label: 'Home Care', anchor: '#services' },
     { label: 'Specialists', anchor: '#services' },
     { label: 'Diagnostic Centers', anchor: '#services' },
@@ -115,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               }}
             />
             <span style={{ fontWeight: 500, letterSpacing: '0.3px', color: '#e2e8f0' }}>
-              Welcome to ODS Global Net
+              Welcome to ODS Global Net • Connecting Healthcare, Wellness &amp; Gifting
             </span>
           </div>
 
@@ -209,7 +210,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                       cursor: 'pointer',
                     }}
                   >
-                    Amharic (ET)
+                    Amharic (አማርኛ)
                   </div>
                 </div>
               )}
@@ -275,7 +276,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
           className="desktop-nav"
         >
           {/* Home */}
-          {/* <button
+          <button
             onClick={() => onNavigate('home')}
             style={{
               color: currentView === 'home' ? 'var(--color-gold-bright)' : '#ffffff',
@@ -285,7 +286,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
             }}
           >
             Home
-          </button> */}
+          </button>
 
           {/* Services Dropdown */}
           <div

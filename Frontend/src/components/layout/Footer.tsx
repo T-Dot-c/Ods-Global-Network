@@ -30,31 +30,44 @@ export const Footer: React.FC = () => {
               style={{ height: '44px', objectFit: 'contain', alignSelf: 'flex-start' }}
             />
             <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: 'var(--color-text-muted-dark)' }}>
-              ODS Global Net brings customers, merchants, and service providers together through a seamless digital ecosystem designed to make discovering, booking, managing, and paying for services easier.
+              ODS Global Network Gifting is a digital platform connecting customers, merchants, and service providers across wellness, home care, medical clinics, and hospitality.
             </p>
+            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-gold-bright)', fontStyle: 'italic' }}>
+              &ldquo;Ethiopian Blessings, Modern Gifting&rdquo;
+            </p>
+            <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted-dark)', lineHeight: '1.6' }}>
+              <div>Addis Ababa, Ethiopia</div>
+              <div>Tel: <a href="tel:+251-960-606-042" style={{ color: 'var(--color-gold-bright)' }}>+251 960 606 042</a></div>
+              <div>Email: <a href="mailto:info@odsglobal.net" style={{ color: 'var(--color-gold-bright)' }}>info@odsglobal.net</a></div>
+            </div>
           </div>
 
           {/* Col 2: Services & Providers */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <h4 style={{ color: 'var(--color-gold-bright)', fontSize: '1rem' }}>Provider Categories</h4>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
-              <li>Hospitals & Diagnostic Clinics</li>
-              <li>Pharmacies & Prescription Delivery</li>
-              <li>Wellness Centers & Therapeutic Spas</li>
-              <li>24/7 Rapid Ambulance Services</li>
-              <li>At-Home Nursing & Care</li>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.88rem' }}>
+              <li>Hospitals</li>
+              <li>Clinics &amp; Urgent Care</li>
+              <li>Pharmacies</li>
+              <li>Laboratories &amp; Pathology</li>
+              <li>Wellness Centers &amp; Spas</li>
+              <li>24/7 Ambulance Services</li>
+              <li>Home Care &amp; Nursing</li>
+              <li>Specialists &amp; Consultants</li>
+              <li>Diagnostic &amp; Imaging Centers</li>
             </ul>
           </div>
 
           {/* Col 3: ODS Global Network Ecosystem */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <h4 style={{ color: 'var(--color-gold-bright)', fontSize: '1rem' }}>Ecosystem & Portals</h4>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
+            <h4 style={{ color: 'var(--color-gold-bright)', fontSize: '1rem' }}>Ecosystem &amp; Portals</h4>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.88rem' }}>
               <li>Customer Appointment Engine</li>
-              <li>Merchant Onboarding & KYC</li>
-              <li>ODS Global Network Digital Gift Cards</li>
-              <li>Provider Availability Scheduling</li>
+              <li>Merchant Registration &amp; KYC</li>
+              <li>ODS Digital Gift Cards &amp; Vouchers</li>
+              <li>Service Provider Scheduling</li>
               <li>Executive Operations Dashboard</li>
+              <li>Diaspora &amp; Community Initiatives</li>
             </ul>
           </div>
 
@@ -113,7 +126,14 @@ export const Footer: React.FC = () => {
             gap: '12px',
           }}
         >
-          <p>© {new Date().getFullYear()} ODS Global Network. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ODS Global Network Health &amp; Wellness. All rights reserved.</p>
+          <div style={{ display: 'flex', gap: '18px', color: 'var(--color-text-muted-dark)', fontSize: '0.82rem' }}>
+            <span>Privacy Policy</span>
+            <span>•</span>
+            <span>Terms &amp; Conditions</span>
+            <span>•</span>
+            <span>Help Center</span>
+          </div>
         </div>
       </div>
     </footer>
