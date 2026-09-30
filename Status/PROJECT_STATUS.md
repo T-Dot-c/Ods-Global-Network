@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-09-29  
-> **CURRENT STAGE**: TASK 04 Completed — Vibe-Code Cleanup & Production Security Audit  
+> **LAST UPDATED**: 2026-09-30  
+> **CURRENT STAGE**: TASK 05 Complete — Frontend Header Scope Re-baselining & Accessibility Refinements  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -159,6 +159,39 @@
   - `Backend`: Syntax validated with `node -c`; `/api/health` verified 200 OK; registration input rejection verified (invalid email 400, oversized password 400, invalid role 400, oversized login 401).
   - Dependency audit: Verified 0 vulnerabilities across both `Frontend` and `Backend`.
   - Git secrets: Verified `.env` is git-ignored and never committed to repository history.
+
+### TASK 05: Frontend Header & Navigation Bar Scope Re-baselining & Brand Alignment
+- [x] **Scope Baseline Alignment (`KPIs & SCOPES ODS GLOBAL NET .txt`)**:
+  - Re-baselined Header against authoritative scope document, resolving conflicts between legacy `Navbar.tsx` and official requirements.
+  - Eliminated non-scoped/non-compliant elements: removed top-bar announcement text (absent from `BRAND_GUIDELINES.md`), language toggle dropdown (`EN`/`AM`, avoiding non-functional controls per Section 1 Line 15/24), and duplicate lightweight top `Sign In` link.
+  - Preserved direct communication shortcuts: Phone (`+251 960 606 042`), Email (`info@odsglobal.net`), Telegram, and WhatsApp quick links, plus `"Help Center"` (`#contact`).
+- [x] **Taxonomy & Category Integration**:
+  - Services Menu: Bound all 9 Authoritative Provider Categories from Scopes Section 4 (`Hospitals`, `Clinics`, `Pharmacies`, `Laboratories`, `Wellness Centers`, `Ambulance Services`, `Home Care`, `Specialists`, `Diagnostic Centers`) + `"All Services"`.
+  - Gifting Menu: Bound approved 6-item taxonomy under `"Gifting ▾"` title (`"Gift Cards"`, `"Purchase Gift Cards"`, `"Redeem Gift Cards"`, `"Individual Gifts"`, `"Corporate Gifts"`, `"Ethiopian Diaspora"`).
+  - Business Menu: Bound `"For Businesses ▾"` (`"For Merchants"`, `"For Service Providers"`).
+  - About Menu: Bound `"About Us ▾"` (`"About ODS Global Net"`, `"Our Network"`, `"Contact Us"`).
+  - Kept `"How It Works"` (`#how-it-works`).
+  - Deferred unbuilt routes (`Blog`, `Programs`, `Request Service`) to guarantee 100% working navigation targets.
+- [x] **Design Token Deviation Audit**:
+  - **Token Drift Logged**: `--color-border-dark: #1a3875` in `tokens.css` (vs `#264572` in PDF/MD) is retained as an accepted baseline deviation across the design system to preserve visual parity across 10+ UI components (`HomePage.tsx`, `LoginPage.tsx`, `RegisterPage.tsx`, `DashboardShell.tsx`, `Header.tsx`, `Footer.tsx`, `Input.tsx`, `Card.tsx`, `Button.tsx`).
+  - Replaced all hard-coded colors in `Header.tsx` with CSS variables (`var(--color-navy-dark)`, `var(--color-border-dark)`, `var(--color-white)`, `var(--color-border-light)`, `var(--color-text-muted-dark)`) or dynamic `color-mix()` expressions (e.g. `color-mix(in srgb, var(--color-navy) 98%, transparent)`).
+- [x] **Accessibility & Architecture**:
+  - Replaced menu ARIA roles with the W3C Disclosure pattern (`<button aria-expanded aria-controls>` revealing `<ul>`/`<li>` lists).
+  - Implemented responsive mobile drawer with sub-menu accordions, outside click handling, and `Escape` key dismiss returning focus to the hamburger button.
+  - Retained strict `HeaderProps` contract (`{ currentView: string; onNavigate: (view: string) => void }`) with zero `App.tsx` regressions.
+  - Purged unused imports (`Globe`) and unused state (`langOpen`, `currentLang`) for clean TypeScript compilation.
+  - All navigation links verified to resolve to existing active DOM anchors or app views.
+- [x] **Accessibility Refinements (Addendum Executed)**:
+  - **Trigger Focus Return**: Bound 10 dedicated React refs (`servicesBtnRef`, `giftingBtnRef`, `businessBtnRef`, `aboutBtnRef`, `searchBtnRef`, `mobileToggleRef`, `mobileServicesBtnRef`, `mobileGiftingBtnRef`, `mobileBusinessBtnRef`, `mobileAboutBtnRef`) restoring programmatic focus upon `Escape` or modal close.
+  - **State-Aware Hierarchical Escape**: Prioritizes search overlay &rarr; desktop dropdowns &rarr; mobile accordion submenus &rarr; mobile drawer.
+  - **Click-Only Desktop Navigation**: Converted desktop dropdowns to click-only activation (removed hover `onMouseEnter`/`onMouseLeave`).
+  - **Safe Blur Focus-Out**: Implemented `handleDropdownBlur` requiring non-null `relatedTarget` outside container, eliminating swallowed click events on Safari/macOS Firefox.
+  - **Outside Click Dismissal**: Added document-level conditional `pointerdown` listener dismissing open overlays when clicking outside `<header>`.
+  - **High-Contrast Focus Ring**: Removed inline `outline: 'none'` from search input; added `header button:focus-visible, header a:focus-visible, header input:focus-visible` with `outline: 2px solid var(--color-gold-bright); outline-offset: 2px;` in `<style>`.
+- [x] **Production Build Verification**:
+  - `Frontend`: `npm run build` completed cleanly with exit code 0 (`tsc && vite build`, 1602 modules, built in 4.24s).
+- [x] **Manual Browser Verification**:
+  - Visual and responsive layout testing (1280px desktop, ~900px touch emulation, and mobile drawer at 860px/768px), mouse click persistence without swallowed clicks, outside click dismissal, and keyboard accessibility (`Tab`, `Enter`, `Escape` focus restoration) verified and passed by user.
 
 ---
 
