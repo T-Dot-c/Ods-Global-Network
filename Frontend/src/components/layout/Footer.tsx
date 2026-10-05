@@ -1,6 +1,10 @@
 import React from 'react';
 
-export const Footer: React.FC = () => {
+export interface FooterProps {
+  onNavigate?: (view: string) => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
     <footer
       id="contact"
@@ -130,7 +134,23 @@ export const Footer: React.FC = () => {
           <div style={{ display: 'flex', gap: '18px', color: 'var(--color-text-muted-dark)', fontSize: '0.82rem' }}>
             <span>Privacy Policy</span>
             <span>•</span>
-            <span>Terms &amp; Conditions</span>
+            <button
+              type="button"
+              onClick={() => onNavigate?.('terms')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'inherit',
+                font: 'inherit',
+                cursor: 'pointer',
+                padding: 0,
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-gold-bright)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}
+            >
+              Terms &amp; Conditions
+            </button>
             <span>•</span>
             <span>Help Center</span>
           </div>

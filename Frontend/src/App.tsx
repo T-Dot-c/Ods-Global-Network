@@ -8,6 +8,10 @@ import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
 import { MerchantDashboard } from './pages/dashboards/MerchantDashboard';
 import { ProviderDashboard } from './pages/dashboards/ProviderDashboard';
 import { AdminDashboard } from './pages/dashboards/AdminDashboard';
+import { UnauthorizedPage } from './pages/UnauthorizedPage';
+import { TermsPage } from './pages/TermsPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
 
 /* ── View type ────────────────────────────────────────────── */
@@ -18,7 +22,11 @@ export type View =
   | 'dashboard'
   | 'merchant/dashboard'
   | 'provider/dashboard'
-  | 'admin/dashboard';
+  | 'admin/dashboard'
+  | 'unauthorized'
+  | 'terms'
+  | 'forgot-password'
+  | 'reset-password';
 
 const DASHBOARD_VIEWS: View[] = [
   'dashboard',
@@ -40,6 +48,10 @@ function normalizeRoute(path: string): View {
   if (!clean || clean === 'home') return 'home';
   if (clean === 'login') return 'login';
   if (clean === 'register') return 'register';
+  if (clean === 'unauthorized') return 'unauthorized';
+  if (clean === 'terms') return 'terms';
+  if (clean === 'forgot-password') return 'forgot-password';
+  if (clean === 'reset-password') return 'reset-password';
 
   if (clean === 'dashboard' || clean === 'dashboard/customer') return 'dashboard';
   if (clean === 'merchant/dashboard' || clean === 'dashboard/merchant') return 'merchant/dashboard';
@@ -53,6 +65,8 @@ function normalizeRoute(path: string): View {
 const AppInner: React.FC = () => {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState<View>(() => normalizeRoute(window.location.pathname));
+  // In-memory recovery email state (never stored in URL query parameters)
+  const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -63,16 +77,21 @@ const AppInner: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // On session restore: if already authenticated and on public auth pages, redirect to role dashboard
+  // On session restore: if already authenticated and on public auth/recovery pages, redirect to role dashboard
   useEffect(() => {
     if (!loading && user && !DASHBOARD_VIEWS.includes(currentView)) {
-      if (currentView === 'login' || currentView === 'register') {
+      if (
+        currentView === 'login' ||
+        currentView === 'register' ||
+        currentView === 'forgot-password' ||
+        currentView === 'reset-password'
+      ) {
         const dest = ROLE_TO_DASHBOARD[user.role];
         setCurrentView(dest);
         window.history.replaceState(null, '', `/${dest}`);
       }
     }
-  }, [loading, user]);
+  }, [loading, user, currentView]);
 
   const handleNavigate = (rawView: string) => {
     const targetView = normalizeRoute(rawView);
@@ -86,13 +105,18 @@ const AppInner: React.FC = () => {
         window.history.pushState(null, '', '/login');
         return;
       }
-      // Role mismatch → redirect to their own dashboard
+      // Role mismatch → redirect to dedicated /unauthorized error view
       const allowedDashboard = ROLE_TO_DASHBOARD[user.role];
       if (targetView !== allowedDashboard) {
-        setCurrentView(allowedDashboard);
-        window.history.pushState(null, '', `/${allowedDashboard}`);
+        setCurrentView('unauthorized');
+        window.history.pushState(null, '', '/unauthorized');
         return;
       }
+    }
+
+    // Clear recovery email if leaving recovery flow
+    if (targetView !== 'reset-password' && targetView !== 'forgot-password') {
+      setRecoveryEmail(null);
     }
 
     setCurrentView(targetView);
@@ -137,9 +161,33 @@ const AppInner: React.FC = () => {
 
       {/* Main content */}
       <main style={{ flex: 1 }}>
-        {currentView === 'home'     && <HomePage     onNavigate={handleNavigate} />}
-        {currentView === 'login'    && <LoginPage    onNavigate={handleNavigate} />}
-        {currentView === 'register' && <RegisterPage onNavigate={handleNavigate} />}
+        {currentView === 'home'            && <HomePage     onNavigate={handleNavigate} />}
+        {currentView === 'login'           && <LoginPage    onNavigate={handleNavigate} />}
+        {currentView === 'register'        && <RegisterPage onNavigate={handleNavigate} />}
+        {currentView === 'unauthorized'    && <UnauthorizedPage onNavigate={handleNavigate} />}
+        {currentView === 'terms'           && <TermsPage onNavigate={handleNavigate} />}
+        {currentView === 'forgot-password' && (
+          <ForgotPasswordPage
+            onNavigate={handleNavigate}
+            onCodeSent={(email) => {
+              setRecoveryEmail(email);
+              handleNavigate('reset-password');
+            }}
+          />
+        )}
+        {currentView === 'reset-password'  && (
+          <ResetPasswordPage
+            email={recoveryEmail}
+            onNavigate={handleNavigate}
+            onResetSuccess={() => {
+              setRecoveryEmail(null);
+            }}
+            onStartAgain={() => {
+              setRecoveryEmail(null);
+              handleNavigate('forgot-password');
+            }}
+          />
+        )}
 
         {/* ── Role-protected dashboards ─────────────────── */}
         {currentView === 'dashboard' && user?.role === 'customer' && (
@@ -156,8 +204,8 @@ const AppInner: React.FC = () => {
         )}
       </main>
 
-      {/* Footer — only on Home */}
-      {isHome && <Footer />}
+      {/* Footer — on Home and static informational pages */}
+      {(isHome) && <Footer onNavigate={handleNavigate} />}
     </div>
   );
 };

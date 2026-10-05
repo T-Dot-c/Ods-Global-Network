@@ -343,9 +343,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                   Remember session
                 </label>
 
-                <a href="#forgot" style={{ color: 'var(--color-gold-deep)', fontWeight: 600 }}>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('forgot-password')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: 'var(--color-gold-deep)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: 'inherit',
+                    fontFamily: 'inherit',
+                    borderRadius: '4px',
+                    outline: 'none',
+                  }}
+                  onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-gold-bright)')}
+                  onBlur={(e) => (e.currentTarget.style.boxShadow = 'none')}
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
 
               {/* General API error banner */}

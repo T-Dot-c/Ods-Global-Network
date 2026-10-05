@@ -1,0 +1,25 @@
+/**
+ * batch1-focus.css — Scoped Focus Styles for Batch 1 Pages
+ * 
+ * Strictly scoped to .batch1-page container to guarantee zero visual or focus
+ * regressions on HomePage, Header, Login, Register, or Dashboards.
+ * Uses official ODS gold design tokens.
+ */
+
+.batch1-page button:focus-visible,
+.batch1-page a:focus-visible,
+.batch1-page input:focus-visible,
+.batch1-page [tabindex="0"]:focus-visible {
+  outline: 2px solid var(--color-gold-bright, #edc45b) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(190, 155, 73, 0.3) !important;
+}
+
+.batch1-page [tabindex="-1"]:focus {
+  outline: none;
+}
+
+.batch1-page [tabindex="-1"]:focus-visible {
+  outline: 2px solid var(--color-gold-bright, #edc45b);
+  outline-offset: 2px;
+}
