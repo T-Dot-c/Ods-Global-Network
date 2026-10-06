@@ -29,8 +29,30 @@ if (process.env.NODE_ENV === 'production') {
 app.use(helmet());
 
 /* ── CORS — allow frontend origin with credentials ────────── */
+const devOrigins = [
+  FRONTEND_ORIGIN,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5175',
+];
+
 app.use(cors({
-  origin: FRONTEND_ORIGIN,
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. mobile, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production') {
+      if (devOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        return callback(null, true);
+      }
+    }
+    if (origin === FRONTEND_ORIGIN) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS not allowed for this origin.'));
+  },
   credentials: true,               // required for HttpOnly cookie round-trips
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],

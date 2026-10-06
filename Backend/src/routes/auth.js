@@ -19,6 +19,7 @@
 const router     = require('express').Router();
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
+const crypto     = require('crypto');
 const pool       = require('../db');
 
 const JWT_SECRET      = process.env.JWT_SECRET || 'CHANGE_ME_IN_PRODUCTION';
@@ -405,6 +406,165 @@ router.post('/logout', (_req, res) => {
     secure:   COOKIE_SECURE,
   });
   return res.json({ success: true, message: 'Logged out successfully.' });
+});
+
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/forgot-password
+   Anti-enumeration: Always returns HTTP 200 with uniform message
+   ───────────────────────────────────────────────────────────── */
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body || {};
+  const neutralMessage = 'If an account exists with this email, a reset code has been sent.';
+
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ success: false, message: 'Valid email address is required.' });
+  }
+
+  const trimmedEmail = email.toLowerCase().trim();
+  if (!EMAIL_REGEX.test(trimmedEmail)) {
+    return res.status(400).json({ success: false, message: 'Valid email address is required.' });
+  }
+
+  try {
+    const userResult = await pool.query(
+      `SELECT id, email, is_active FROM users WHERE email = $1`,
+      [trimmedEmail]
+    );
+
+    // If user does not exist or is inactive, return 200 with neutral message (anti-enumeration)
+    if (userResult.rows.length === 0 || !userResult.rows[0].is_active) {
+      console.log(`[ODS RECOVERY DEV] ℹ️ Password reset requested for non-existent/inactive email: ${trimmedEmail}`);
+      return res.json({ success: true, message: neutralMessage });
+    }
+
+    const user = userResult.rows[0];
+
+    // Invalidate existing unused recovery OTPs for this user
+    await pool.query(
+      `DELETE FROM otp_codes WHERE user_id = $1 AND purpose = 'password_recovery' AND verified_at IS NULL`,
+      [user.id]
+    );
+
+    // Generate cryptographically secure 6-digit numeric OTP code
+    const rawOtp = crypto.randomInt(100000, 1000000).toString();
+    const codeHash = await bcrypt.hash(rawOtp, 10);
+
+    // Insert into otp_codes (15-minute expiration)
+    await pool.query(
+      `INSERT INTO otp_codes (user_id, code_hash, purpose, expires_at)
+       VALUES ($1, $2, 'password_recovery', now() + interval '15 minutes')`,
+      [user.id, codeHash]
+    );
+
+    // Development terminal logging for local testing
+    console.log(`\n=============================================================`);
+    console.log(`[ODS RECOVERY DEV] 🔑 PASSWORD RESET CODE FOR ${trimmedEmail}:`);
+    console.log(`                    >>> ${rawOtp} <<<`);
+    console.log(`                    (Valid for 15 minutes)`);
+    console.log(`=============================================================\n`);
+
+    return res.json({ success: true, message: neutralMessage });
+  } catch (err) {
+    console.error('[forgot-password]', err.message);
+    return res.status(500).json({ success: false, message: 'Server error processing request.' });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/reset-password
+   Verifies OTP code and sets new bcrypt password
+   ───────────────────────────────────────────────────────────── */
+router.post('/reset-password', async (req, res) => {
+  const { email, code, newPassword } = req.body || {};
+
+  if (!email || !code || !newPassword || typeof email !== 'string' || typeof code !== 'string' || typeof newPassword !== 'string') {
+    return res.status(400).json({ success: false, message: 'Email, code, and new password are required.' });
+  }
+
+  const trimmedEmail = email.toLowerCase().trim();
+  const trimmedCode = code.trim();
+
+  if (newPassword.length < 8 || newPassword.length > 128) {
+    return res.status(400).json({ success: false, message: 'Password must be between 8 and 128 characters.' });
+  }
+
+  const genericInvalidMessage = 'The recovery code is invalid or has expired. Please check your code or request a new one.';
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Find user
+    const userRes = await client.query(
+      `SELECT id, is_active FROM users WHERE email = $1`,
+      [trimmedEmail]
+    );
+
+    if (userRes.rows.length === 0 || !userRes.rows[0].is_active) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: genericInvalidMessage });
+    }
+
+    const userId = userRes.rows[0].id;
+
+    // 2. Fetch latest active OTP for password recovery
+    const otpRes = await client.query(
+      `SELECT id, code_hash, expires_at
+       FROM otp_codes
+       WHERE user_id = $1 AND purpose = 'password_recovery' AND verified_at IS NULL
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (otpRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: genericInvalidMessage });
+    }
+
+    const otpRecord = otpRes.rows[0];
+
+    // Check expiry
+    if (new Date(otpRecord.expires_at) < new Date()) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: genericInvalidMessage });
+    }
+
+    // Verify OTP code
+    const isCodeMatch = await bcrypt.compare(trimmedCode, otpRecord.code_hash);
+    if (!isCodeMatch) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: genericInvalidMessage });
+    }
+
+    // 3. Hash new password with bcrypt (12 rounds per directive)
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
+
+    // 4. Update user's password and reset lockout counters
+    await client.query(
+      `UPDATE users
+       SET password_hash = $1, failed_login_attempts = 0, locked_until = NULL, updated_at = now()
+       WHERE id = $2`,
+      [newPasswordHash, userId]
+    );
+
+    // 5. Mark OTP code as consumed
+    await client.query(
+      `UPDATE otp_codes SET verified_at = now() WHERE id = $1`,
+      [otpRecord.id]
+    );
+
+    await client.query('COMMIT');
+
+    console.log(`[ODS RECOVERY DEV] ✅ Password successfully reset for ${trimmedEmail}`);
+
+    return res.json({ success: true, message: 'Your password has been reset successfully.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[reset-password]', err.message);
+    return res.status(500).json({ success: false, message: 'Server error processing reset.' });
+  } finally {
+    client.release();
+  }
 });
 
 router.ALLOWED_DOCUMENT_TYPES = ALLOWED_DOCUMENT_TYPES;
