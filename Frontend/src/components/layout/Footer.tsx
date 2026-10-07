@@ -152,7 +152,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               Terms &amp; Conditions
             </button>
             <span>•</span>
-            <span>Help Center</span>
+            <button
+              type="button"
+              onClick={() => onNavigate?.('support')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'inherit',
+                font: 'inherit',
+                cursor: 'pointer',
+                padding: 0,
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-gold-bright)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}
+            >
+              Help Center
+            </button>
           </div>
         </div>
       </div>

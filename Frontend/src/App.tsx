@@ -12,6 +12,9 @@ import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { TermsPage } from './pages/TermsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { CompanyPage } from './pages/CompanyPage';
+import { SupportPage } from './pages/SupportPage';
+import { PartnerWithUsPage } from './pages/PartnerWithUsPage';
 import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
 
 /* ── View type ────────────────────────────────────────────── */
@@ -26,7 +29,10 @@ export type View =
   | 'unauthorized'
   | 'terms'
   | 'forgot-password'
-  | 'reset-password';
+  | 'reset-password'
+  | 'company'
+  | 'support'
+  | 'partner-with-us';
 
 const DASHBOARD_VIEWS: View[] = [
   'dashboard',
@@ -52,6 +58,9 @@ function normalizeRoute(path: string): View {
   if (clean === 'terms') return 'terms';
   if (clean === 'forgot-password') return 'forgot-password';
   if (clean === 'reset-password') return 'reset-password';
+  if (clean === 'company') return 'company';
+  if (clean === 'support') return 'support';
+  if (clean === 'partner-with-us') return 'partner-with-us';
 
   if (clean === 'dashboard' || clean === 'dashboard/customer') return 'dashboard';
   if (clean === 'merchant/dashboard' || clean === 'dashboard/merchant') return 'merchant/dashboard';
@@ -166,6 +175,9 @@ const AppInner: React.FC = () => {
         {currentView === 'register'        && <RegisterPage onNavigate={handleNavigate} />}
         {currentView === 'unauthorized'    && <UnauthorizedPage onNavigate={handleNavigate} />}
         {currentView === 'terms'           && <TermsPage onNavigate={handleNavigate} />}
+        {currentView === 'company'         && <CompanyPage onNavigate={handleNavigate} />}
+        {currentView === 'support'         && <SupportPage onNavigate={handleNavigate} />}
+        {currentView === 'partner-with-us' && <PartnerWithUsPage onNavigate={handleNavigate} />}
         {currentView === 'forgot-password' && (
           <ForgotPasswordPage
             onNavigate={handleNavigate}
