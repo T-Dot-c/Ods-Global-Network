@@ -3,189 +3,175 @@
 
 **Project:** ODS Global Network  
 **File:** `./Progress/2026-10-06_1640_implementation-plan_batch2-public-pages.md`  
-**Date:** 2026-10-06 16:40  
-**Branch:** `batch2-public-pages` (To be created from `main` post-approval)  
-**Status:** **Pending User Approval** ("Approved: proceed")  
+**Date:** 2026-10-07 (Updated with User Amendments)  
+**Branch:** `batch2-public-pages` (Created from `main`)  
+**Status:** **Approved by User — Active Execution**  
 
 ---
 
 ## 1. Exact Files In Scope
 
-Only the files explicitly listed below will be created or modified. Anything not listed is strictly out of scope and requires a separate approval.
+Only the files explicitly listed below will be created or modified. Anything not listed is strictly out of scope.
 
-### Files to Create (7 Files):
-1. `d:/Ods Global/Source Code/Ods-Global-Network/Frontend/src/pages/CompanyPage.tsx`
-2. `d:/Ods Global/Source Code/Ods-Global-Network/Frontend/src/pages/SupportPage.tsx`
-3. `d:/Ods Global/Source Code/Ods-Global-Network/Frontend/src/pages/PartnerWithUsPage.tsx`
-4. `d:/Ods Global/Source Code/Ods-Global-Network/Backend/src/database/migrations/010_create_support_requests_table.sql`
-5. `d:/Ods Global/Source Code/Ods-Global-Network/Backend/src/database/migrations/011_create_partners_table.sql`
-6. `d:/Ods Global/Source Code/Ods-Global-Network/Backend/src/routes/support.js`
-7. `d:/Ods Global/Source Code/Ods-Global-Network/Backend/src/routes/partners.js`
+### Files to Create (8 Files):
+1. `Frontend/src/pages/CompanyPage.tsx`
+2. `Frontend/src/pages/SupportPage.tsx`
+3. `Frontend/src/pages/PartnerWithUsPage.tsx`
+4. `Frontend/src/services/publicService.ts`
+5. `Backend/src/database/migrations/010_create_support_requests_table.sql`
+6. `Backend/src/database/migrations/011_create_partners_table.sql`
+7. `Backend/src/routes/support.js`
+8. `Backend/src/routes/partners.js`
 
-### Files to Modify (4 Files):
-1. `d:/Ods Global/Source Code/Ods-Global-Network/Frontend/src/App.tsx`
-   - *Justification*: Register `'company' | 'support' | 'partner-with-us'` in the `View` type union, route normalizer, and view render switch.
-2. `d:/Ods Global/Source Code/Ods-Global-Network/Frontend/src/components/layout/Header.tsx`
-   - *Justification*: Fix verified navigation mismatches: wire top utility bar "Help Center" button to `onNavigate('support')` (currently scrolls to `#contact`), and wire "Partner With Us" under `businessMenu`.
-3. `d:/Ods Global/Source Code/Ods-Global-Network/Frontend/src/components/layout/Footer.tsx`
-   - *Justification*: Fix verified navigation mismatches: convert inert `<span>Help Center</span>` into an active button calling `onNavigate?.('support')`, and add links to `company` and `partner-with-us`.
-4. `d:/Ods Global/Source Code/Ods-Global-Network/Backend/src/server.js`
-   - *Justification*: Mount the two new modular route handlers: `app.use('/api/support', supportRoutes)` and `app.use('/api/partners', partnerRoutes)`. Zero changes to existing auth, security headers, or rate-limiters.
+### Documentation / Verification Files to Create in `./Progress/` (2 Files):
+1. `Progress/2026-10-07_1100_batch2-audit-log.md`
+2. `Progress/2026-10-07_1100_batch2-manual-checklist.md`
+
+### Files to Modify (6 Files):
+1. `Frontend/src/App.tsx`
+   - *Scope*: Register `'company' | 'support' | 'partner-with-us'` in the `View` type union, route normalizer, and view render switch.
+2. `Frontend/src/components/layout/Header.tsx`
+   - *Scope*: Minimal surgical link updates (capped at ~40 lines diff).
+3. `Frontend/src/components/layout/Footer.tsx`
+   - *Scope*: Minimal link wiring for "Help Center" button (capped at ~10 lines diff).
+4. `Backend/src/server.js`
+   - *Scope*: Mount the two modular route handlers under `/api/support` and `/api/partners` (~4 lines added).
+5. `Status/PROJECT_STATUS.md`
+   - *Scope*: Record Batch 2 completion status.
+6. `Progress/2026-10-06_1640_action-plan_batch2-public-pages.md` & `Progress/2026-10-06_1640_summary_batch2-analysis.md` (Updated with amendments).
 
 ### Files Strictly Untouched:
 - `Backend/src/routes/auth.js` (ZERO changes)
 - `Frontend/src/styles/tokens.css` (ZERO changes)
-- `Frontend/src/pages/RegisterPage.tsx`, `LoginPage.tsx`, `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx`, `TermsPage.tsx`, `UnauthorizedPage.tsx` (ZERO changes)
-- All 4 role dashboards (`CustomerDashboard.tsx`, `MerchantDashboard.tsx`, `ProviderDashboard.tsx`, `AdminDashboard.tsx`) (ZERO changes)
+- All Batch 1 pages (`LoginPage.tsx`, `RegisterPage.tsx`, `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx`, `TermsPage.tsx`, `UnauthorizedPage.tsx`) (ZERO changes)
+- All role dashboards (`CustomerDashboard.tsx`, `MerchantDashboard.tsx`, `ProviderDashboard.tsx`, `AdminDashboard.tsx`) (ZERO changes)
 - `resource/` directory (100% READ-ONLY)
 
 ---
 
-## 2. Technical Implementation Specifications
+## 2. Routing Architecture & Navigation Alignment
 
-### 2.1. Database Migrations (PostgreSQL 18.6)
+### 2.1. Routing & Subpage Behavior
+* **View-State & HTML5 History**: The application uses client-side view-state management (`currentView: View` in `App.tsx`) synchronized with browser history (`window.history.pushState(null, '', newPath)` and `popstate` event listeners).
+* **Gifting Link on `/company`**: Navigates to `home` and smoothly scrolls to `#gifting` (`onNavigate('home')` followed by scrolling to `#gifting`). It will not rely on silent fallback. Batch 4 will replace this target with dedicated `/gifting-options`.
+* **SEO Metadata**: Each of the 3 pages sets its own `document.title` and meta description via `useEffect` upon mounting.
 
-#### Migration 010: `support_requests`
-```sql
-CREATE TABLE IF NOT EXISTS support_requests (
-    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name       VARCHAR(128) NOT NULL,
-    email      VARCHAR(255) NOT NULL,
-    subject    VARCHAR(200) NOT NULL,
-    message    TEXT NOT NULL,
-    status     VARCHAR(30) NOT NULL DEFAULT 'open',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+### 2.2. Surgical Edits to `Header.tsx` & `Footer.tsx`
+* **Diff Caps**: `Header.tsx` diff capped at ~40 lines; `Footer.tsx` diff capped at ~10 lines. `git diff --stat` will be quoted.
+* **Header MenuItem Type Update**: Allow optional `anchor?: string;` and `view?: string;`.
+* **Header Icon Import**: Add `Handshake` from `lucide-react`.
+* **Search Overlay Click Handler**: Check search result click handler (approx line 994) and support items with `view`: `item.view ? onNavigate(item.view) : handleLinkClick(item.anchor)`.
+* **Menu Items**:
+  - `businessMenu`: Add 3rd item `{ label: 'Partner With Us', view: 'partner-with-us', icon: <Handshake size={16} /> }`.
+  - `aboutMenu`: `"About ODS Global Net"` → `view: 'company'`; `"Our Network"` → `anchor: '#ecosystem'` (stays unchanged); `"Contact Us"` → `view: 'support'`.
+  - Top Utility Bar: "Help Center" button → `onNavigate('support')`.
+* **Footer**: Bottom utility bar `<span>Help Center</span>` becomes `<button type="button" onClick={() => onNavigate?.('support')} style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', cursor: 'pointer', padding: 0 }}>Help Center</button>`. `Privacy Policy` remains strictly untouched.
 
-CREATE INDEX IF NOT EXISTS idx_support_requests_created ON support_requests(created_at DESC);
-```
+---
 
-#### Migration 011: `partners`
-```sql
-CREATE TABLE IF NOT EXISTS partners (
-    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    partnership_type VARCHAR(50) NOT NULL,
-    name             VARCHAR(128) NOT NULL,
-    company_name     VARCHAR(128) NOT NULL,
-    email            VARCHAR(255) NOT NULL,
-    phone            VARCHAR(50) NOT NULL,
-    sector           VARCHAR(100),
-    investment_type  VARCHAR(100),
-    enquiry          TEXT,
-    metadata         JSONB DEFAULT '{}'::jsonb,
-    status           VARCHAR(30) NOT NULL DEFAULT 'submitted',
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+## 3. Technical Specifications
 
-CREATE INDEX IF NOT EXISTS idx_partners_created ON partners(created_at DESC);
-```
+### 3.1. Database Migrations (PostgreSQL 18.6)
+* **Runner**: `node src/database/migrate.js` (invoked via `npm run migrate` in `Backend`).
+* **Existing State**: Highest existing migration is `009_seed_admin.sql`. Zero gaps exist between `001` and `009`.
+* **New Migration Files**:
+  - `010_create_support_requests_table.sql`:
+    ```sql
+    CREATE TABLE IF NOT EXISTS support_requests (
+        id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        reference  VARCHAR(32) NOT NULL UNIQUE,
+        name       VARCHAR(128) NOT NULL,
+        email      VARCHAR(255) NOT NULL,
+        subject    VARCHAR(200) NOT NULL,
+        message    TEXT NOT NULL,
+        status     VARCHAR(30) NOT NULL DEFAULT 'open',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_support_requests_created ON support_requests(created_at DESC);
+    ```
+  - `011_create_partners_table.sql`:
+    *(Added `whatsapp` column with validation; max length constraints applied; zero document upload columns)*
+    ```sql
+    CREATE TABLE IF NOT EXISTS partners (
+        id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        partnership_type VARCHAR(50) NOT NULL,
+        name             VARCHAR(128) NOT NULL,
+        company_name     VARCHAR(128) NOT NULL,
+        email            VARCHAR(255) NOT NULL,
+        phone            VARCHAR(50) NOT NULL,
+        whatsapp         VARCHAR(50),
+        sector           VARCHAR(100),
+        investment_type  VARCHAR(100),
+        enquiry          VARCHAR(2000),
+        status           VARCHAR(30) NOT NULL DEFAULT 'submitted',
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_partners_created ON partners(created_at DESC);
+    ```
 
-### 2.2. Backend Endpoints (Testing Mode)
+### 3.2. Backend Routes (Testing Endpoints)
 
 #### Endpoint 1: `POST /api/support` (`Backend/src/routes/support.js`)
-* **Spam Guard**: Single honeypot field `website`. If present and non-empty, silently return `{ success: true }` without database insertion.
+* **Spam Guard**: Honeypot `website`. If filled, return `{ success: true, reference: "ODS-REQ-00000000" }` without database insertion.
 * **Validation**:
-  - `name`: String, 1–128 chars.
+  - `name`: 1–128 chars.
   - `email`: RFC 5322 regex match.
-  - `subject`: String, 1–200 chars.
-  - `message`: String, 1–2000 chars.
-* **Database Query**: Parameterized `INSERT INTO support_requests (name, email, subject, message) VALUES ($1, $2, $3, $4)`.
-* **Dev Output**: Logs formatted ticket receipt to backend terminal console.
-* **Response**: Uniform JSON `{ success: true, message: "Your support request has been received. Our team will contact you shortly." }`.
+  - `subject`: 1–200 chars.
+  - `message`: 1–2000 chars.
+* **Reference ID & Collision Handling**:
+  - Generates at least 8 hex chars: `ODS-REQ-` + `crypto.randomBytes(4).toString('hex').toUpperCase()` (e.g. `ODS-REQ-A1B2C3D4`).
+  - Retry on unique violation (PostgreSQL error code `23505`) up to 3 attempts. Never return a 500 on collision.
+* **Console Logging**: Reference ID and type only, never message body, and only when `NODE_ENV !== 'production'`.
+* **Response**: `{ success: true, reference: "ODS-REQ-A1B2C3D4", message: "Your support request has been received (Reference: ODS-REQ-A1B2C3D4). For urgent matters, please contact us at +251 960 606 042 or info@odsglobal.net." }`. (Zero promises of follow-up).
 
 #### Endpoint 2: `POST /api/partners` (`Backend/src/routes/partners.js`)
-* **Spam Guard**: Single honeypot field `website_url`. If present, silently return `{ success: true }`.
+* **Spam Guard**: Honeypot `website_url`. If filled, return `{ success: true }`.
 * **Validation**:
-  - `partnership_type`: Allowed values `['investor', 'strategic_partner', 'sponsorship']`.
-  - `name`: String, 1–128 chars.
-  - `company_name`: String, 1–128 chars.
+  - `partnership_type`: Allowlist `['investor', 'strategic_partner', 'sponsorship']`.
+  - `name`: 1–128 chars.
+  - `company_name`: 1–128 chars.
   - `email`: RFC 5322 regex match.
-  - `phone`: String, 5–50 chars.
-* **Database Query**: Parameterized `INSERT INTO partners (partnership_type, name, company_name, email, phone, sector, investment_type, enquiry, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`.
-* **Dev Output**: Logs formatted partnership inquiry to backend terminal console.
-* **Response**: Uniform JSON `{ success: true, message: "Thank you for your interest in partnering with ODS Global Network. Our partnerships team will be in touch." }`.
+  - `phone`: 5–50 chars.
+  - `whatsapp`: Optional, 5–50 chars.
+  - `sector`: Max 100 chars.
+  - `investment_type`: Max 100 chars.
+  - `enquiry`: Max 2000 chars.
+* **Console Logging**: Type only, never message body, only when `NODE_ENV !== 'production'`.
+* **Response**: `{ success: true, message: "Your partnership inquiry has been received. For urgent matters, please contact us at +251 960 606 042 or info@odsglobal.net." }`. (Zero promises of follow-up).
+
+### 3.3. Frontend Service Layer (`Frontend/src/services/publicService.ts`)
+* Uses `API_BASE = 'http://localhost:3001'`.
+* Methods:
+  - `submitSupportRequest(data)`
+  - `submitPartnerRequest(data)`
+* Error classification: `'network' | 'validation' | 'server' | 'unknown'`.
+
+### 3.4. Frontend Page Specifications
+* **`CompanyPage.tsx`**: Sets `document.title = "Company Overview | ODS Global Network"`. 9 categories. Condensed Cultural Gifting card linking to home `#gifting`.
+* **`SupportPage.tsx`**: Sets `document.title = "Customer Support & Help Center | ODS Global Network"`. Contact channels, support form with honeypot, reference ID display, neutral message with phone/email for urgent matters. 5 truthful FAQs:
+  1. What is ODS Global Network?
+  2. How do I get started or create an account? (Explicitly references customer, merchant, and provider roles from `RegisterPage.tsx:33-38`).
+  3. How can I reach the ODS Global Network team?
+  4. What services will be available through the network? (Omits "verified").
+  5. How do I inquire about partnerships or corporate packages?
+* **`PartnerWithUsPage.tsx`**: Sets `document.title = "Partner With Us | ODS Global Network"`. 3 tabs, sector/investment dropdowns, contact fields (including WhatsApp), no document upload fields.
 
 ---
 
-### 2.3. Frontend Rebuilds
+## 4. Test Plan & Evidence Requirements
 
-#### Page 1: `CompanyPage.tsx` (`/company`)
-* Top sticky utility bar with "Back to Home" button and ODS vector logo.
-* Section 1: Hero with ODS corporate wordmark, tagline ("Ethiopian Blessings, Modern Gifting"), and mission/vision cards.
-* Section 2: What We Offer — Centralized marketplace, cultural gifting, corporate wellness, diaspora engagement, and community initiatives (with Lucide icons).
-* Section 3: Why Choose ODS Global Network — Holistic services, cultural connection, seamless experience, social impact.
-* Section 4: 9 Healthcare & Wellness Provider Categories (Hospitals, Clinics, Pharmacies, Labs, Wellness Centers, Ambulance, Home Care, Specialists, Diagnostic Centers).
-* Section 5: Key Initiatives & Economic Impact.
-* Integrates platform `Footer.tsx`.
-
-#### Page 2: `SupportPage.tsx` (`/support`)
-* Top utility bar with "Back to Home" button and ODS vector logo.
-* Direct contact banner: Phone (`+251 960 606 042`), Email (`info@odsglobal.net`), WhatsApp, Telegram with active gold hover states.
-* Accessible support form: Name, Email, Subject, Message, hidden honeypot field.
-* Inline feedback banner (clean success confirmation card; red error alert with focus return).
-* Frequently Asked Questions section with accordion or structured cards covering appointments, cancellations, payments, and platform usage.
-* Integrates platform `Footer.tsx`.
-
-#### Page 3: `PartnerWithUsPage.tsx` (`/partner-with-us`)
-* Top utility bar with "Back to Home" button and ODS vector logo.
-* Track selector tabs: **Investor**, **Strategic Partner**, **Sponsorship**.
-* Dynamic field display based on active tab with accessible W3C tab patterns.
-* Inputs: Name, Company Name, Email, Phone, WhatsApp, Sector (10 sectors), Investment Type, Enquiries, hidden honeypot.
-* Inline submission confirmation card.
-* Integrates platform `Footer.tsx`.
-
----
-
-## 3. Test Plan & Evidence Requirements
-
-| Test Step | Command / Tool | Success Criteria | Evidence Required |
-| :--- | :--- | :--- | :--- |
-| **TypeScript Compilation** | `npx tsc --noEmit` in `Frontend` | Exit code 0, 0 type errors | Terminal output log |
-| **Production Build** | `npm run build` in `Frontend` | Exit code 0, bundles created | Vite build output log |
-| **Support API Valid** | Node fetch `POST /api/support` | HTTP 200, `{ success: true }`, DB record created | DB query result |
-| **Support API Invalid** | Node fetch `POST /api/support` (empty name/email) | HTTP 400, validation error | Response JSON |
-| **Support API Honeypot** | Node fetch `POST /api/support` (with `website: "spam.com"`) | HTTP 200, zero DB record created | DB count unchanged |
-| **Partners API Valid** | Node fetch `POST /api/partners` | HTTP 200, `{ success: true }`, DB record created | DB query result |
-| **Partners API Invalid** | Node fetch `POST /api/partners` (invalid email) | HTTP 400, validation error | Response JSON |
-| **Partners API Honeypot** | Node fetch `POST /api/partners` (with `website_url: "spam.com"`) | HTTP 200, zero DB record created | DB count unchanged |
-| **Desktop Viewport** | 1280px viewport check | Multi-column grid, no overflow | Visual DOM layout verification |
-| **Mobile Viewport** | 375px / 768px viewport check | Single-column stack, tap targets >= 44px | Responsive verification |
-| **Keyboard Accessibility** | `Tab`, `Enter`, `Space` | Visible gold focus ring (`--color-gold-bright`) on all interactive controls | CSS focus verification |
-| **Link Integrity** | Link audit across all 3 pages | Zero 404s, all routes resolve cleanly | Router mapping check |
-
----
-
-## 4. KPIs & Root Guideline Compliance Checklist
-
-Checked against [`resource/KPIs & SCOPES ODS GLOBAL NET .txt`](file:///d:/Ods%20Global/Source%20Code/Ods-Global-Network/resource/KPIs%20&%20SCOPES%20ODS%20GLOBAL%20NET%20.txt) Module 1:
-
-- [ ] **100% Website pages completed for Batch 2**: `/company`, `/support`, `/partner-with-us`.
-- [ ] **Zero broken links / Zero broken pages**: All internal header, footer, and utility bar links map to valid DOM anchors or views.
-- [ ] **Mobile responsiveness above 95%**: Layout stacks gracefully on mobile with zero horizontal scrolling.
-- [ ] **Page loading time under 3 seconds**: Minimal lightweight bundle, zero external map scripts or bloated GIF animations.
-- [ ] **SSL / Security**: Prepared for HTTPS deployment; parameterized SQL statements preventing SQL injection.
-- [ ] **KPIs Not Directly Measurable in Local Dev**: Production SSL termination (requires live domain/proxy), PageSpeed Insights field data (requires live CDN).
-
----
-
-## 5. Rollback Steps & Branch Management
-
-* **Working Branch**: `batch2-public-pages` (To be created strictly after user approval: `git checkout -b batch2-public-pages main`).
-* **Rollback Procedure**:
-  - If regressions occur, discard uncommitted changes via `git restore .`.
-  - To completely rollback to pre-Batch 2 state: `git checkout main`.
-  - Revert database test migrations if needed: `DROP TABLE IF EXISTS support_requests, partners;`.
-
----
-
-## 6. Risks & Not Verified Section
-
-### Identified Risks:
-1. **Header Complexity**: `Header.tsx` has numerous programmatic accessibility refs and nested dropdown state. Modifying dropdown items must be done strictly without breaking `Escape` key hierarchies or safe blur handlers.
-2. **PostgreSQL Migrations**: Ensure `010` and `011` migration scripts run cleanly in migration pipeline without altering existing tables `001` through `009`.
-
-### Not Verified (Pending Execution):
-* Compilation of new pages (files not yet created).
-* Live HTTP response of `/api/support` and `/api/partners` (endpoints not yet created).
-* Database insert performance under concurrent load.
-* Screen reader speech output on NVDA / JAWS (to be verified via keyboard semantics).
+1. **TypeScript Compilation**: `npx tsc --noEmit` in `Frontend` (Quote exact output, exit code 0).
+2. **Production Build**: `npm run build` in `Frontend` (Quote exact output, exit code 0).
+3. **Six Backend Endpoint Tests** (via Node script):
+   - `POST /api/support` Valid & DB insertion verified.
+   - `POST /api/support` Invalid (missing required fields) & 400 verified.
+   - `POST /api/support` Honeypot & DB non-insertion verified.
+   - `POST /api/partners` Valid & DB insertion verified.
+   - `POST /api/partners` Invalid & 400 verified.
+   - `POST /api/partners` Honeypot & DB non-insertion verified.
+   - Collision retry logic verified.
+4. **Git Diff Caps**:
+   - `git diff --stat` for `Header.tsx` (< 40 lines).
+   - `git diff --stat` for `Footer.tsx` (< 10 lines).
+5. **Manual Verification Checklist**:
+   - Layout, mobile, keyboard, header clicks, and direct route checks documented in `Progress/2026-10-07_1100_batch2-manual-checklist.md` under "Not verified" for local agent execution.

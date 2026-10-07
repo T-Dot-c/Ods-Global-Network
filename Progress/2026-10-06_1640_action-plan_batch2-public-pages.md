@@ -3,63 +3,53 @@
 
 **Project:** ODS Global Network  
 **File:** `./Progress/2026-10-06_1640_action-plan_batch2-public-pages.md`  
-**Date:** 2026-10-06 16:40  
-**Status:** Pending User Approval ("Approved: proceed")  
+**Date:** 2026-10-07 (Updated with User Amendments)  
+**Branch:** `batch2-public-pages` (Created from `main`)  
+**Status:** **Approved by User — Active Execution**  
 
 ---
 
-## 1. High-Level Objectives
+## 1. Process Deviation Log & History Integrity
 
-Reconstruct and modernize three public-facing legacy routes into the official ODS Global Network React 18 + Vite frontend and Express + PostgreSQL backend:
-1. **`/company`**: Institutional profile, mission, vision, and strategic impact pillars.
-2. **`/support`**: Customer care, verified direct channels, ticket inquiry form, and contextual FAQs.
-3. **`/partner-with-us`**: Multi-track partnership intake (Investor, Strategic Partner, Sponsorship) with accessible validation.
+* **Deviation Record (2026-10-06)**: Documentation commit `0ecee801` ("docs: add Batch 2 analysis briefs and implementation plans for public pages") was committed to `main` and pushed to `origin/main` prior to explicit approval.
+* **Resolution**: Recorded here as an official process deviation. History will **not** be rewritten.
+* **Strict Corrective Policy**: Branch `batch2-public-pages` has been created directly from `main`. All Batch 2 commits will be made strictly on this branch in the exact 5-stage order specified below. `main` will remain untouched.
 
 ---
 
-## 2. Phased Architectural Steps
+## 2. Commit Staging Order on `batch2-public-pages`
 
-### Phase 1: Branch Setup & Schema Preparation (Post-Approval)
-1. Verify working tree is clean.
-2. Create dedicated feature branch: `batch2-public-pages` from `main`.
-3. Apply minimal database tables (`support_requests` and `partners`) using standard PostgreSQL migrations or pool scripts.
+All work will be committed on `batch2-public-pages` in this exact sequence:
 
-### Phase 2: Backend Test Route Layer
-1. Create `Backend/src/routes/support.js`:
-   - `POST /api/support` with parameterized query, server-side validation, and honeypot check.
-   - Terminal dev logging for inquiry dispatch.
-2. Create `Backend/src/routes/partners.js`:
-   - `POST /api/partners` with parameterized query, server-side validation, and honeypot check.
-   - Terminal dev logging for partnership dispatch.
-3. Mount the two route files in `Backend/src/server.js` under `/api/support` and `/api/partners`.
+1. **Commit 1: Updated Plan Files**
+   - `./Progress/2026-10-06_1640_action-plan_batch2-public-pages.md`
+   - `./Progress/2026-10-06_1640_implementation-plan_batch2-public-pages.md`
+   - `./Progress/2026-10-06_1640_summary_batch2-analysis.md`
+2. **Commit 2: Migrations + Backend Routes**
+   - `Backend/src/database/migrations/010_create_support_requests_table.sql`
+   - `Backend/src/database/migrations/011_create_partners_table.sql`
+   - `Backend/src/routes/support.js`
+   - `Backend/src/routes/partners.js`
+   - `Backend/src/server.js` (mount routes)
+3. **Commit 3: Frontend Pages & Service**
+   - `Frontend/src/services/publicService.ts`
+   - `Frontend/src/pages/CompanyPage.tsx`
+   - `Frontend/src/pages/SupportPage.tsx`
+   - `Frontend/src/pages/PartnerWithUsPage.tsx`
+4. **Commit 4: Layout & Router Wiring**
+   - `Frontend/src/App.tsx`
+   - `Frontend/src/components/layout/Header.tsx`
+   - `Frontend/src/components/layout/Footer.tsx`
+5. **Commit 5: Status & Audit Log**
+   - `Status/PROJECT_STATUS.md`
+   - `Progress/2026-10-07_1100_batch2-audit-log.md`
+   - `Progress/2026-10-07_1100_batch2-manual-checklist.md`
 
-### Phase 3: Frontend Page Rebuilds
-1. Build `Frontend/src/pages/CompanyPage.tsx`:
-   - Luxury brand header with back navigation.
-   - About ODS Global Network, Mission & Vision, 9 Provider Categories, Impact Pillars.
-2. Build `Frontend/src/pages/SupportPage.tsx`:
-   - Customer support header, direct contact channels (phone, email, WhatsApp, Telegram).
-   - Accessible ticket submission form with client-side validation and honeypot.
-   - Categorized ODS platform FAQs.
-3. Build `Frontend/src/pages/PartnerWithUsPage.tsx`:
-   - Multi-track partnership tabs (Investor, Strategic Partner, Sponsorship).
-   - Accessible sector and investment options.
-   - Clean intake form with client-side validation, honeypot, and inline confirmation state.
+---
 
-### Phase 4: Router & Layout Link Alignment
-1. Update `Frontend/src/App.tsx`:
-   - Add views `'company' | 'support' | 'partner-with-us'` to `View` type and route normalization.
-   - Mount components in `<main>`.
-2. Update `Frontend/src/components/layout/Header.tsx`:
-   - Wire "Help Center" top utility button to `onNavigate('support')`.
-   - Wire "Partner With Us" menu item if confirmed.
-3. Update `Frontend/src/components/layout/Footer.tsx`:
-   - Convert `<span>Help Center</span>` to button triggering `onNavigate('support')`.
-   - Add `company` and `partner-with-us` links.
+## 3. Scope & Key Decision Summary
 
-### Phase 5: Verification & Quality Assurance
-1. Execute `npx tsc --noEmit` in `Frontend` (0 errors).
-2. Execute `npm run build` in `Frontend` (exit code 0).
-3. Execute backend endpoint tests (valid, invalid, honeypot) using Node fetch.
-4. Verify desktop & mobile responsiveness and keyboard accessibility.
-5. Create comprehensive audit report in `./Progress/`.
+1. **`/company`**: Institutional profile, mission, vision, 9 healthcare provider categories. Cultural Gifting condensed to a card navigating to `home` and scrolling to `#gifting` (Batch 4 will replace target).
+2. **`/support`**: Contact form + 5 truthful FAQs. Submissions generate 8-hex reference ID (`ODS-REQ-XXXXXXXX`) with collision retry. Neutral response with urgent contact phone/email. Console logs reference/type only in non-production.
+3. **`/partner-with-us`**: 3 intake tracks with WhatsApp field, max length constraints, zero document upload inputs.
+4. **Header/Footer**: Minimal surgical edits capped at ~40 lines (`Header.tsx`) and ~10 lines (`Footer.tsx`). Search overlay supports `view` destinations.
