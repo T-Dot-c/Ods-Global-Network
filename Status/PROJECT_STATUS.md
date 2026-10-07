@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-09-30  
-> **CURRENT STAGE**: TASK 05 Complete — Frontend Header Scope Re-baselining & Accessibility Refinements  
+> **LAST UPDATED**: 2026-10-07  
+> **CURRENT STAGE**: BATCH 2 Complete — Public Informational & Intake Pages (/company, /support, /partner-with-us)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -192,6 +192,28 @@
   - `Frontend`: `npm run build` completed cleanly with exit code 0 (`tsc && vite build`, 1602 modules, built in 4.24s).
 - [x] **Manual Browser Verification**:
   - Visual and responsive layout testing (1280px desktop, ~900px touch emulation, and mobile drawer at 860px/768px), mouse click persistence without swallowed clicks, outside click dismissal, and keyboard accessibility (`Tab`, `Enter`, `Escape` focus restoration) verified and passed by user.
+
+### BATCH 02: Public Informational & Intake Pages (`/company`, `/support`, `/partner-with-us`)
+
+- [x] **Database Migrations (010 & 011)**:
+  - `010_create_support_requests_table.sql`: Support tickets with unique 8-hex reference and status.
+  - `011_create_partners_table.sql`: Partnership intake with multi-track fields, WhatsApp, and length limits.
+- [x] **Backend Endpoints (`/api/support` & `/api/partners`)**:
+  - `POST /api/support`: Parameterized insert, honeypot protection, 8-hex reference generator (`ODS-REQ-XXXXXXXX`) with unique collision retry logic, and neutral acknowledgment message.
+  - `POST /api/partners`: Parameterized insert, allowlisted partnership types, honeypot protection, zero document upload dependency, and neutral acknowledgment message.
+- [x] **Frontend Public Pages & Service**:
+  - `Frontend/src/services/publicService.ts`: Centralized service with typed error classification (`network`, `validation`, `server`, `unknown`).
+  - `CompanyPage.tsx` (`/company`): Corporate profile, mission & vision, 9 healthcare provider categories, and condensed Cultural Gifting card linking to home `#gifting`.
+  - `SupportPage.tsx` (`/support`): Direct contact channels, support inquiry form with reference ID display, and 5 truthful FAQs compliant with today's built system state.
+  - `PartnerWithUsPage.tsx` (`/partner-with-us`): 3-track intake (Investor, Strategic Partner, Sponsorship) with sector and investment fields, and document upload inputs removed.
+- [x] **Routing & Navigation Wiring**:
+  - `App.tsx`: Registered `company`, `support`, and `partner-with-us` routes in `View` union and route normalizer.
+  - `Header.tsx`: Wired "About ODS Global Net" to `/company`, "Contact Us" to `/support`, top-bar "Help Center" to `/support`, and added "Partner With Us" to "For Businesses" dropdown, mobile drawer, and search index.
+  - `Footer.tsx`: Converted "Help Center" span into active button linking to `/support`.
+- [x] **Build & Test Verification**:
+  - `npx tsc --noEmit` passed with 0 errors.
+  - `npm run build` passed with exit code 0 (1,613 modules transformed, 11.23s).
+  - All 6 backend endpoint scenarios (valid, invalid, honeypot for support & partners) verified against PostgreSQL.
 
 ---
 
