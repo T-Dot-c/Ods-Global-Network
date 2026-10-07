@@ -11,7 +11,9 @@ const cookieParser = require('cookie-parser');
 const helmet       = require('helmet');
 const rateLimit    = require('express-rate-limit');
 
-const authRoutes = require('./routes/auth');
+const authRoutes    = require('./routes/auth');
+const supportRoutes = require('./routes/support');
+const partnerRoutes = require('./routes/partners');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -80,6 +82,10 @@ app.use('/api/auth', rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many auth requests — please slow down.' },
 }), authRoutes);
+
+/* ── Public inquiry routes (Batch 2) ──────────────────────── */
+app.use('/api/support', supportRoutes);
+app.use('/api/partners', partnerRoutes);
 
 /* ── Health check ─────────────────────────────────────────── */
 app.get('/api/health', (_req, res) => {
