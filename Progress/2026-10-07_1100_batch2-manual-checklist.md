@@ -101,3 +101,71 @@ Both local servers should be running:
   - Press `Tab` through interactive elements.
   - Verify visible gold outline ring (`outline: 2px solid var(--color-gold-bright)`) on all active buttons, links, and inputs.
   - Press `Enter` or `Space` to activate buttons and expand FAQ accordions.
+
+---
+
+### Step 6: Backend Migrations & Database Endpoint Verification (PowerShell)
+
+Ensure `Backend/.env` is configured with your local database password (`DB_PASSWORD`), and `Backend` dev server is running on `http://localhost:3001`.
+
+#### 1. Apply Migrations 010 and 011
+```powershell
+cd "c:\Users\Tewolde\Desktop\Y Arc System PLC\Ods Global\Ods-Global-Network\Backend"
+npm run migrate
+```
+*Expected Output:*
+```
+[Migrations] Found 11 migration file(s) in ./migrations/
+  [Skipped] (already applied): 001_create_users_table.sql
+  ...
+  [Applied] 010_create_support_requests_table.sql
+  [Applied] 011_create_partners_table.sql
+[Migrations] Complete. Applied: 2  |  Skipped: 9
+```
+
+#### 2. Check Initial Table Row Counts
+```powershell
+psql -U postgres -d ods_global -c "SELECT count(*) AS support_count FROM support_requests;"
+psql -U postgres -d ods_global -c "SELECT count(*) AS partners_count FROM partners;"
+```
+
+#### 3. Test `POST /api/support` Endpoints
+```powershell
+# (A) Valid Support Request (Expect HTTP 200, ODS-REQ-XXXXXXXX, +1 row in DB)
+Invoke-RestMethod -Uri "http://localhost:3001/api/support" -Method Post -ContentType "application/json" -Body '{"name":"Abebe Kebede","email":"abebe@example.com","subject":"Appointment Inquiry","message":"Requesting information regarding clinic specialist availability."}'
+
+# (B) Invalid Support Request (Expect HTTP 400 error, 0 rows added)
+try {
+  Invoke-RestMethod -Uri "http://localhost:3001/api/support" -Method Post -ContentType "application/json" -Body '{"name":"","email":"invalid-email","subject":"Test","message":""}'
+} catch {
+  $_.Exception.Response.StatusCode
+  $_.ErrorDetails.Message
+}
+
+# (C) Bot Honeypot Support Request (Expect HTTP 200 with ODS-REQ-00000000, 0 rows added)
+Invoke-RestMethod -Uri "http://localhost:3001/api/support" -Method Post -ContentType "application/json" -Body '{"name":"Spam Bot","email":"bot@spam.com","subject":"Buy Now","message":"Spam offer text","website":"http://spam-link.com"}'
+
+# Verify Row Count
+psql -U postgres -d ods_global -c "SELECT reference, name, email, subject, created_at FROM support_requests ORDER BY created_at DESC LIMIT 5;"
+```
+
+#### 4. Test `POST /api/partners` Endpoints
+```powershell
+# (A) Valid Partner Request (Expect HTTP 200, +1 row in DB)
+Invoke-RestMethod -Uri "http://localhost:3001/api/partners" -Method Post -ContentType "application/json" -Body '{"partnership_type":"investor","name":"Sara Tesfaye","company_name":"Highland Capital","email":"sara@highland.com","phone":"+251911223344","whatsapp":"+251911223344","sector":"Healthcare","investment_type":"Equity","enquiry":"Interested in Series A co-investment."}'
+
+# (B) Invalid Partner Request (Expect HTTP 400 error, 0 rows added)
+try {
+  Invoke-RestMethod -Uri "http://localhost:3001/api/partners" -Method Post -ContentType "application/json" -Body '{"partnership_type":"invalid_type","name":"","company_name":"","email":"bad","phone":""}'
+} catch {
+  $_.Exception.Response.StatusCode
+  $_.ErrorDetails.Message
+}
+
+# (C) Bot Honeypot Partner Request (Expect HTTP 200, 0 rows added)
+Invoke-RestMethod -Uri "http://localhost:3001/api/partners" -Method Post -ContentType "application/json" -Body '{"partnership_type":"investor","name":"Spam Bot","company_name":"Spam Corp","email":"bot@spam.com","phone":"+123456789","website_url":"http://spam-site.com"}'
+
+# Verify Row Count
+psql -U postgres -d ods_global -c "SELECT id, partnership_type, name, company_name, phone, whatsapp, created_at FROM partners ORDER BY created_at DESC LIMIT 5;"
+```
+

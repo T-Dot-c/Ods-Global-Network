@@ -41,7 +41,7 @@ export const CompanyPage: React.FC<CompanyPageProps> = ({ onNavigate }) => {
     { title: 'Pharmacies', desc: 'Licensed retail pharmacies and essential medication delivery.', icon: <Pill size={24} /> },
     { title: 'Laboratories & Pathology', desc: 'Clinical diagnostic labs, specimen testing, and pathology centers.', icon: <Activity size={24} /> },
     { title: 'Wellness Centers & Spas', desc: 'Holistic retreats, therapeutic wellness, and fitness sanctuaries.', icon: <HeartPulse size={24} /> },
-    { title: '24/7 Ambulance Services', desc: 'Emergency medical dispatch and rapid patient transport.', icon: <Truck size={24} /> },
+    { title: 'Ambulance Services', desc: 'Emergency medical dispatch and rapid patient transport.', icon: <Truck size={24} /> },
     { title: 'Home Care & Nursing', desc: 'In-home clinical caregivers, nurse visits, and elderly support.', icon: <UserCheck size={24} /> },
     { title: 'Specialists & Consultants', desc: 'Board-certified medical consultants across clinical disciplines.', icon: <Award size={24} /> },
     { title: 'Diagnostic & Imaging', desc: 'Medical imaging, ultrasound, MRI, and radiology diagnostics.', icon: <BarChart3 size={24} /> },
