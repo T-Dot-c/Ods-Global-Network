@@ -231,7 +231,15 @@
 
 ---
 
-## 4. Immediate Next Steps
+## 4. Release Blockers
+
+- Migration 009_seed_admin.sql creates a default admin with a known password. It must be removed or rotated before any non-local deployment.
+- The app connects as the postgres superuser. A dedicated limited DB user is needed before deployment.
+- Batch 2 inquiries (support_requests, partners) are only visible in the database until the admin dashboard and notifications batches.
+
+---
+
+## 5. Immediate Next Steps
 
 1. **Merchant & Provider KYC Onboarding**:
    - Build document upload handler (`POST /api/documents/upload`) with validation and secure local/cloud storage.

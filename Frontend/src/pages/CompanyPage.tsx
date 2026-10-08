@@ -181,7 +181,7 @@ export const CompanyPage: React.FC<CompanyPageProps> = ({ onNavigate }) => {
                 </h2>
               </div>
               <p style={{ color: 'var(--color-text-muted-dark)', lineHeight: 1.7, fontSize: '0.98rem', margin: 0 }}>
-                Connecting people to better healthcare, seamless gifting, and verified wellness services across Ethiopia and the diaspora through innovative, secure, and compassionate digital infrastructure.
+                Connecting people to better healthcare, seamless gifting, and trusted wellness services across Ethiopia and the diaspora through innovative, secure, and compassionate digital infrastructure.
               </p>
             </div>
 
