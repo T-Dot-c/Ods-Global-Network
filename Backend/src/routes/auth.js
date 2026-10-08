@@ -21,8 +21,13 @@ const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const crypto     = require('crypto');
 const pool       = require('../db');
+const { logAuditEvent } = require('../services/auditService');
 
-const JWT_SECRET      = process.env.JWT_SECRET || 'CHANGE_ME_IN_PRODUCTION';
+const JWT_SECRET      = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('[FATAL SECURITY ERROR] JWT_SECRET is missing. Server must not run without JWT_SECRET.');
+  process.exit(1);
+}
 const COOKIE_MAX_AGE  = parseInt(process.env.COOKIE_MAX_AGE_MS || '86400000', 10);
 const COOKIE_SECURE   = process.env.COOKIE_SECURE === 'true';
 const MAX_FAILURES    = 5;
@@ -258,9 +263,26 @@ router.post('/register', async (req, res) => {
           [providerId, contact_person_name.trim(), contact_person_role || 'Primary Contact', contact_person_email || null, contact_person_phone || null]
         );
       }
+    } else if (role === 'customer') {
+      // Address record for customer if provided at registration
+      if (city || country || address_line) {
+        await client.query(
+          `INSERT INTO addresses (entity_type, entity_id, country, region_state, city, postal_code, address_line)
+           VALUES ('customer', $1, $2, $3, $4, $5, $6)`,
+          [user.id, country || 'Ethiopia', region_state || null, city || null, postal_code || null, address_line || null]
+        );
+      }
     }
 
     await client.query('COMMIT');
+
+    await logAuditEvent({
+      userId: user.id,
+      action: 'REGISTER_SUCCESS',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      details: { role },
+    });
 
     const approval_status = await getApprovalStatus(role, user.id);
 
@@ -302,6 +324,12 @@ router.post('/login', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      await logAuditEvent({
+        action: 'LOGIN_FAILED',
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        details: { email: email.toLowerCase(), reason: 'user_not_found' },
+      });
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
@@ -331,6 +359,14 @@ router.post('/login', async (req, res) => {
         [newAttempts, locked_until, user.id]
       );
 
+      await logAuditEvent({
+        userId: user.id,
+        action: 'LOGIN_FAILED',
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        details: { email: user.email, attempts: newAttempts },
+      });
+
       const attemptsLeft = MAX_FAILURES - newAttempts;
       return res.status(401).json({
         success: false,
@@ -348,6 +384,13 @@ router.post('/login', async (req, res) => {
        WHERE id = $1`,
       [user.id]
     );
+
+    await logAuditEvent({
+      userId: user.id,
+      action: 'LOGIN_SUCCESS',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     const approval_status = await getApprovalStatus(user.role, user.id);
 

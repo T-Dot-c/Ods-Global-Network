@@ -35,11 +35,14 @@ interface DashboardLayoutProps {
   role: UserRole;
   roleTitle: string;
   sidebarItems: SidebarItem[];
-  statCards: StatCardItem[];
-  quickActions: QuickActionItem[];
-  activityTitle: string;
+  statCards?: StatCardItem[];
+  quickActions?: QuickActionItem[];
+  activityTitle?: string;
   activityContent?: React.ReactNode;
   showApprovalStatus?: boolean;
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
+  children?: React.ReactNode;
   onNavigate: (view: string) => void;
 }
 
@@ -53,16 +56,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   role,
   roleTitle,
   sidebarItems,
-  statCards,
-  quickActions,
-  activityTitle,
+  statCards = [],
+  quickActions = [],
+  activityTitle = 'Recent Activity',
   activityContent,
   showApprovalStatus = false,
+  activeTab: controlledTab,
+  onTabChange,
+  children,
   onNavigate,
 }) => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('Overview');
+  const [internalTab, setInternalTab] = useState('overview');
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const currentTab = controlledTab !== undefined ? controlledTab : internalTab;
 
   const handleSignOut = async () => {
     await logout();
@@ -268,7 +276,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
                 <div style={{ padding: '6px 0' }}>
                   <button
-                    onClick={() => { setActiveTab('Settings'); setProfileOpen(false); }}
+                    onClick={() => {
+                      if (onTabChange) onTabChange('profile');
+                      else setInternalTab('profile');
+                      setProfileOpen(false);
+                    }}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -354,11 +366,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {sidebarItems.map((item) => {
-                const isActive = activeTab === item.label;
+                const isActive = currentTab === item.id || currentTab === item.label;
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setActiveTab(item.label)}
+                    onClick={() => {
+                      if (onTabChange) onTabChange(item.id);
+                      else setInternalTab(item.id);
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -512,215 +527,225 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             )}
           </div>
 
-          {/* ─────────────────────────────────────────────────────────
-              STAT CARDS GRID
-             ───────────────────────────────────────────────────────── */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${statCards.length > 3 ? 3 : statCards.length}, 1fr)`,
-              gap: '18px',
-              marginBottom: '28px',
-            }}
-          >
-            {statCards.map((stat, idx) => (
+          {children ? (
+            children
+          ) : (
+            <>
+              {/* ─────────────────────────────────────────────────────────
+                  STAT CARDS GRID
+                 ───────────────────────────────────────────────────────── */}
+              {statCards.length > 0 && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${statCards.length > 3 ? 3 : statCards.length}, 1fr)`,
+                    gap: '18px',
+                    marginBottom: '28px',
+                  }}
+                >
+                  {statCards.map((stat, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '22px 24px',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--color-gold-mid)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(190, 155, 73, 0.12)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#e2e8f0';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.04)';
+                      }}
+                    >
+                      <div>
+                        <div
+                          style={{
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: '#64748b',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            marginBottom: '8px',
+                          }}
+                        >
+                          {stat.label}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '2rem',
+                            fontWeight: 800,
+                            color: 'var(--color-navy-dark)',
+                            fontFamily: 'var(--font-heading)',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {stat.value}
+                        </div>
+                        {stat.subtext && (
+                          <div style={{ fontSize: '0.74rem', color: 'var(--color-gold-deep)', marginTop: '4px', fontWeight: 500 }}>
+                            {stat.subtext}
+                          </div>
+                        )}
+                      </div>
+
+                      {stat.icon && (
+                        <div
+                          style={{
+                            width: '46px',
+                            height: '46px',
+                            borderRadius: '10px',
+                            backgroundColor: 'rgba(190, 155, 73, 0.12)',
+                            border: '1px solid rgba(190, 155, 73, 0.25)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--color-gold-deep)',
+                          }}
+                        >
+                          {stat.icon}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ─────────────────────────────────────────────────────────
+                  QUICK ACTIONS CARD
+                 ───────────────────────────────────────────────────────── */}
+              {quickActions.length > 0 && (
+                <div
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '16px',
+                    padding: '24px 28px',
+                    marginBottom: '28px',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
+                      color: 'var(--color-navy-dark)',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span style={{ color: 'var(--color-gold-deep)' }}>✦</span> Quick Actions
+                  </h3>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '14px',
+                    }}
+                  >
+                    {quickActions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={action.onClick}
+                        style={{
+                          padding: '14px 18px',
+                          borderRadius: '10px',
+                          backgroundColor: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          color: 'var(--color-navy-dark)',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(190, 155, 73, 0.1)';
+                          e.currentTarget.style.borderColor = 'var(--color-gold-deep)';
+                          e.currentTarget.style.color = 'var(--color-gold-deep)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f8fafc';
+                          e.currentTarget.style.borderColor = '#e2e8f0';
+                          e.currentTarget.style.color = 'var(--color-navy-dark)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        {action.icon}
+                        <span>{action.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ─────────────────────────────────────────────────────────
+                  ACTIVITY / BOTTOM SECTION
+                 ───────────────────────────────────────────────────────── */}
               <div
-                key={idx}
                 style={{
                   backgroundColor: '#ffffff',
                   border: '1px solid #e2e8f0',
-                  borderRadius: '14px',
-                  padding: '22px 24px',
+                  borderRadius: '16px',
+                  padding: '24px 28px',
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-gold-mid)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(190, 155, 73, 0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.04)';
                 }}
               >
-                <div>
-                  <div
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3
                     style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    {stat.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '2rem',
-                      fontWeight: 800,
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
                       color: 'var(--color-navy-dark)',
-                      fontFamily: 'var(--font-heading)',
-                      lineHeight: 1,
                     }}
                   >
-                    {stat.value}
-                  </div>
-                  {stat.subtext && (
-                    <div style={{ fontSize: '0.74rem', color: 'var(--color-gold-deep)', marginTop: '4px', fontWeight: 500 }}>
-                      {stat.subtext}
-                    </div>
-                  )}
+                    {activityTitle}
+                  </h3>
                 </div>
 
-                {stat.icon && (
+                {activityContent ? (
+                  activityContent
+                ) : (
                   <div
                     style={{
-                      width: '46px',
-                      height: '46px',
+                      padding: '32px 20px',
                       borderRadius: '10px',
-                      backgroundColor: 'rgba(190, 155, 73, 0.12)',
-                      border: '1px solid rgba(190, 155, 73, 0.25)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--color-gold-deep)',
+                      backgroundColor: '#f8fafc',
+                      border: '1px dashed #cbd5e1',
+                      textAlign: 'center',
+                      color: '#64748b',
+                      fontSize: '0.88rem',
                     }}
                   >
-                    {stat.icon}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                      <ClipboardList size={30} color="#64748b" />
+                    </div>
+                    <div style={{ fontWeight: 500, color: 'var(--color-navy-dark)' }}>No recent activity to display yet.</div>
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
+                      Your upcoming interactions and logs will appear here.
+                    </div>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-
-          {/* ─────────────────────────────────────────────────────────
-              QUICK ACTIONS CARD
-             ───────────────────────────────────────────────────────── */}
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '16px',
-              padding: '24px 28px',
-              marginBottom: '28px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-            }}
-          >
-            <h3
-              style={{
-                fontSize: '1.05rem',
-                fontWeight: 700,
-                color: 'var(--color-navy-dark)',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <span style={{ color: 'var(--color-gold-deep)' }}>✦</span> Quick Actions
-            </h3>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '14px',
-              }}
-            >
-              {quickActions.map((action, idx) => (
-                <button
-                  key={idx}
-                  onClick={action.onClick}
-                  style={{
-                    padding: '14px 18px',
-                    borderRadius: '10px',
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    color: 'var(--color-navy-dark)',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(190, 155, 73, 0.1)';
-                    e.currentTarget.style.borderColor = 'var(--color-gold-deep)';
-                    e.currentTarget.style.color = 'var(--color-gold-deep)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                    e.currentTarget.style.color = 'var(--color-navy-dark)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  {action.icon}
-                  <span>{action.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ─────────────────────────────────────────────────────────
-              ACTIVITY / BOTTOM SECTION
-             ───────────────────────────────────────────────────────── */}
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '16px',
-              padding: '24px 28px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3
-                style={{
-                  fontSize: '1.05rem',
-                  fontWeight: 700,
-                  color: 'var(--color-navy-dark)',
-                }}
-              >
-                {activityTitle}
-              </h3>
-            </div>
-
-            {activityContent ? (
-              activityContent
-            ) : (
-              <div
-                style={{
-                  padding: '32px 20px',
-                  borderRadius: '10px',
-                  backgroundColor: '#f8fafc',
-                  border: '1px dashed #cbd5e1',
-                  textAlign: 'center',
-                  color: '#64748b',
-                  fontSize: '0.88rem',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-                  <ClipboardList size={30} color="#64748b" />
-                </div>
-                <div style={{ fontWeight: 500, color: 'var(--color-navy-dark)' }}>No recent activity to display yet.</div>
-                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
-                  Your upcoming interactions and logs will appear here.
-                </div>
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </main>
       </div>
     </div>

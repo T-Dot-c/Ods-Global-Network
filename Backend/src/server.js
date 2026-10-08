@@ -20,11 +20,9 @@ const PORT = process.env.PORT || 3001;
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 
 /* ── Environment & Security Validation ──────────────────────── */
-if (process.env.NODE_ENV === 'production') {
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'CHANGE_ME_IN_PRODUCTION' || process.env.JWT_SECRET.length < 32) {
-    console.error('[FATAL SECURITY ERROR] In production, JWT_SECRET must be set to a secure string of at least 32 characters.');
-    process.exit(1);
-  }
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'CHANGE_ME_IN_PRODUCTION' || process.env.JWT_SECRET.length < 32) {
+  console.error('[FATAL SECURITY ERROR] JWT_SECRET must be set to a secure string of at least 32 characters in .env.');
+  process.exit(1);
 }
 
 /* ── Security headers ─────────────────────────────────────── */
@@ -56,7 +54,7 @@ app.use(cors({
     return callback(new Error('CORS not allowed for this origin.'));
   },
   credentials: true,               // required for HttpOnly cookie round-trips
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));
 
@@ -82,6 +80,16 @@ app.use('/api/auth', rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many auth requests — please slow down.' },
 }), authRoutes);
+
+/* ── Customer portal route (Batch 3) ──────────────────────── */
+const customerRoutes = require('./routes/customer');
+app.use('/api/customer', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many customer portal requests — please slow down.' },
+}), customerRoutes);
 
 /* ── Public inquiry routes (Batch 2) ──────────────────────── */
 app.use('/api/support', supportRoutes);

@@ -15,7 +15,7 @@ export type UserRole = 'customer' | 'merchant' | 'provider' | 'admin';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface AuthUser {
-  id: number;
+  id: string | number;
   email: string;
   full_name: string;
   role: UserRole;
@@ -26,6 +26,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (user: AuthUser) => void;
+  updateUser: (fields: Partial<AuthUser>) => void;
   logout: () => Promise<void>;
 }
 
@@ -58,6 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
   }, []);
 
+  const updateUser = useCallback((fields: Partial<AuthUser>) => {
+    setUser((prev) => (prev ? { ...prev, ...fields } : null));
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await fetch(`${API_BASE}/api/auth/logout`, {
@@ -71,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
