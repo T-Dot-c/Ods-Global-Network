@@ -20,6 +20,7 @@ import {
   UserCheck,
   Award,
   BarChart3,
+  Handshake,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -127,6 +128,17 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
     el?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleItemClick = (item: { anchor?: string; view?: string }) => {
+    if (item.view) {
+      setOpenDropdown(null);
+      setMobileOpen(false);
+      setSearchOpen(false);
+      onNavigate(item.view);
+    } else if (item.anchor) {
+      handleLinkClick(item.anchor);
+    }
+  };
+
   // 9 Authoritative Categories from KPIs & Scopes Section 4 + All Services
   const servicesMenu = [
     { label: 'All Services', anchor: '#services', icon: <Activity size={16} /> },
@@ -151,15 +163,16 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
     { label: 'Ethiopian Diaspora', anchor: '#gifting', icon: <HeartPulse size={16} /> },
   ];
 
-  const businessMenu = [
+  const businessMenu: Array<{ label: string; anchor?: string; view?: string; icon: React.ReactNode }> = [
     { label: 'For Merchants', anchor: '#for-merchants', icon: <Building2 size={16} /> },
     { label: 'For Service Providers', anchor: '#for-providers', icon: <Stethoscope size={16} /> },
+    { label: 'Partner With Us', view: 'partner-with-us', icon: <Handshake size={16} /> },
   ];
 
-  const aboutMenu = [
-    { label: 'About ODS Global Net', anchor: '#about', icon: <Sparkles size={16} /> },
+  const aboutMenu: Array<{ label: string; anchor?: string; view?: string; icon: React.ReactNode }> = [
+    { label: 'About ODS Global Net', view: 'company', icon: <Sparkles size={16} /> },
     { label: 'Our Network', anchor: '#ecosystem', icon: <Activity size={16} /> },
-    { label: 'Contact Us', anchor: '#contact', icon: <Mail size={16} /> },
+    { label: 'Contact Us', view: 'support', icon: <Mail size={16} /> },
   ];
 
   // Search items across all menus and categories
@@ -324,7 +337,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
           {/* Right: Help Center */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
             <button
-              onClick={() => handleLinkClick('#contact')}
+              onClick={() => onNavigate('support')}
               style={{
                 color: 'var(--color-text-muted-dark)',
                 fontSize: '0.8rem',
@@ -688,7 +701,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 {businessMenu.map((item, idx) => (
                   <li key={idx}>
                     <button
-                      onClick={() => handleLinkClick(item.anchor)}
+                      onClick={() => handleItemClick(item)}
                       style={{
                         width: '100%',
                         textAlign: 'left',
@@ -783,7 +796,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 {aboutMenu.map((item, idx) => (
                   <li key={idx}>
                     <button
-                      onClick={() => handleLinkClick(item.anchor)}
+                      onClick={() => handleItemClick(item)}
                       style={{
                         width: '100%',
                         textAlign: 'left',
@@ -991,7 +1004,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                   searchResults.map((item, idx) => (
                     <div
                       key={idx}
-                      onClick={() => handleLinkClick(item.anchor)}
+                      onClick={() => handleItemClick(item)}
                       style={{
                         padding: '10px 16px',
                         display: 'flex',
@@ -1272,7 +1285,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 {businessMenu.map((m, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleLinkClick(m.anchor)}
+                    onClick={() => handleItemClick(m)}
                     style={{
                       textAlign: 'left',
                       color: 'var(--color-text-muted-dark)',
@@ -1335,7 +1348,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 {aboutMenu.map((m, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleLinkClick(m.anchor)}
+                    onClick={() => handleItemClick(m)}
                     style={{
                       textAlign: 'left',
                       color: 'var(--color-text-muted-dark)',

@@ -78,7 +78,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           {/* Col 4: Strategic Partners */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <h4 style={{ color: 'var(--color-gold-bright)', fontSize: '1rem' }}>Strategic Partners</h4>
-            <p style={{ fontSize: '0.85rem' }}>Integrated with verified banking, telecom, and settlement gateways:</p>
+            <p style={{ fontSize: '0.85rem' }}>Planned integrations with banking, telecom, and settlement partners:</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '6px' }}>
               <div
                 style={{
@@ -152,7 +152,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               Terms &amp; Conditions
             </button>
             <span>•</span>
-            <span>Help Center</span>
+            <button
+              type="button"
+              onClick={() => onNavigate?.('support')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'inherit',
+                font: 'inherit',
+                cursor: 'pointer',
+                padding: 0,
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-gold-bright)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}
+            >
+              Help Center
+            </button>
           </div>
         </div>
       </div>
