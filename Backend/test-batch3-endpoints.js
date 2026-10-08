@@ -61,6 +61,34 @@ async function runTests() {
     const data3 = await res3.json();
     assert('Unauthenticated POST /api/customer/change-password returns 401', res3.status === 401 && data3.success === false);
 
+    // ── Test 3b: Unauthorized Role Access (Merchant trying customer profile) (Expect 403) ──
+    const merchantEmail = `test_merchant_${Date.now()}@odsglobal.net`;
+    const merchantPass = 'MerchantPass123!';
+    await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: merchantEmail,
+        password: merchantPass,
+        full_name: 'Merchant User',
+        role: 'merchant',
+        business_name: 'Test Pharmacy Ltd',
+        category: 'pharmacy',
+      }),
+    });
+    const mLogin = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: merchantEmail, password: merchantPass }),
+    });
+    const mCookie = mLogin.headers.get('set-cookie')?.split(';')[0] || '';
+    const res403 = await fetch(`${API_BASE}/api/customer/profile`, {
+      method: 'GET',
+      headers: { Cookie: mCookie },
+    });
+    const data403 = await res403.json();
+    assert('Merchant access to /api/customer/profile returns 403', res403.status === 403 && data403.success === false);
+
     // ── Test 4: Register a test customer with address ──
     const testEmail = `test_customer_${Date.now()}@odsglobal.net`;
     const initialPassword = 'SecurePassword123!';
