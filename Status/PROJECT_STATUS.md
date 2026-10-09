@@ -206,7 +206,7 @@
 ### BATCH 03: Customer Portal & Security Baseline (Module 3 & Initial Module 10)
 - [x] **Database Migrations (012 & 013)**:
   - `012_purge_seeded_admin_and_update_addresses.sql`: Purged default test admin (`admin@odsglobal.net`), updated `addresses.entity_type` check constraint to include `customer`, and added unique index `idx_addresses_customer_unique` on `(entity_type, entity_id)` for customer addresses.
-  - `013_create_audit_logs_table.sql`: Created `audit_logs` table with composite and single column indices (`user_id`, `action`, `created_at`).
+  - `013_create_audit_logs_table.sql`: Created `audit_logs` table (columns: `id` UUID, `user_id` UUID, `action` VARCHAR(50), `ip_address` VARCHAR(45), `user_agent` VARCHAR(255), `details` JSONB, `created_at` TIMESTAMPTZ) with three single-column indices (`idx_audit_logs_user_id`, `idx_audit_logs_action`, `idx_audit_logs_created_at`).
 - [x] **Backend Security & Middleware (`Backend/src/middleware/auth.js`)**:
   - Implemented `requireAuth` verifying `ods_session` JWT cookie against live DB active status.
   - Implemented `requireRole(...roles)` returning HTTP 403 on role mismatch.
@@ -252,7 +252,7 @@
    - The default seeded admin was purged in migration 012. Admin users can now be created via `Backend/scripts/create-admin.js`.
    - Admin login is functional via `/login`, but the full Admin management portal is scheduled for Batch 8 (Module 8).
 3. **Password Change Session Invalidation (Logged Enhancement)**:
-   - Old `ods_session` JWT cookies remain valid until expiration (7 days) after a password change because token revocation/versioning is not yet implemented.
+   - Old `ods_session` JWT cookies remain valid until expiration (24 hours / 1 day) after a password change because token revocation/versioning is not yet implemented.
 4. **Rate Limiting on Password Endpoint (Logged Enhancement)**:
    - `/api/customer/change-password` is covered by the general customer router rate limit (30 req / 15 min), but does not yet have a dedicated stricter brute-force limit.
 5. **Intake Visibility (Open until Batch 8 & 9)**:
