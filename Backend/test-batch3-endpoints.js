@@ -89,6 +89,43 @@ async function runTests() {
     const data403 = await res403.json();
     assert('Merchant access to /api/customer/profile returns 403', res403.status === 403 && data403.success === false);
 
+    // ── Test 3c: Merchant access to PUT /api/customer/profile (Expect 403) ──
+    const res403Put = await fetch(`${API_BASE}/api/customer/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: mCookie },
+      body: JSON.stringify({ full_name: 'Merchant Impersonator' }),
+    });
+    const data403Put = await res403Put.json();
+    assert('Merchant access to PUT /api/customer/profile returns 403', res403Put.status === 403 && data403Put.success === false);
+
+    // ── Test 3d: Provider access to GET /api/customer/profile (Expect 403) ──
+    const providerEmail = `test_provider_${Date.now()}@odsglobal.net`;
+    const providerPass = 'ProviderPass123!';
+    await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: providerEmail,
+        password: providerPass,
+        full_name: 'Provider User',
+        role: 'provider',
+        provider_name: 'Test Clinic Center',
+        provider_type: 'clinic',
+      }),
+    });
+    const pLogin = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: providerEmail, password: providerPass }),
+    });
+    const pCookie = pLogin.headers.get('set-cookie')?.split(';')[0] || '';
+    const res403Prov = await fetch(`${API_BASE}/api/customer/profile`, {
+      method: 'GET',
+      headers: { Cookie: pCookie },
+    });
+    const data403Prov = await res403Prov.json();
+    assert('Provider access to GET /api/customer/profile returns 403', res403Prov.status === 403 && data403Prov.success === false);
+
     // ── Test 4: Register a test customer with address ──
     const testEmail = `test_customer_${Date.now()}@odsglobal.net`;
     const initialPassword = 'SecurePassword123!';
@@ -153,6 +190,20 @@ async function runTests() {
     const updateData = await updateRes.json();
     assert('Authenticated PUT /api/customer/profile updates name and city', updateRes.status === 200 && updateData.profile.full_name === 'Test Customer Updated' && updateData.profile.city === 'Hawassa');
 
+    // ── Test 7b: Invalid PUT /api/customer/profile (empty full_name) returns 400 ──
+    const invalidProfileRes = await fetch(`${API_BASE}/api/customer/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: sessionCookie,
+      },
+      body: JSON.stringify({
+        full_name: '',
+      }),
+    });
+    const invalidProfileData = await invalidProfileRes.json();
+    assert('PUT /api/customer/profile with empty full_name returns 400', invalidProfileRes.status === 400 && invalidProfileData.success === false);
+
     // ── Test 8: Change password with wrong current password (Expect 400) ──
     const wrongPassRes = await fetch(`${API_BASE}/api/customer/change-password`, {
       method: 'POST',
@@ -167,6 +218,21 @@ async function runTests() {
     });
     const wrongPassData = await wrongPassRes.json();
     assert('Change password with wrong current password returns 400', wrongPassRes.status === 400 && wrongPassData.success === false);
+
+    // ── Test 8b: Change password with short new password (<8 chars) returns 400 ──
+    const shortPassRes = await fetch(`${API_BASE}/api/customer/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: sessionCookie,
+      },
+      body: JSON.stringify({
+        current_password: initialPassword,
+        new_password: 'short',
+      }),
+    });
+    const shortPassData = await shortPassRes.json();
+    assert('Change password with short new password (< 8 chars) returns 400', shortPassRes.status === 400 && shortPassData.success === false);
 
     // ── Test 9: Change password with correct current password (Expect 200) ──
     const newPassword = 'NewStrongPassword456!';
@@ -213,8 +279,8 @@ async function runTests() {
     // ── Cleanup Test Rows ──
     console.log('\n  🧹 Cleaning up test database rows...');
     const testUsers = await pool.query(
-      `SELECT id, role FROM users WHERE email IN ($1, $2)`,
-      [testEmail, merchantEmail]
+      `SELECT id, role FROM users WHERE email IN ($1, $2, $3)`,
+      [testEmail, merchantEmail, providerEmail]
     );
 
     for (const u of testUsers.rows) {
@@ -224,6 +290,13 @@ async function runTests() {
           const mId = mRow.rows[0].id;
           await pool.query(`DELETE FROM contact_persons WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
           await pool.query(`DELETE FROM addresses WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
+        }
+      } else if (u.role === 'provider') {
+        const pRow = await pool.query(`SELECT id FROM providers WHERE user_id = $1`, [u.id]);
+        if (pRow.rows.length > 0) {
+          const pId = pRow.rows[0].id;
+          await pool.query(`DELETE FROM contact_persons WHERE entity_type = 'provider' AND entity_id = $1`, [pId]);
+          await pool.query(`DELETE FROM addresses WHERE entity_type = 'provider' AND entity_id = $1`, [pId]);
         }
       } else if (u.role === 'customer') {
         await pool.query(`DELETE FROM addresses WHERE entity_type = 'customer' AND entity_id = $1`, [u.id]);
