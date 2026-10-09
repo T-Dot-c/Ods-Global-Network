@@ -44,18 +44,23 @@ app.use(cors({
     // Allow non-browser requests (e.g. mobile, curl, Postman)
     if (!origin) return callback(null, true);
     if (process.env.NODE_ENV !== 'production') {
-      if (devOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      if (
+        devOrigins.includes(origin) ||
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.startsWith('http://[::1]:')
+      ) {
         return callback(null, true);
       }
     }
     if (origin === FRONTEND_ORIGIN) {
       return callback(null, true);
     }
-    return callback(new Error('CORS not allowed for this origin.'));
+    return callback(new Error(`CORS policy rejection: origin ${origin} is not allowed.`));
   },
   credentials: true,               // required for HttpOnly cookie round-trips
   methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 /* ── Body parsing + cookies ───────────────────────────────── */
