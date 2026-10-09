@@ -210,6 +210,29 @@ async function runTests() {
       actions.includes('PASSWORD_CHANGE')
     );
 
+    // ── Cleanup Test Rows ──
+    console.log('\n  🧹 Cleaning up test database rows...');
+    const testUsers = await pool.query(
+      `SELECT id, role FROM users WHERE email IN ($1, $2)`,
+      [testEmail, merchantEmail]
+    );
+
+    for (const u of testUsers.rows) {
+      if (u.role === 'merchant') {
+        const mRow = await pool.query(`SELECT id FROM merchants WHERE user_id = $1`, [u.id]);
+        if (mRow.rows.length > 0) {
+          const mId = mRow.rows[0].id;
+          await pool.query(`DELETE FROM contact_persons WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
+          await pool.query(`DELETE FROM addresses WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
+        }
+      } else if (u.role === 'customer') {
+        await pool.query(`DELETE FROM addresses WHERE entity_type = 'customer' AND entity_id = $1`, [u.id]);
+      }
+      await pool.query(`DELETE FROM audit_logs WHERE user_id = $1`, [u.id]);
+      await pool.query(`DELETE FROM users WHERE id = $1`, [u.id]);
+    }
+    console.log(`  ✅ Cleaned up ${testUsers.rows.length} test user(s) and associated test records.`);
+
     console.log('\n======================================================');
     console.log(`   Summary: ${testPassed} Passed, ${testFailed} Failed`);
     console.log('======================================================\n');
