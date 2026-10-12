@@ -9,6 +9,7 @@
 
 const express = require('express');
 const pool    = require('../db');
+const { verifyStagingToken } = require('../services/uploadService');
 
 const router = express.Router();
 
@@ -115,33 +116,90 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // ── 3. Database insertion ────────────────────────────────────────
-    await pool.query(
-      `INSERT INTO partners (
-        partnership_type, name, company_name, email, phone, whatsapp, sector, investment_type, enquiry
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [
-        type,
-        trimmedName,
-        trimmedCompany,
-        trimmedEmail,
-        trimmedPhone,
-        trimmedWhatsapp || null,
-        trimmedSector || null,
-        trimmedInvType || null,
-        trimmedEnquiry || null,
-      ]
-    );
-
-    // ── 4. Non-production console logging (type only) ────────────────
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[PARTNERS] Type: ${type}`);
+    // ── 3. Staging Token Validation (Optional) ───────────────────────
+    let attachedDocId = null;
+    if (req.body.staging_token) {
+      const staged = verifyStagingToken(req.body.staging_token);
+      if (!staged || !staged.docId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired staging token.',
+        });
+      }
+      attachedDocId = staged.docId;
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Your partnership inquiry has been received. For urgent matters, please contact us at +251 960 606 042 or info@odsglobal.net.',
-    });
+    // ── 4. Database insertion & attachment in a single transaction ────
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const insertRes = await client.query(
+        `INSERT INTO partners (
+          partnership_type, name, company_name, email, phone, whatsapp, sector, investment_type, enquiry, document_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id`,
+        [
+          type,
+          trimmedName,
+          trimmedCompany,
+          trimmedEmail,
+          trimmedPhone,
+          trimmedWhatsapp || null,
+          trimmedSector || null,
+          trimmedInvType || null,
+          trimmedEnquiry || null,
+          attachedDocId,
+        ]
+      );
+
+      const partnerId = insertRes.rows[0].id;
+
+      if (attachedDocId) {
+        const updateDocRes = await client.query(
+          `UPDATE documents
+           SET is_attached = TRUE,
+               entity_type = 'partner',
+               entity_id = $1,
+               expires_at = NULL
+           WHERE id = $2
+             AND is_attached = FALSE
+             AND expires_at > NOW()
+             AND purpose = 'partner_proposal'
+           RETURNING id`,
+          [partnerId, attachedDocId]
+        );
+
+        if (updateDocRes.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid or expired staging token.',
+          });
+        }
+      }
+
+      await client.query('COMMIT');
+
+      // ── 5. Non-production console logging (type only, no tokens) ───
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[PARTNERS] Type: ${type}, Document attached: ${!!attachedDocId}`);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Your partnership inquiry has been received. For urgent matters, please contact us at +251 960 606 042 or info@odsglobal.net.',
+      });
+    } catch (dbErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('[PARTNERS] Transaction error:', dbErr.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to process partnership inquiry. Please try again later.',
+      });
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('[PARTNERS] Error processing request:', error.message);
     return res.status(500).json({

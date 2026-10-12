@@ -36,12 +36,21 @@ export interface PartnerSubmissionData {
   investment_type?: string;
   enquiry?: string;
   website_url?: string; // honeypot
+  staging_token?: string;
 }
 
 export interface PartnerSubmissionResponse {
   success: boolean;
   message?: string;
   errorKind?: PublicErrorKind;
+}
+
+export interface StagingUploadResponse {
+  success: boolean;
+  message?: string;
+  staging_token?: string;
+  doc_id?: string;
+  expires_in?: string;
 }
 
 const API_BASE = 'http://localhost:3001';
@@ -131,6 +140,44 @@ export async function submitPartnerRequest(
       success: false,
       message: 'Unable to reach the server. Please check your internet connection or contact us directly.',
       errorKind: 'network',
+    };
+  }
+}
+
+/**
+ * Upload an anonymous staging document (proposal/pitch deck)
+ * for attachment to a partner inquiry.
+ */
+export async function uploadStagingDocument(file: File): Promise<StagingUploadResponse> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('purpose', 'partner_proposal');
+
+    const res = await fetch(`${API_BASE}/api/documents/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const json = await res.json().catch(() => null);
+
+    if (res.ok && json?.success) {
+      return {
+        success: true,
+        staging_token: json.staging_token,
+        doc_id: json.doc_id,
+        expires_in: json.expires_in,
+      };
+    }
+
+    return {
+      success: false,
+      message: json?.message || 'Failed to upload proposal document.',
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      message: 'Network error uploading proposal document. Please check connection.',
     };
   }
 }

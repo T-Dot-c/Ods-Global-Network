@@ -42,10 +42,11 @@ const DASHBOARD_VIEWS: View[] = [
 ];
 
 const ROLE_TO_DASHBOARD: Record<UserRole, View> = {
-  customer: 'dashboard',
-  merchant: 'merchant/dashboard',
-  provider: 'provider/dashboard',
-  admin:    'admin/dashboard',
+  customer:    'dashboard',
+  merchant:    'merchant/dashboard',
+  provider:    'provider/dashboard',
+  admin:       'admin/dashboard',
+  super_admin: 'admin/dashboard',
 };
 
 // Normalize any route aliases (e.g. 'dashboard/customer' -> 'dashboard')

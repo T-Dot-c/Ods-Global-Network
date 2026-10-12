@@ -25,6 +25,20 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'CHANGE_ME_IN_PRODUCTI
   process.exit(1);
 }
 
+const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+if (!isDevOrTest) {
+  if (!process.env.STAGING_TOKEN_SECRET || process.env.STAGING_TOKEN_SECRET.length < 32) {
+    console.error('[FATAL SECURITY ERROR] STAGING_TOKEN_SECRET must be set to at least 32 characters unless NODE_ENV is explicitly development or test.');
+    process.exit(1);
+  }
+}
+
+/* ── Trust Proxy Configuration ────────────────────────────── */
+const trustProxy = process.env.TRUST_PROXY;
+if (trustProxy === 'true' || trustProxy === '1') {
+  app.set('trust proxy', 1);
+}
+
 /* ── Security headers ─────────────────────────────────────── */
 app.use(helmet());
 
@@ -99,6 +113,24 @@ app.use('/api/customer', rateLimit({
 /* ── Public inquiry routes (Batch 2) ──────────────────────── */
 app.use('/api/support', supportRoutes);
 app.use('/api/partners', partnerRoutes);
+
+/* ── Shared documents route (Batch 4) ─────────────────────── */
+const documentRoutes = require('./routes/documents');
+app.use('/api/documents', documentRoutes);
+
+/* ── Merchant & Provider routes (Batch 4) ─────────────────── */
+const merchantRoutes = require('./routes/merchant');
+const providerRoutes = require('./routes/provider');
+app.use('/api/merchant', merchantRoutes);
+app.use('/api/provider', providerRoutes);
+
+/* ── Admin routes (Batch 4) ───────────────────────────────── */
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
+
+/* ── Start unattached document sweeper ────────────────────── */
+const { startSweeper } = require('./services/sweeperService');
+startSweeper();
 
 /* ── Health check ─────────────────────────────────────────── */
 app.get('/api/health', (_req, res) => {

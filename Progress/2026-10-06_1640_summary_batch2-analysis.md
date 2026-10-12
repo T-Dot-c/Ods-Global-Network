@@ -13,7 +13,7 @@
 Batch 2 reconstructs three essential public-facing routes from the legacy system:
 1. **`/company`** (`CompanyInfo.tsx`): Institutional identity, mission, vision, 9 healthcare provider categories, and a condensed Cultural Gifting block linking to `/gifting-options`.
 2. **`/support`** (`SupportPage.tsx`): Customer care channels, inquiry contact form with honeypot spam protection and reference ID generation, plus a 5-question FAQ strictly truthful to today's built system state.
-3. **`/partner-with-us`** (`PartnerWithUs.tsx`): Structured multi-track intake (Investor, Strategic Partner, Sponsorship) with contact and partnership fields, with document upload inputs explicitly removed for Batch 2 (deferred to Batch 5).
+3. **`/partner-with-us`** (`PartnerWithUs.tsx`): Structured multi-track intake (Investor, Strategic Partner, Sponsorship) with contact and partnership fields, with document upload inputs deferred to the Batch 4 unified shared upload service.
 
 All three pages will be modernized using React 18, TypeScript, Vite, ODS Deep Navy (`#0F285B`) and Gold (`#BE9B49`/`#EDC45B`) design tokens, and WCAG 2.1 AA accessibility standards, purging all legacy green artifacts (`#1c2b21`), arbitrary animations, and raw browser `alert()` popups.
 
@@ -34,7 +34,7 @@ All three pages will be modernized using React 18, TypeScript, Vite, ODS Deep Na
   - Generates a reference ID (`ODS-REQ-<HEX>`) logged to the backend terminal console.
   - Returns reference ID to client; UI displays an accessible inline success card (no auto-reply email/SMS).
 * **Partner Form Scoping**:
-  - Document file upload fields removed in Batch 2 (deferred to Batch 5). No filenames or metadata for files recorded in the database.
+  - Document file upload fields removed in Batch 2 (unified upload service built in Batch 4). No filenames or metadata for files recorded in the database in Batch 2.
 * **Truthful FAQ Constraint**:
   - 5 audited questions answering what ODS is, how to get started (creating an account with customer/merchant/provider roles verified against `RegisterPage.tsx`), contact channels, 9 categories (without "verified"), and partnership inquiries.
   - Zero claims about orders, delivery tracking, appointment booking, payments, refunds, gift card redemptions, or ticket portals.

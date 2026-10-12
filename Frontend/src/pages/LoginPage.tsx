@@ -105,6 +105,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       name: 'Administrator Portal',
       icon: <KeyRound size={18} color="var(--color-gold-bright)" />,
     },
+    super_admin: {
+      name: 'Super Admin Console',
+      icon: <KeyRound size={18} color="var(--color-gold-bright)" />,
+    },
   };
 
   return (

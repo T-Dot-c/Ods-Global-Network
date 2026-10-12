@@ -20,6 +20,7 @@ const ROLE_DASHBOARDS: Record<UserRole, string> = {
   merchant: 'merchant/dashboard',
   provider: 'provider/dashboard',
   admin: 'admin/dashboard',
+  super_admin: 'admin/dashboard',
 };
 
 export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({

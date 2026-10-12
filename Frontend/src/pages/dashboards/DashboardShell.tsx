@@ -18,17 +18,19 @@ interface DashboardShellProps {
 }
 
 const ROLE_LABEL: Record<UserRole, string> = {
-  customer: 'Customer',
-  merchant: 'Merchant',
-  provider: 'Service Provider',
-  admin:    'Administrator',
+  customer:    'Customer',
+  merchant:    'Merchant',
+  provider:    'Service Provider',
+  admin:       'Administrator',
+  super_admin: 'Super Administrator',
 };
 
 const ROLE_COLOR: Record<UserRole, { bg: string; text: string; border: string }> = {
-  customer: { bg: 'rgba(16, 185, 129, 0.12)',  text: '#065f46', border: 'rgba(16, 185, 129, 0.35)' },
-  merchant: { bg: 'rgba(190, 155, 73, 0.12)',  text: '#8d7338', border: 'rgba(190, 155, 73, 0.35)' },
-  provider: { bg: 'rgba(59, 130, 246, 0.12)',  text: '#1e40af', border: 'rgba(59, 130, 246, 0.35)' },
-  admin:    { bg: 'rgba(139, 92, 246, 0.12)',  text: '#5b21b6', border: 'rgba(139, 92, 246, 0.35)' },
+  customer:    { bg: 'rgba(16, 185, 129, 0.12)',  text: '#065f46', border: 'rgba(16, 185, 129, 0.35)' },
+  merchant:    { bg: 'rgba(190, 155, 73, 0.12)',  text: '#8d7338', border: 'rgba(190, 155, 73, 0.35)' },
+  provider:    { bg: 'rgba(59, 130, 246, 0.12)',  text: '#1e40af', border: 'rgba(59, 130, 246, 0.35)' },
+  admin:       { bg: 'rgba(139, 92, 246, 0.12)',  text: '#5b21b6', border: 'rgba(139, 92, 246, 0.35)' },
+  super_admin: { bg: 'rgba(220, 38, 38, 0.12)',   text: '#991b1b', border: 'rgba(220, 38, 38, 0.35)' },
 };
 
 const STATUS_STYLE: Record<ApprovalStatus, { bg: string; text: string; border: string; label: string }> = {

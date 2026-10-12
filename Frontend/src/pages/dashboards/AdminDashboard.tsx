@@ -1,62 +1,83 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
   Building2,
   Stethoscope,
-  Calendar,
-  CreditCard,
-  FileText,
   Settings,
   ShieldCheck,
-  BarChart3,
-  UserCheck,
+  Inbox,
+  ShieldAlert,
 } from 'lucide-react';
 import { DashboardLayout, SidebarItem, StatCardItem, QuickActionItem } from './DashboardLayout';
+import { KycQueueTab } from './admin/KycQueueTab';
+import { InquiriesInboxTab } from './admin/InquiriesInboxTab';
+import { AuditLogsTab } from './admin/AuditLogsTab';
+import { useAuth } from '../../context/AuthContext';
 
 interface AdminDashboardProps {
   onNavigate: (view: string) => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<string>('overview');
+
   const sidebarItems: SidebarItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={17} /> },
+    { id: 'kyc', label: 'KYC Queue', icon: <ShieldCheck size={17} /> },
+    { id: 'inbox', label: 'Inquiries Inbox', icon: <Inbox size={17} /> },
+    ...(user?.role === 'super_admin' ? [{ id: 'audit', label: 'Audit Logs', icon: <ShieldAlert size={17} /> }] : []),
     { id: 'users', label: 'Users', icon: <Users size={17} /> },
     { id: 'merchants', label: 'Merchants', icon: <Building2 size={17} /> },
     { id: 'providers', label: 'Providers', icon: <Stethoscope size={17} /> },
-    { id: 'bookings', label: 'Bookings', icon: <Calendar size={17} /> },
-    { id: 'transactions', label: 'Transactions', icon: <CreditCard size={17} /> },
-    { id: 'reports', label: 'Reports', icon: <BarChart3 size={17} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={17} /> },
   ];
 
-  // 6 cards (2 rows of 3)
   const statCards: StatCardItem[] = [
-    { label: 'Users', value: 1, subtext: 'Registered accounts', icon: <Users size={22} /> },
-    { label: 'Merchants', value: 0, subtext: 'Institutional partners', icon: <Building2 size={22} /> },
-    { label: 'Providers', value: 0, subtext: 'Accredited facilities', icon: <Stethoscope size={22} /> },
-    { label: 'Bookings', value: 0, subtext: 'Platform reservations', icon: <Calendar size={22} /> },
-    { label: 'Payments', value: 0, subtext: 'Completed checkouts', icon: <CreditCard size={22} /> },
-    { label: 'Pending Reviews', value: 0, subtext: 'Compliance queue', icon: <ShieldCheck size={22} /> },
+    { label: 'KYC Reviews', value: 'Active', subtext: 'Merchant & provider compliance queue', icon: <ShieldCheck size={22} /> },
+    { label: 'Intake Inbox', value: 'Active', subtext: 'Support & partner proposal stream', icon: <Inbox size={22} /> },
+    { label: 'Audit Ledger', value: user?.role === 'super_admin' ? 'Super Admin' : 'Restricted', subtext: 'Platform security logs', icon: <ShieldAlert size={22} /> },
   ];
 
   const quickActions: QuickActionItem[] = [
-    { label: 'KYC Compliance Queue', icon: <ShieldCheck size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Opening merchant and provider compliance review queue.') },
-    { label: 'Manage Roles & Users', icon: <UserCheck size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Manage user access permissions & authentication status.') },
-    { label: 'Transactions & Gateways', icon: <CreditCard size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Inspect Chapa and banking transaction audit ledger.') },
-    { label: 'Analytics & Reports', icon: <FileText size={16} color="var(--color-gold-bright)" />, onClick: () => alert('Generate platform health, revenue & operational reports.') },
+    {
+      label: 'KYC Compliance Queue',
+      icon: <ShieldCheck size={16} color="var(--color-gold-bright)" />,
+      onClick: () => setActiveTab('kyc'),
+    },
+    {
+      label: 'Public Inquiries Inbox',
+      icon: <Inbox size={16} color="var(--color-gold-bright)" />,
+      onClick: () => setActiveTab('inbox'),
+    },
+    ...(user?.role === 'super_admin'
+      ? [
+          {
+            label: 'Security Audit Logs',
+            icon: <ShieldAlert size={16} color="var(--color-gold-bright)" />,
+            onClick: () => setActiveTab('audit'),
+          },
+        ]
+      : []),
   ];
 
   return (
     <DashboardLayout
-      role="admin"
-      roleTitle="Administrator Dashboard"
+      role={user?.role || 'admin'}
+      roleTitle={user?.role === 'super_admin' ? 'Super Administrator Console' : 'Administrator Dashboard'}
       sidebarItems={sidebarItems}
       statCards={statCards}
       quickActions={quickActions}
-      activityTitle="System Activity"
+      activityTitle="System Operations"
+      activeTab={activeTab}
+      onTabChange={(tabId) => setActiveTab(tabId)}
       onNavigate={onNavigate}
-    />
+    >
+      {activeTab === 'kyc' && <KycQueueTab />}
+      {activeTab === 'inbox' && <InquiriesInboxTab />}
+      {activeTab === 'audit' && <AuditLogsTab />}
+    </DashboardLayout>
   );
 };
 

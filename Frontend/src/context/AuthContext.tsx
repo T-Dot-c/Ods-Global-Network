@@ -11,7 +11,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 /* ── Types ─────────────────────────────────────────────────── */
-export type UserRole = 'customer' | 'merchant' | 'provider' | 'admin';
+export type UserRole = 'customer' | 'merchant' | 'provider' | 'admin' | 'super_admin';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface AuthUser {
