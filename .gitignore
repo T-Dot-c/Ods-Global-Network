@@ -37,8 +37,7 @@ resource/server/uploads/*
 !resource/server/uploads/.gitkeep
 Backend/uploads/*
 !Backend/uploads/.gitkeep
-Backend/uploads/private/*
-!Backend/uploads/private/.gitkeep
+Backend/uploads/private/
 
 # PDFs (generated)
 server/pdfs/*

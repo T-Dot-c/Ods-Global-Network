@@ -126,6 +126,12 @@ router.post('/', async (req, res) => {
           message: 'Invalid or expired staging token.',
         });
       }
+      if (staged.purpose !== 'partner_proposal') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid staging token purpose.',
+        });
+      }
       attachedDocId = staged.docId;
     }
 
@@ -133,6 +139,27 @@ router.post('/', async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+
+      if (attachedDocId) {
+        const checkDoc = await client.query(
+          `SELECT is_attached, expires_at FROM documents WHERE id = $1`,
+          [attachedDocId]
+        );
+        if (checkDoc.rows.length === 0 || checkDoc.rows[0].is_attached) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            success: false,
+            message: 'Staging document is already attached or has been purged.',
+          });
+        }
+        if (checkDoc.rows[0].expires_at && new Date(checkDoc.rows[0].expires_at) <= new Date()) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid or expired staging token.',
+          });
+        }
+      }
 
       const insertRes = await client.query(
         `INSERT INTO partners (
@@ -174,7 +201,7 @@ router.post('/', async (req, res) => {
           await client.query('ROLLBACK');
           return res.status(400).json({
             success: false,
-            message: 'Invalid or expired staging token.',
+            message: 'Staging document is already attached or has been purged.',
           });
         }
       }

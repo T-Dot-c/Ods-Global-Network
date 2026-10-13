@@ -87,9 +87,23 @@ const AppInner: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // On session restore: if already authenticated and on public auth/recovery pages, redirect to role dashboard
+  // Route protection & session redirect guard
   useEffect(() => {
-    if (!loading && user && !DASHBOARD_VIEWS.includes(currentView)) {
+    if (loading) return;
+
+    if (DASHBOARD_VIEWS.includes(currentView)) {
+      if (!user) {
+        setCurrentView('login');
+        window.history.replaceState(null, '', '/login');
+        return;
+      }
+      const allowedDashboard = ROLE_TO_DASHBOARD[user.role];
+      if (currentView !== allowedDashboard) {
+        setCurrentView('unauthorized');
+        window.history.replaceState(null, '', '/unauthorized');
+        return;
+      }
+    } else if (user) {
       if (
         currentView === 'login' ||
         currentView === 'register' ||
@@ -212,7 +226,7 @@ const AppInner: React.FC = () => {
         {currentView === 'provider/dashboard' && user?.role === 'provider' && (
           <ProviderDashboard onNavigate={handleNavigate} />
         )}
-        {currentView === 'admin/dashboard' && user?.role === 'admin' && (
+        {currentView === 'admin/dashboard' && (user?.role === 'admin' || user?.role === 'super_admin') && (
           <AdminDashboard onNavigate={handleNavigate} />
         )}
       </main>

@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-10-12  
-> **CURRENT STAGE**: BATCH 4 In Progress — Merchant & Provider Onboarding, Document Management, Admin Console  
+> **LAST UPDATED**: 2026-10-13  
+> **CURRENT STAGE**: BATCH 4 Complete — Merchant & Provider Onboarding, Document Management, Admin Console  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -240,12 +240,12 @@
 - [x] **Unified Document Upload Service (`Backend/src/services/uploadService.js`)**:
   - Magic-byte file type sniffing (PDF `%PDF-`, PNG, JPEG) rejecting renamed or disguised executables/scripts.
   - Multi-tier file size caps: 7 MB authenticated (with client message indicating 10 MB limit), 5 MB anonymous max cap.
-  - Private storage with randomized filenames (`crypto.randomBytes(24)`).
+  - Private storage with randomized filenames (`crypto.randomUUID()`).
   - Serving only via authorized endpoints (`/api/documents/:id/view`) with `X-Content-Type-Options: nosniff` and `Cache-Control: no-store` headers.
   - Periodic and startup background sweeper cleaning abandoned unattached staging documents (capped at 100 MB).
 - [x] **Staging Token & Intake Attachment (`/api/partners`)**:
   - Dedicated `STAGING_TOKEN_SECRET` with audience `ods:partner_staging` and 2-hour TTL.
-  - Single atomic attachment transaction linking anonymous staging uploads to partner submissions, with automatic rollback.
+  - Single atomic attachment transaction linking anonymous staging uploads to partner submissions, with automatic rollback and strict `WHERE` guards.
 - [x] **KYC State Machine & Profile Management (`Backend/src/routes/merchant.js` & `provider.js`)**:
   - Dynamic profile management, facility metadata, and operating hours.
   - Strict KYC state machine (`pending` -> `approved` / `rejected`).
@@ -253,26 +253,29 @@
 - [x] **Thin Admin Console Endpoints (`Backend/src/routes/admin.js`)**:
   - `GET /api/admin/kyc/queue`: Review queue of pending/approved/rejected merchant and provider entities.
   - `POST /api/admin/kyc/decision`: Atomic KYC decision transaction with 409 conflict guard on non-pending entities and 422 guard requiring attached documents before approval.
-  - `GET /api/admin/intake/overview`: Unified inbox for support requests and partnership proposals.
+  - `GET /api/admin/inbox/support`: Inbox for support requests with `reference` codes.
+  - `GET /api/admin/inbox/partners`: Inbox for partnership proposals with document view links.
   - `GET /api/admin/audit-logs`: RBAC-protected audit log explorer restricted strictly to `super_admin`.
 - [x] **Frontend Portal Dashboards & Admin Console**:
   - `AdminDashboard.tsx`: Added Verification Queue tab, Document Inspection modal, Intake Inbox, and Super Admin Audit Log viewer.
   - `MerchantDashboard.tsx` & `ProviderDashboard.tsx`: Live compliance alert banner, document upload controls, business profile editing, and operational hours management.
   - `PartnerWithUsPage.tsx`: Re-integrated anonymous document upload using the shared upload service and staging tokens.
+  - `App.tsx`: Route protection guards redirecting unauthenticated dashboard visits to `/login` and enabling `super_admin` console access.
 - [x] **Least-Privilege Database Execution (`ods_app`)**:
   - Provisioned and verified `ods_app` least-privilege role (`Backend/scripts/apply-limited-user.js`).
   - Runtime configured with `DB_USER=ods_app` with append-only access to `audit_logs` (UPDATE/DELETE denied) and DML-only permissions on application tables.
+  - **Checklist Requirement**: New tables need explicit `ods_app` grants in future migrations (`GRANT SELECT, INSERT, UPDATE ON <table_name> TO ods_app;`) because tables created by postgres/superuser do not automatically grant permissions.
 
 ---
 
 ## 3. Verification & Compliance
 
-- **PostgreSQL Migrations**: 14 of 14 migrations applied to `ods_global` on PostgreSQL 18.6.
+- **PostgreSQL Migrations**: 14 of 14 migrations applied to `ods_global.net` on PostgreSQL 18.6.
 - **Database Least-Privilege Execution**: Application runtime and dev tests verified running as `ods_app`.
 - **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, and document inspection.
-- **Full Automated Test Suite**: `node test-batch4-endpoints.js` passed 55 of 55 tests (0 failed), covering upload limits, magic bytes, staging tokens, KYC state transitions, IDOR cross-tenant isolation, admin RBAC, sweeper, and `ods_app` privileges.
+- **Full Automated Test Suite**: `node test-batch4-endpoints.js` passing all 96 tests (0 failed) twice back-to-back without restarting server.
 - **TypeScript Compiler**: `npx tsc --noEmit` exited with 0 errors.
-- **Production Bundle**: `npm run build` completed with exit code 0.
+- **Production Bundle**: `npm run build` completed with exit code 0 (1626 modules transformed, dist generated in 11.09s).
 - **Folder Confinement**: 100% of code and documentation strictly confined within the 7 designated root directories (`./Frontend`, `./Backend`, `./System Directive`, `./Progress`, `./Assets`, `./Status`, `./resource`).
 - **Path Portability**: All code imports, links, and documentation paths are strictly relative to `Ods-Global-Network`.
 
@@ -280,24 +283,54 @@
 
 ## 4. Release Blockers & Security Notes
 
-1. **Database Superuser Connection (Resolved in Dev)**:
-   - Development runtime is now active and verified on least-privilege `ods_app` role. Production rollout is scheduled for Batch 12.
-2. **KYC Review & Approver Workflow (Resolved)**:
-   - Full reviewer tracking (`reviewed_by`, `reviewed_at`), state machine enforcement, and document inspection modal are functional in the Admin Console.
-3. **Intake Visibility (Resolved)**:
-   - `/api/admin/intake/overview` and the Admin Dashboard now provide direct administrative visibility into `/support` and `/partner-with-us` submissions.
-4. **Password Change Session Invalidation (Logged Enhancement)**:
-   - Old `ods_session` JWT cookies remain valid until expiration (24 hours / 1 day) after a password change because token revocation/versioning is not yet implemented.
-5. **Rate Limiting on Password Endpoint (Logged Enhancement)**:
-   - `/api/customer/change-password` is covered by the general customer router rate limit (30 req / 15 min), but does not yet have a dedicated stricter brute-force limit.
+### Release Blockers
+1. **Migration 009 Default Admin Purge**:
+   - *Original wording:* "Migration 009_seed_admin.sql creates a default admin with a known password. It must be removed or rotated before any non-local deployment. The default seeded admin was purged in migration 012. Admin users can now be created via `Backend/scripts/create-admin.js`."
+   - *Status:* **Required on every environment** — Applied in dev/test via migrations 012–013 and `pre-migrate-create-admin.js`; must be executed on every new environment/deployment before non-local deployment. Not marked globally closed.
+2. **Database Superuser Connection**:
+   - *Original wording:* "The app connects as the postgres superuser. A dedicated limited DB user is needed before deployment. Script `Backend/scripts/setup-limited-db-user.sql` has been authored to create a dedicated `ods_app` user with limited grants. This must be executed and `.env` credentials updated prior to production deployment."
+   - *Status:* **Open until Batch 12** — Development runtime is active on least-privilege `ods_app` role; host-level limited user setup and production rollout deferred to Batch 12.
+3. **KYC Approval Reviewer Tracking & Intake Visibility**:
+   - *Original wording:* "KYC approval having a real reviewer; Batch 2 inquiries (support_requests, partners) are only visible in the database until the admin dashboard and notifications batches."
+   - *Status:* **Closed in Batch 4** — Real reviewer assignment (`reviewed_by`, `reviewed_at`), document inspection modal, KYC state machine transitions (409/422 guards), and dedicated Support & Partner Inboxes implemented in the Admin Console.
+
+> **Go-Live Gate**: All release blockers must be fully resolved and verified before production deployment. (Unchanged)
+
+### Follow-Up List
+1. **ClamAV Antivirus Daemon (B12)**: Implement inline or asynchronous daemon scanning for uploaded files.
+2. **In-Memory Rate Limiter (B12)**: Replace current in-memory `express-rate-limit` with distributed Redis rate limiting to support horizontal scaling and server restarts.
+3. **Concurrent Anonymous-Upload Cap Race (B12)**: Resolve simultaneous burst upload race conditions with distributed atomic counters or database locks.
+4. **Multi-Document KYC Requirement**: Enforce requiring both license AND registration documents before approving KYC (currently at least one verified document is required).
+5. **Database Grants Policy**: New tables created in future migrations need explicit `ods_app` grants (`GRANT SELECT, INSERT, UPDATE ON <table_name> TO ods_app;` — ledger and audit tables get `SELECT, INSERT` only).
+6. **Role Baked into JWT Token (Batch 5 Session Invalidation)**: The user role is baked into the 24-hour `ods_session` JWT token at login; administrative changes to `admins.admin_level` (e.g. promoting staff admin to super admin) do not apply until token expiration or re-login. To be resolved in Batch 5 via session invalidation / token versioning.
 
 ---
 
 ## 5. Immediate Next Steps
 
-1. **Batch 6: Service Catalog & Offerings (Module 6)**:
+1. **Batch 5: Email Foundation and Account Recovery**:
+   - SMTP sender foundation and transactional email delivery.
+   - Forgot/reset password workflows replacing the development OTP.
+   - Email verification flow.
+   - Session invalidation on password change (token revocation/versioning).
+   - Change-password dedicated rate limit.
+   - *(Note: Module 5 is Provider Onboarding and was completed in Batch 4).*
+2. **Batch 6: Payments**:
+   - Chapa test mode integration.
+   - Cryptographic HMAC webhook verification.
+   - Idempotent transaction processing.
+   - Transaction records and receipt generation.
+3. **Batch 7: Gifting and Vouchers**:
+   - Digital gift cards, custom vouchers, and balance management.
+4. **Batch 8: Service Catalog and Directory**:
    - Service listing, category tagging, and pricing configuration.
-2. **Batch 7: Appointment Booking Engine (Module 7)**:
+5. **Batch 9: Appointment Booking Engine**:
    - Availability slot generation, booking creation, and collision prevention.
-3. **Batch 8: Advanced Admin & Operations Management (Module 8)**:
-   - System configurations, platform analytics, and operational metrics.
+6. **Batch 10: Full Admin Console**:
+   - Comprehensive platform analytics, management tools, and operational controls.
+7. **Batch 11: Notification Engine**:
+   - Multi-channel notification delivery (Email, SMS, Push).
+8. **Batch 12: Production Hardening and Go-Live Gate**:
+   - ClamAV integration, Redis rate limiter, production `ods_app` DB migration, and final go-live gate audit.
+
+

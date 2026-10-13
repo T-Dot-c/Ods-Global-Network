@@ -14,16 +14,25 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { Pool } = require('pg');
 
 async function main() {
-  const adminUser = process.env.TEST_ADMIN_DB_USER || 'postgres';
-  const adminPassword = process.env.TEST_ADMIN_DB_PASSWORD || 'postgres';
+  const adminUser = process.env.TEST_ADMIN_DB_USER;
+  const adminPassword = process.env.TEST_ADMIN_DB_PASSWORD;
+  if (!adminUser || !adminPassword) {
+    console.error('FATAL: TEST_ADMIN_DB_USER and TEST_ADMIN_DB_PASSWORD environment variables are required.');
+    process.exit(1);
+  }
+
   const dbHost = process.env.TEST_ADMIN_DB_HOST || process.env.DB_HOST || 'localhost';
   const dbPort = parseInt(process.env.TEST_ADMIN_DB_PORT || process.env.DB_PORT || '5432', 10);
-  const dbName = process.env.TEST_ADMIN_DB_NAME || process.env.DB_NAME || 'ods_global';
+  const dbName = process.env.TEST_ADMIN_DB_NAME || process.env.DB_NAME;
+  if (!dbName) {
+    console.error('FATAL: TEST_ADMIN_DB_NAME or DB_NAME environment variable is required.');
+    process.exit(1);
+  }
 
   const appUser = 'ods_app';
-  const appPassword = process.argv[2] || process.env.APP_PASSWORD || process.env.DB_PASSWORD;
+  const appPassword = process.env.APP_PASSWORD || process.env.DB_PASSWORD;
   if (!appPassword) {
-    console.error('FATAL: Limited user password must be supplied via CLI argument or APP_PASSWORD / DB_PASSWORD environment variable.');
+    console.error('FATAL: Limited user password must be supplied via APP_PASSWORD or DB_PASSWORD environment variable.');
     process.exit(1);
   }
 

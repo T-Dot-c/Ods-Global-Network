@@ -16,6 +16,16 @@
 
 require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 const pool = require('./src/db');
+const { Pool } = require('pg');
+
+const cleanupPool = new Pool({
+  host:     process.env.TEST_ADMIN_DB_HOST || process.env.DB_HOST,
+  port:     process.env.TEST_ADMIN_DB_PORT || process.env.DB_PORT,
+  database: process.env.TEST_ADMIN_DB_NAME || process.env.DB_NAME,
+  user:     process.env.TEST_ADMIN_DB_USER || 'postgres',
+  password: process.env.TEST_ADMIN_DB_PASSWORD || process.env.DB_PASSWORD,
+  ssl:      false,
+});
 
 const API_BASE = 'http://localhost:3001';
 
@@ -285,24 +295,30 @@ async function runTests() {
 
     for (const u of testUsers.rows) {
       if (u.role === 'merchant') {
-        const mRow = await pool.query(`SELECT id FROM merchants WHERE user_id = $1`, [u.id]);
+        const mRow = await cleanupPool.query(`SELECT id FROM merchants WHERE user_id = $1`, [u.id]);
         if (mRow.rows.length > 0) {
           const mId = mRow.rows[0].id;
-          await pool.query(`DELETE FROM contact_persons WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
-          await pool.query(`DELETE FROM addresses WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
+          await cleanupPool.query(`DELETE FROM contact_persons WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
+          await cleanupPool.query(`DELETE FROM addresses WHERE entity_type = 'merchant' AND entity_id = $1`, [mId]);
+          await cleanupPool.query(`DELETE FROM merchants WHERE id = $1`, [mId]);
         }
       } else if (u.role === 'provider') {
-        const pRow = await pool.query(`SELECT id FROM providers WHERE user_id = $1`, [u.id]);
+        const pRow = await cleanupPool.query(`SELECT id FROM providers WHERE user_id = $1`, [u.id]);
         if (pRow.rows.length > 0) {
           const pId = pRow.rows[0].id;
-          await pool.query(`DELETE FROM contact_persons WHERE entity_type = 'provider' AND entity_id = $1`, [pId]);
-          await pool.query(`DELETE FROM addresses WHERE entity_type = 'provider' AND entity_id = $1`, [pId]);
+          await cleanupPool.query(`DELETE FROM contact_persons WHERE entity_type = 'provider' AND entity_id = $1`, [pId]);
+          await cleanupPool.query(`DELETE FROM addresses WHERE entity_type = 'provider' AND entity_id = $1`, [pId]);
+          await cleanupPool.query(`DELETE FROM providers WHERE id = $1`, [pId]);
         }
       } else if (u.role === 'customer') {
-        await pool.query(`DELETE FROM addresses WHERE entity_type = 'customer' AND entity_id = $1`, [u.id]);
+        await cleanupPool.query(`DELETE FROM addresses WHERE entity_type = 'customer' AND entity_id = $1`, [u.id]);
       }
-      await pool.query(`DELETE FROM audit_logs WHERE user_id = $1`, [u.id]);
-      await pool.query(`DELETE FROM users WHERE id = $1`, [u.id]);
+      try {
+        await cleanupPool.query(`DELETE FROM audit_logs WHERE user_id = $1`, [u.id]);
+      } catch (_e) {
+        // Ignored if audit_logs has constraints
+      }
+      await cleanupPool.query(`DELETE FROM users WHERE id = $1`, [u.id]);
     }
     console.log(`  ✅ Cleaned up ${testUsers.rows.length} test user(s) and associated test records.`);
 
@@ -313,6 +329,7 @@ async function runTests() {
     console.error('Test execution error:', err.message);
   } finally {
     await pool.end();
+    await cleanupPool.end();
   }
 }
 

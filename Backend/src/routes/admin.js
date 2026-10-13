@@ -273,7 +273,7 @@ router.get('/inbox/support', requireRole('admin', 'super_admin'), async (req, re
     params.push(lim, off);
 
     const result = await pool.query(
-      `SELECT id, reference_id, name, email, phone, subject, message, status, created_at
+      `SELECT id, reference, name, email, subject, message, status, created_at
        FROM support_requests
        ${where}
        ORDER BY created_at DESC

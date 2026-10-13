@@ -17,7 +17,7 @@ const ALLOWED_NOTIFICATION_PREFERENCES = ['email', 'sms', 'both'];
 /* ─────────────────────────────────────────────────────────────
    GET /api/customer/profile
    ───────────────────────────────────────────────────────────── */
-router.get('/profile', requireAuth, requireRole('customer', 'admin'), async (req, res) => {
+router.get('/profile', requireAuth, requireRole('customer', 'admin', 'super_admin'), async (req, res) => {
   const userId = req.user.id;
 
   try {
@@ -72,7 +72,7 @@ router.get('/profile', requireAuth, requireRole('customer', 'admin'), async (req
 /* ─────────────────────────────────────────────────────────────
    PUT /api/customer/profile
    ───────────────────────────────────────────────────────────── */
-router.put('/profile', requireAuth, requireRole('customer', 'admin'), async (req, res) => {
+router.put('/profile', requireAuth, requireRole('customer', 'admin', 'super_admin'), async (req, res) => {
   const userId = req.user.id;
   const {
     full_name,

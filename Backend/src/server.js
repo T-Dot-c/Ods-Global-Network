@@ -5,15 +5,23 @@
 'use strict';
 
 require('dotenv').config();
-const express      = require('express');
-const cors         = require('cors');
-const cookieParser = require('cookie-parser');
-const helmet       = require('helmet');
-const rateLimit    = require('express-rate-limit');
+const fs            = require('fs');
+const path          = require('path');
+const express       = require('express');
+const cors          = require('cors');
+const cookieParser  = require('cookie-parser');
+const helmet        = require('helmet');
+const rateLimit     = require('express-rate-limit');
 
 const authRoutes    = require('./routes/auth');
 const supportRoutes = require('./routes/support');
 const partnerRoutes = require('./routes/partners');
+
+/* ── Storage Directory Initialization ───────────────────────── */
+const UPLOADS_PRIVATE_DIR = path.resolve(__dirname, '../uploads/private');
+if (!fs.existsSync(UPLOADS_PRIVATE_DIR)) {
+  fs.mkdirSync(UPLOADS_PRIVATE_DIR, { recursive: true });
+}
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -82,19 +90,27 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-/* ── Global rate limiter (100 req / 15 min per IP) ────────── */
+/* ── Global rate limiter (default: 100 req / 15 min per IP) ─── */
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: process.env.RATE_LIMIT_GLOBAL_WINDOW_MS
+    ? parseInt(process.env.RATE_LIMIT_GLOBAL_WINDOW_MS, 10)
+    : 15 * 60 * 1000,
+  max: process.env.RATE_LIMIT_GLOBAL_MAX
+    ? parseInt(process.env.RATE_LIMIT_GLOBAL_MAX, 10)
+    : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests — please try again later.' },
 }));
 
-/* ── Auth route — tighter limiter (20 req / 15 min per IP) ── */
+/* ── Auth route — tighter limiter (default: 20 req / 15 min per IP) ── */
 app.use('/api/auth', rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
+  windowMs: process.env.RATE_LIMIT_AUTH_WINDOW_MS
+    ? parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS, 10)
+    : 15 * 60 * 1000,
+  max: process.env.RATE_LIMIT_AUTH_MAX
+    ? parseInt(process.env.RATE_LIMIT_AUTH_MAX, 10)
+    : 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many auth requests — please slow down.' },
@@ -103,8 +119,12 @@ app.use('/api/auth', rateLimit({
 /* ── Customer portal route (Batch 3) ──────────────────────── */
 const customerRoutes = require('./routes/customer');
 app.use('/api/customer', rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
+  windowMs: process.env.RATE_LIMIT_CUSTOMER_WINDOW_MS
+    ? parseInt(process.env.RATE_LIMIT_CUSTOMER_WINDOW_MS, 10)
+    : 15 * 60 * 1000,
+  max: process.env.RATE_LIMIT_CUSTOMER_MAX
+    ? parseInt(process.env.RATE_LIMIT_CUSTOMER_MAX, 10)
+    : 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many customer portal requests — please slow down.' },

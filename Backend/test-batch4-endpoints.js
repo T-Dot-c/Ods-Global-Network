@@ -23,6 +23,8 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 
 const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3001';
@@ -55,6 +57,7 @@ const createdMerchantIds  = [];
 const createdProviderIds  = [];
 const createdDocumentIds  = [];
 const createdPartnerIds   = [];
+const createdSupportReferences = [];
 const createdDiskFiles    = [];
 
 let passed = 0;
@@ -84,7 +87,9 @@ async function api(method, path, { body, cookie, contentType } = {}) {
   if (contentType) headers['Content-Type'] = contentType;
 
   const opts = { method, headers };
-  if (body !== undefined) opts.body = body;
+  if (method !== 'GET' && method !== 'HEAD' && body !== undefined && body !== null) {
+    opts.body = body;
+  }
 
   const res = await fetch(`${API_BASE}${path}`, opts);
   res.res = res;
@@ -92,10 +97,11 @@ async function api(method, path, { body, cookie, contentType } = {}) {
 }
 
 async function apiJson(method, path, bodyObj, cookie) {
+  const isGetOrHead = method === 'GET' || method === 'HEAD';
   const res = await api(method, path, {
-    body: JSON.stringify(bodyObj),
+    body: (!isGetOrHead && bodyObj !== undefined && bodyObj !== null) ? JSON.stringify(bodyObj) : undefined,
     cookie,
-    contentType: 'application/json',
+    contentType: isGetOrHead ? undefined : 'application/json',
   });
   const data = await res.json().catch(() => ({}));
   return { res, data };
@@ -152,9 +158,14 @@ async function runTests() {
     console.error('FATAL: Refusing to run test suite in production environment!');
     process.exit(1);
   }
+  if (process.env.ALLOW_DESTRUCTIVE_TESTS !== '1') {
+    console.error('FATAL: Refusing to run test suite without ALLOW_DESTRUCTIVE_TESTS=1 opt-in flag!');
+    process.exit(1);
+  }
   const targetDb = process.env.TEST_ADMIN_DB_NAME || process.env.DB_NAME;
-  if (!['ods_global', 'ods_global_test', 'ods_global_dev', 'ods_global.net'].includes(targetDb)) {
-    console.error(`FATAL: Refusing to run test suite against non-dev database: ${targetDb}`);
+  const ALLOWED_DEV_DBS = ['ods_global.net', 'ods_global_test', 'ods_global_dev'];
+  if (!ALLOWED_DEV_DBS.includes(targetDb)) {
+    console.error(`FATAL: Refusing to run test suite against non-dev database: "${targetDb}". Allowed dev databases: ${ALLOWED_DEV_DBS.join(', ')}`);
     process.exit(1);
   }
 
@@ -212,12 +223,18 @@ async function runTests() {
         assert(`ods_app can SELECT from ${t}`, false, e.message);
       }
     }
-    // audit_logs must NOT allow UPDATE
+    // audit_logs must NOT allow UPDATE or DELETE
     try {
       await appPool.query(`UPDATE audit_logs SET action = action WHERE FALSE`);
       assert('ods_app cannot UPDATE audit_logs (append-only)', false, 'UPDATE succeeded unexpectedly');
     } catch (e) {
       assert('ods_app cannot UPDATE audit_logs (append-only)', e.message.includes('permission denied'));
+    }
+    try {
+      await appPool.query(`DELETE FROM audit_logs WHERE FALSE`);
+      assert('ods_app cannot DELETE audit_logs (append-only)', false, 'DELETE succeeded unexpectedly');
+    } catch (e) {
+      assert('ods_app cannot DELETE audit_logs (append-only)', e.message.includes('permission denied'));
     }
   } catch (e) {
     console.error('  T0 error:', e.message);
@@ -286,7 +303,7 @@ async function runTests() {
   const { res: tanonkyc } = await uploadFile(pdfBuf, 'license.pdf', 'kyc_license', null);
   assert('T3b: Anonymous upload with KYC purpose rejected (400)', tanonkyc.status === 400);
 
-  // ── T4: Anonymous Upload Staging Token & Rate Limit ──────────────────────
+  // ── T4: Anonymous Upload Staging Token & Capacity ──────────────────────
   console.log('\n── T4: Anonymous Upload & Staging Token ─────────────────────────');
   const buf512 = makePdfBuffer(512);
   const { res: tanonRes, data: danonRes } = await uploadFile(buf512, 'prop.pdf', 'partner_proposal', null);
@@ -294,8 +311,23 @@ async function runTests() {
   if (danonRes.document_id) createdDocumentIds.push(danonRes.document_id);
   const validStagingToken = danonRes.staging_token;
 
-  // ── T5: Staging Token Attach ──────────────────────────────────────────────
-  console.log('\n── T5: Staging Token Partner Attach ─────────────────────────────');
+  // T4b: Anonymous staging storage cap exceeded returns 503
+  const dummyCapInsert = await adminPool.query(
+    `INSERT INTO documents (entity_type, purpose, document_type, file_url, file_name, mime_type,
+       file_size, storage_path, is_attached, expires_at, status)
+     VALUES ('unattached', 'partner_proposal', 'other', '/api/documents/private/dummy-cap', 'dummy-cap.pdf',
+       'application/pdf', 101 * 1024 * 1024, 'dummy_path', FALSE,
+       NOW() + INTERVAL '1 hour', 'pending')
+     RETURNING id`
+  );
+  const dummyCapId = dummyCapInsert.rows[0].id;
+  const { res: tCapRes, data: dCapData } = await uploadFile(buf512, 'cap_test.pdf', 'partner_proposal', null);
+  assert('T4b: Staging storage cap exceeded returns 503 Service Unavailable',
+    tCapRes.status === 503 && (dCapData.message || '').includes('capacity temporarily full'));
+  await adminPool.query(`DELETE FROM documents WHERE id = $1`, [dummyCapId]);
+
+  // ── T5: Staging Token Verification & Lifecycle ────────────────────────────
+  console.log('\n── T5: Staging Token Verification & Lifecycle ───────────────────');
 
   // Valid attach
   const { res: tattach, data: dattach } = await apiJson('POST', '/api/partners', {
@@ -313,12 +345,12 @@ async function runTests() {
   );
   if (partnerRows.rows.length > 0) createdPartnerIds.push(partnerRows.rows[0].id);
 
-  // Expired / tampered token
+  // Tampered token
   const { res: texp } = await apiJson('POST', '/api/partners', {
     partnership_type: 'investor',
-    name: 'Test Expired',
-    company_name: 'Expired Co',
-    email: `expired_${Date.now()}@example.com`,
+    name: 'Test Tampered',
+    company_name: 'Tampered Co',
+    email: `tampered_${Date.now()}@example.com`,
     phone: '+9876543210',
     staging_token: 'invalid.tampered.token',
   });
@@ -337,6 +369,70 @@ async function runTests() {
     `SELECT id FROM partners WHERE name = 'No Doc Partner' ORDER BY created_at DESC LIMIT 1`
   );
   if (ndRows.rows.length > 0) createdPartnerIds.push(ndRows.rows[0].id);
+
+  const stagingSecret = process.env.STAGING_TOKEN_SECRET || (process.env.JWT_SECRET + '_staging');
+
+  // T5d: Expired staging token
+  const expiredStagingToken = jwt.sign(
+    { docId: crypto.randomUUID(), purpose: 'partner_proposal' },
+    stagingSecret,
+    { expiresIn: '-10s', audience: 'ods:partner_staging', issuer: 'ods_global_network' }
+  );
+  const { res: texpStaging, data: dexpStaging } = await apiJson('POST', '/api/partners', {
+    partnership_type: 'investor',
+    name: 'Expired Token Partner',
+    company_name: 'Expired Co',
+    email: `expired_tok_${Date.now()}@example.com`,
+    phone: '+1234567890',
+    staging_token: expiredStagingToken,
+  });
+  assert('T5d: Expired staging token rejected (400)',
+    texpStaging.status === 400 && (dexpStaging.message || '').includes('expired'));
+
+  // T5e: Replayed staging token (re-submitting with validStagingToken that was already attached in T5a)
+  const { res: treplay, data: dreplay } = await apiJson('POST', '/api/partners', {
+    partnership_type: 'investor',
+    name: 'Replay Partner',
+    company_name: 'Replay Co',
+    email: `replay_${Date.now()}@example.com`,
+    phone: '+1234567890',
+    staging_token: validStagingToken,
+  });
+  assert('T5e: Replayed staging token rejected (400)',
+    treplay.status === 400 && (dreplay.message || '').includes('already attached'));
+
+  // T5f: Foreign-purpose staging token
+  const foreignStagingToken = jwt.sign(
+    { docId: crypto.randomUUID(), purpose: 'kyc_license' },
+    stagingSecret,
+    { expiresIn: '1h', audience: 'ods:partner_staging', issuer: 'ods_global_network' }
+  );
+  const { res: tforeign, data: dforeign } = await apiJson('POST', '/api/partners', {
+    partnership_type: 'investor',
+    name: 'Foreign Purpose Partner',
+    company_name: 'Foreign Co',
+    email: `foreign_tok_${Date.now()}@example.com`,
+    phone: '+1234567890',
+    staging_token: foreignStagingToken,
+  });
+  assert('T5f: Foreign-purpose staging token rejected (400)',
+    tforeign.status === 400 && (dforeign.message || '').includes('purpose'));
+
+  // T5g: Anonymous upload rate limiting (429)
+  let got429 = false;
+  for (let i = 0; i < 15; i++) {
+    const { res: tRateRes, data: dRateRes } = await uploadFile(buf512, 'rate.pdf', 'partner_proposal', null);
+    if (dRateRes?.document_id) createdDocumentIds.push(dRateRes.document_id);
+    if (tRateRes.status === 429) {
+      got429 = true;
+      break;
+    }
+  }
+  assert('T5g: Anonymous uploads exceeding rate limit return 429 Too Many Requests', got429);
+
+  // Wait out the window afterward so it cannot flake on a slow machine
+  const anonWindowMs = process.env.RATE_LIMIT_ANON_WINDOW_MS ? parseInt(process.env.RATE_LIMIT_ANON_WINDOW_MS, 10) : 3000;
+  await new Promise(r => setTimeout(r, Math.max(anonWindowMs, 3000) + 500));
 
   // ── T6: Cross-Tenant IDOR Protection ─────────────────────────────────────
   console.log('\n── T6: Cross-Tenant IDOR Protection ─────────────────────────────');
@@ -486,7 +582,89 @@ async function runTests() {
       decision: 'rejected', reason: 'Conflict test',
     }, adminCookie);
     assert('T8j: Rejecting already approved entity rejected with 409 Conflict', t409Reject.status === 409);
+
+    // ── T8k: Simultaneous decisions race on single pending entity ──
+    const simMerchantEmail = `b4_sim_m_${Date.now()}@odsglobal.net`;
+    const simMCookie = await registerAndLogin(simMerchantEmail, 'SimPass123!', 'merchant', {
+      business_name: 'Simultaneous Test Merchant Ltd', category: 'General',
+    });
+    await trackFixtureUser(simMerchantEmail);
+    const simRow = await adminPool.query(
+      `SELECT m.id FROM merchants m JOIN users u ON u.id = m.user_id WHERE u.email = $1`,
+      [simMerchantEmail]
+    );
+    const simMerchantId = simRow.rows[0]?.id;
+    const { data: uDocSim } = await uploadFile(pdfBuf, 'sim_doc.pdf', 'kyc_license', simMCookie);
+    if (uDocSim.document_id) createdDocumentIds.push(uDocSim.document_id);
+
+    // Fire two simultaneous decision requests
+    const [simDec1, simDec2] = await Promise.all([
+      apiJson('POST', `/api/admin/kyc/merchant/${simMerchantId}/decision`, { decision: 'approved' }, adminCookie),
+      apiJson('POST', `/api/admin/kyc/merchant/${simMerchantId}/decision`, { decision: 'approved' }, adminCookie),
+    ]);
+    const simStatuses = [simDec1.res.status, simDec2.res.status].sort();
+    assert('T8k: Two simultaneous decisions on one entity: exactly one wins (200) and one gets 409',
+      simStatuses[0] === 200 && simStatuses[1] === 409);
   }
+
+  // ── Provider KYC Decision Parity ─────────────────────────────────
+  console.log('\n── Provider KYC Decision Parity ─────────────────────────────────');
+  const provEmail = `b4_provider_${Date.now()}@odsglobal.net`;
+  const provPass  = 'ProviderPass123!';
+  const provCookie = await registerAndLogin(provEmail, provPass, 'provider', {
+    provider_name: 'B4 Test Clinic Ltd', provider_type: 'clinic',
+  });
+  await trackFixtureUser(provEmail);
+
+  const provRow = await adminPool.query(
+    `SELECT p.id FROM providers p JOIN users u ON u.id = p.user_id WHERE u.email = $1`,
+    [provEmail]
+  );
+  const testProviderId = provRow.rows[0]?.id;
+
+  // 1. Admin attempts to approve provider with 0 attached documents → 422
+  const { res: tProv422 } = await apiJson('POST', `/api/admin/kyc/provider/${testProviderId}/decision`, {
+    decision: 'approved',
+  }, adminCookie);
+  assert('T8l: Provider approval with 0 documents rejected with 422 Unprocessable', tProv422.status === 422);
+
+  // 2. Verify provider remains in pending status
+  const provStatusAfter422 = await appPool.query(
+    `SELECT approval_status FROM providers WHERE id = $1`, [testProviderId]
+  );
+  assert('T8m: Provider remains in pending status after 422 rollback',
+    provStatusAfter422.rows[0]?.approval_status === 'pending');
+
+  // 3. Upload KYC document for provider
+  const { data: uDocProv } = await uploadFile(pdfBuf, 'prov_license.pdf', 'kyc_license', provCookie);
+  if (uDocProv.document_id) createdDocumentIds.push(uDocProv.document_id);
+
+  // 4. Admin approves provider → succeeds (200)
+  const { res: tProvApprove } = await apiJson('POST', `/api/admin/kyc/provider/${testProviderId}/decision`, {
+    decision: 'approved',
+  }, adminCookie);
+  assert('T8n: Provider approval with attached document succeeds (200)', tProvApprove.status === 200);
+
+  const provAfterApprove = await appPool.query(
+    `SELECT approval_status FROM providers WHERE id = $1`, [testProviderId]
+  );
+  assert('T8o: Provider status updated to approved',
+    provAfterApprove.rows[0]?.approval_status === 'approved');
+
+  // 5. Audit log contains KYC_APPROVAL with entity_type: provider
+  const provAudit = await appPool.query(
+    `SELECT action, details FROM audit_logs
+     WHERE action = 'KYC_APPROVAL' AND details->>'entity_id' = $1
+     ORDER BY created_at DESC LIMIT 1`,
+    [testProviderId]
+  );
+  assert('T8p: KYC_APPROVAL audit entry written for provider entity', provAudit.rows.length > 0);
+
+  // 6. Decision on already approved provider returns 409 Conflict
+  const { res: tProv409 } = await apiJson('POST', `/api/admin/kyc/provider/${testProviderId}/decision`, {
+    decision: 'approved',
+  }, adminCookie);
+  assert('T8q: Decision on already approved provider rejected with 409 Conflict', tProv409.status === 409);
 
   // ── T9: COMPLIANCE_RESET on Profile Edit ─────────────────────────────────
   console.log('\n── T9: COMPLIANCE_RESET on Profile Edit (Approved Entity) ───────');
@@ -616,7 +794,91 @@ async function runTests() {
   if (adminCookie) {
     const { res: t11superAudit } = await api('GET', '/api/admin/audit-logs', { cookie: adminCookie });
     assert('T11g: Super admin succeeds (200) on /api/admin/audit-logs', t11superAudit.status === 200);
+
+    // Super admin can access /api/admin/kyc/queue
+    const { res: t11superKyc, data: d11superKyc } = await apiJson('GET', '/api/admin/kyc/queue', null, adminCookie);
+    assert('T11g-kyc: Super admin can access /api/admin/kyc/queue (200)',
+      t11superKyc.status === 200 && Array.isArray(d11superKyc?.queue?.merchants) && Array.isArray(d11superKyc?.queue?.providers));
+
+    // Super admin can make a KYC decision
+    const saMerchantEmail = `b4_sa_m_${Date.now()}@odsglobal.net`;
+    const saMCookie = await registerAndLogin(saMerchantEmail, 'SaPass123!', 'merchant', {
+      business_name: 'SuperAdmin Decision Merchant Ltd', category: 'General',
+    });
+    await trackFixtureUser(saMerchantEmail);
+    const saMRow = await adminPool.query(
+      `SELECT m.id FROM merchants m JOIN users u ON u.id = m.user_id WHERE u.email = $1`,
+      [saMerchantEmail]
+    );
+    const saMerchantId = saMRow.rows[0]?.id;
+    const { data: uDocSa } = await uploadFile(pdfBuf, 'sa_decision_doc.pdf', 'kyc_license', saMCookie);
+    if (uDocSa.document_id) createdDocumentIds.push(uDocSa.document_id);
+
+    const { res: tSaDecision } = await apiJson('POST', `/api/admin/kyc/merchant/${saMerchantId}/decision`, {
+      decision: 'approved',
+    }, adminCookie);
+    assert('T11g-decision: Super admin can make KYC decision (200)', tSaDecision.status === 200);
+
+    const saAfter = await appPool.query(
+      `SELECT approval_status, reviewed_by FROM merchants WHERE id = $1`, [saMerchantId]
+    );
+    assert('T11g-decision-state: Super admin KYC decision updates approval_status to approved and records reviewed_by',
+      saAfter.rows[0]?.approval_status === 'approved' && saAfter.rows[0]?.reviewed_by === superAdminId);
+
+    // Admin inbox endpoints
+    // T11h: Create support request and assert it appears in /api/admin/inbox/support with its reference
+    const supEmail = `b4_sup_${Date.now()}@odsglobal.net`;
+    const { res: tSupCreate, data: dSupCreate } = await apiJson('POST', '/api/support', {
+      name: 'Batch 4 Support User',
+      email: supEmail,
+      subject: 'Batch 4 Support Verification',
+      message: 'Verifying support request presence in admin inbox.',
+    });
+    const createdRef = dSupCreate?.reference;
+    if (createdRef) createdSupportReferences.push(createdRef);
+
+    const { res: tInboxSupport, data: dInboxSupport } = await apiJson('GET', '/api/admin/inbox/support', null, adminCookie);
+    assert('T11h: Support inbox query does not return 500', tInboxSupport.status !== 500);
+    assert('T11h: Admin can access /api/admin/inbox/support (200)',
+      tInboxSupport.status === 200 && Array.isArray(dInboxSupport.requests));
+    const foundSupReq = (dInboxSupport.requests || []).find(r => r.reference === createdRef);
+    assert(
+      'T11h: Created support request appears in admin inbox with matching reference',
+      !!foundSupReq && foundSupReq.reference === createdRef && foundSupReq.email === supEmail
+    );
+
+    const { res: tInboxPartners, data: dInboxPartners } = await apiJson('GET', '/api/admin/inbox/partners', null, adminCookie);
+    assert('T11i: Admin can access /api/admin/inbox/partners (200)',
+      tInboxPartners.status === 200 && Array.isArray(dInboxPartners.partners));
+
+    // Verify partner inquiry with attachment appears in inbox with working document link
+    const partnerWithDoc = (dInboxPartners.partners || []).find(p => p.document_id && p.document_view_url);
+    if (partnerWithDoc) {
+      const { res: tDocView } = await api('GET', partnerWithDoc.document_view_url, { cookie: adminCookie });
+      assert(
+        'T11i-doc: Partner inquiry with attachment appears in inbox with working document link (200)',
+        tDocView.status === 200 && tDocView.headers.get('x-content-type-options') === 'nosniff'
+      );
+    } else {
+      assert('T11i-doc: Partner inquiry with attachment appears in inbox with working document link', false, 'no partner with attached document found');
+    }
   }
+
+  // Customer denied on admin inboxes
+  if (cCookie) {
+    const { res: tCustInboxSup } = await apiJson('GET', '/api/admin/inbox/support', null, cCookie);
+    assert('T11j: Customer denied (403) on /api/admin/inbox/support', tCustInboxSup.status === 403);
+
+    const { res: tCustInboxPart } = await apiJson('GET', '/api/admin/inbox/partners', null, cCookie);
+    assert('T11k: Customer denied (403) on /api/admin/inbox/partners', tCustInboxPart.status === 403);
+  }
+
+  // Unauthenticated denied on admin inboxes
+  const { res: tUnauthSup } = await apiJson('GET', '/api/admin/inbox/support');
+  assert('T11l: Unauthenticated request to /api/admin/inbox/support returns 401', tUnauthSup.status === 401);
+
+  const { res: tUnauthPart } = await apiJson('GET', '/api/admin/inbox/partners');
+  assert('T11m: Unauthenticated request to /api/admin/inbox/partners returns 401', tUnauthPart.status === 401);
 
   // ── T12: Guarded Sweeper ──────────────────────────────────────────────────
   console.log('\n── T12: Guarded Sweeper Verification ────────────────────────────');
@@ -698,6 +960,13 @@ async function runTests() {
     assert('T12e: Sweeper guard preserves attached row in DB', checkAttRow.rows.length === 1);
     assert('T12f: Sweeper guard preserves attached file on disk', fs.existsSync(attachedFile));
 
+    // Guard Case 4: Sweeper summary audit entry written
+    const purgeAudit = await appPool.query(
+      `SELECT action, details FROM audit_logs WHERE action = 'DOCUMENT_PURGED' ORDER BY created_at DESC LIMIT 1`
+    );
+    assert('T12g: Sweeper summary audit entry written with DOCUMENT_PURGED and purged_count >= 1',
+      purgeAudit.rows.length > 0 && purgeAudit.rows[0].details?.purged_count >= 1);
+
     // Clean up preserved fixtures from T12
     await adminPool.query(`DELETE FROM documents WHERE id IN ($1, $2)`, [unexpiredDocId, attachedDocId]);
     if (fs.existsSync(unexpiredFile)) fs.unlinkSync(unexpiredFile);
@@ -731,6 +1000,12 @@ async function runTests() {
   if (createdPartnerIds.length > 0) {
     await adminPool.query(`DELETE FROM partners WHERE id = ANY($1::uuid[])`, [createdPartnerIds]);
     console.log(`  Deleted ${createdPartnerIds.length} test partner(s)`);
+  }
+
+  // Delete created support requests
+  if (createdSupportReferences.length > 0) {
+    await adminPool.query(`DELETE FROM support_requests WHERE reference = ANY($1::text[])`, [createdSupportReferences]);
+    console.log(`  Deleted ${createdSupportReferences.length} test support request(s)`);
   }
 
   // Delete created users and their linked profiles
@@ -794,7 +1069,7 @@ async function runTests() {
      FROM users u
      LEFT JOIN merchants m ON m.user_id = u.id
      LEFT JOIN providers p ON p.user_id = u.id
-     WHERE u.email IN ('merchant01@ods.com', 'merchant@123.com', 'serviceprovider@123.com', 'carediagnostics@ods.com')
+     WHERE u.email IN ('merchant01@ods.com', 'merchant@123.com', 'serviceprovider@123.com')
      ORDER BY u.email`
   );
   console.log('\n  Dev account state after cleanup:');
@@ -803,6 +1078,7 @@ async function runTests() {
     assert(`Dev account ${row.email} preserved in approved status`,
       row.status === 'approved');
   }
+  assert('All 3 dev accounts preserved in approved status', devCheck.rows.length === 3);
 
   // ═══════════════════════════════════════════════════════════════════════════
   console.log('\n══════════════════════════════════════════════════════════════');

@@ -7,6 +7,7 @@
  */
 'use strict';
 
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -28,8 +29,12 @@ const router = express.Router();
 
 /* ── Rate Limiters ───────────────────────────────────────────── */
 const anonUploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
+  windowMs: process.env.RATE_LIMIT_ANON_WINDOW_MS
+    ? parseInt(process.env.RATE_LIMIT_ANON_WINDOW_MS, 10)
+    : 15 * 60 * 1000,
+  max: process.env.RATE_LIMIT_ANON_MAX
+    ? parseInt(process.env.RATE_LIMIT_ANON_MAX, 10)
+    : 10,
   message: { success: false, message: 'Too many upload attempts from this IP. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -189,7 +194,7 @@ function uploadMiddleware(req, res, next, isAuthMode) {
           if (priorStatus === 'approved' || priorStatus === 'rejected') {
             resetCompliance = true;
           }
-        } else if (authUser.role === 'admin') {
+        } else if (authUser.role === 'admin' || authUser.role === 'super_admin') {
           entityType = 'unattached';
         }
       }
