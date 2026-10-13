@@ -394,10 +394,18 @@ router.post('/login', async (req, res) => {
 
     const approval_status = await getApprovalStatus(user.role, user.id);
 
+    let effectiveRole = user.role;
+    if (user.role === 'admin') {
+      const adminRow = await pool.query('SELECT admin_level FROM admins WHERE user_id = $1', [user.id]);
+      if (adminRow.rows.length > 0 && adminRow.rows[0].admin_level === 'super_admin') {
+        effectiveRole = 'super_admin';
+      }
+    }
+
     const sessionPayload = {
       id:              user.id,
       email:           user.email,
-      role:            user.role,
+      role:            effectiveRole,
       full_name:       user.full_name,
       approval_status,
     };
@@ -432,7 +440,15 @@ router.get('/me', async (req, res) => {
     const user = result.rows[0];
     const approval_status = await getApprovalStatus(user.role, user.id);
 
-    return res.json({ success: true, user: { ...user, approval_status } });
+    let effectiveRole = user.role;
+    if (user.role === 'admin') {
+      const adminRow = await pool.query('SELECT admin_level FROM admins WHERE user_id = $1', [user.id]);
+      if (adminRow.rows.length > 0 && adminRow.rows[0].admin_level === 'super_admin') {
+        effectiveRole = 'super_admin';
+      }
+    }
+
+    return res.json({ success: true, user: { ...user, role: effectiveRole, approval_status } });
   } catch (err) {
     console.error('[me]', err.message);
     return res.status(500).json({ success: false, message: 'Could not retrieve profile.' });

@@ -316,7 +316,7 @@ router.get('/:id/view', requireAuth, async (req, res) => {
     const doc = docRes.rows[0];
 
     // Authorization & Cross-Tenant Check
-    const isAdmin = user.role === 'admin';
+    const isAdmin = user.role === 'admin' || user.role === 'super_admin';
     let isOwner = false;
 
     if (!isAdmin) {

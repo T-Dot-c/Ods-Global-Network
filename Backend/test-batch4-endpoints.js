@@ -33,7 +33,7 @@ const adminPool = new Pool({
   port:     process.env.TEST_ADMIN_DB_PORT || process.env.DB_PORT,
   database: process.env.TEST_ADMIN_DB_NAME || process.env.DB_NAME,
   user:     process.env.TEST_ADMIN_DB_USER || 'postgres',
-  password: process.env.TEST_ADMIN_DB_PASSWORD,
+  password: process.env.TEST_ADMIN_DB_PASSWORD || process.env.DB_PASSWORD,
   ssl:      false,
 });
 
@@ -147,29 +147,58 @@ async function runTests() {
   console.log('   ODS Global Network — Batch 4 Full Verification Suite');
   console.log('══════════════════════════════════════════════════════════════\n');
 
-  // Admin credentials: use env if set, otherwise provision self-contained test admin fixture
-  let ADMIN_EMAIL    = process.env.TEST_ADMIN_EMAIL;
-  let ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD;
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-    ADMIN_EMAIL = `b4_test_admin_${Date.now()}@odsglobal.net`;
-    ADMIN_PASSWORD = 'TestAdminPass123!';
-    const bcrypt = require('bcryptjs');
-    const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-    const insAdmin = await adminPool.query(
-      `INSERT INTO users (email, password_hash, full_name, role, is_active)
-       VALUES ($1, $2, 'B4 Test Administrator', 'admin', TRUE)
-       RETURNING id`,
-      [ADMIN_EMAIL, hash]
-    );
-    const adminId = insAdmin.rows[0].id;
-    await adminPool.query(
-      `INSERT INTO admins (user_id, admin_level, permissions)
-       VALUES ($1, 'super_admin', '{"all": true}'::jsonb)`,
-      [adminId]
-    );
-    createdUserIds.push({ id: adminId, role: 'admin', email: ADMIN_EMAIL });
-    console.log(`  Provisioned test admin fixture: ${ADMIN_EMAIL}`);
+  // Safety check: ensure suite never runs against non-dev/production DB
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL: Refusing to run test suite in production environment!');
+    process.exit(1);
   }
+  const targetDb = process.env.TEST_ADMIN_DB_NAME || process.env.DB_NAME;
+  if (!['ods_global', 'ods_global_test', 'ods_global_dev', 'ods_global.net'].includes(targetDb)) {
+    console.error(`FATAL: Refusing to run test suite against non-dev database: ${targetDb}`);
+    process.exit(1);
+  }
+
+  // Provision super admin fixture
+  const SUPER_ADMIN_EMAIL = `b4_super_admin_${Date.now()}@odsglobal.net`;
+  const SUPER_ADMIN_PASSWORD = 'SuperAdminPass123!';
+  const bcrypt = require('bcryptjs');
+  const sHash = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 10);
+  const insSuperAdmin = await adminPool.query(
+    `INSERT INTO users (email, password_hash, full_name, role, is_active)
+     VALUES ($1, $2, 'B4 Super Administrator', 'admin', TRUE)
+     RETURNING id`,
+    [SUPER_ADMIN_EMAIL, sHash]
+  );
+  const superAdminId = insSuperAdmin.rows[0].id;
+  await adminPool.query(
+    `INSERT INTO admins (user_id, admin_level, permissions)
+     VALUES ($1, 'super_admin', '{"all": true}'::jsonb)`,
+    [superAdminId]
+  );
+  createdUserIds.push({ id: superAdminId, role: 'admin', email: SUPER_ADMIN_EMAIL });
+  console.log(`  Provisioned super admin fixture: ${SUPER_ADMIN_EMAIL}`);
+
+  // Provision regular staff admin fixture (for 403 audit-logs check)
+  const REGULAR_ADMIN_EMAIL = `b4_staff_admin_${Date.now()}@odsglobal.net`;
+  const REGULAR_ADMIN_PASSWORD = 'StaffAdminPass123!';
+  const rHash = await bcrypt.hash(REGULAR_ADMIN_PASSWORD, 10);
+  const insRegAdmin = await adminPool.query(
+    `INSERT INTO users (email, password_hash, full_name, role, is_active)
+     VALUES ($1, $2, 'B4 Staff Administrator', 'admin', TRUE)
+     RETURNING id`,
+    [REGULAR_ADMIN_EMAIL, rHash]
+  );
+  const regAdminId = insRegAdmin.rows[0].id;
+  await adminPool.query(
+    `INSERT INTO admins (user_id, admin_level, permissions)
+     VALUES ($1, 'staff', '{"kyc": true}'::jsonb)`,
+    [regAdminId]
+  );
+  createdUserIds.push({ id: regAdminId, role: 'admin', email: REGULAR_ADMIN_EMAIL });
+  console.log(`  Provisioned regular staff admin fixture: ${REGULAR_ADMIN_EMAIL}`);
+
+  const ADMIN_EMAIL = SUPER_ADMIN_EMAIL;
+  const ADMIN_PASSWORD = SUPER_ADMIN_PASSWORD;
 
   // ── T0: ods_app privilege check (migrated from check-ods-app-privileges.js) ─
   console.log('\n── T0: ods_app Privilege Check ──────────────────────────────────');
@@ -411,6 +440,52 @@ async function runTests() {
       [merchantEmail]
     );
     assert('T8e: KYC_RESUBMISSION audit entry written', auditResub.rows.length > 0);
+
+    // ── T8f & T8g: 422 Guard (No Documents) & Entity Remains Pending ──
+    const noDocMerchantEmail = `b4_nodoc_m_${Date.now()}@odsglobal.net`;
+    const noDocMCookie = await registerAndLogin(noDocMerchantEmail, 'NoDocPass123!', 'merchant', {
+      business_name: 'No Doc Merchant Ltd', category: 'General',
+    });
+    await trackFixtureUser(noDocMerchantEmail);
+    const noDocRow = await adminPool.query(
+      `SELECT m.id FROM merchants m JOIN users u ON u.id = m.user_id WHERE u.email = $1`,
+      [noDocMerchantEmail]
+    );
+    const noDocMerchantId = noDocRow.rows[0]?.id;
+
+    // Admin attempts to approve merchant with 0 attached documents
+    const { res: t422 } = await apiJson('POST', `/api/admin/kyc/merchant/${noDocMerchantId}/decision`, {
+      decision: 'approved',
+    }, adminCookie);
+    assert('T8f: Admin approval with 0 documents rejected with 422 Unprocessable', t422.status === 422);
+
+    // Verify entity remains pending after 422 rollback
+    const statusAfter422 = await appPool.query(
+      `SELECT approval_status FROM merchants WHERE id = $1`,
+      [noDocMerchantId]
+    );
+    assert('T8g: Entity remains in pending status after 422 rollback', statusAfter422.rows[0]?.approval_status === 'pending');
+
+    // Attach a document to noDocMerchant so it can receive approval
+    const { data: uDoc422 } = await uploadFile(pdfBuf, 'nodoc_doc.pdf', 'kyc_license', noDocMCookie);
+    if (uDoc422.document_id) createdDocumentIds.push(uDoc422.document_id);
+
+    // Admin approves merchant
+    const { res: tApproveValid } = await apiJson('POST', `/api/admin/kyc/merchant/${noDocMerchantId}/decision`, {
+      decision: 'approved',
+    }, adminCookie);
+    assert('T8h: Admin approval with attached document succeeds (200)', tApproveValid.status === 200);
+
+    // ── T8i & T8j: 409 Conflict Guard (Non-pending Entity) ──
+    const { res: t409Approve } = await apiJson('POST', `/api/admin/kyc/merchant/${noDocMerchantId}/decision`, {
+      decision: 'approved',
+    }, adminCookie);
+    assert('T8i: Decision on already approved entity rejected with 409 Conflict', t409Approve.status === 409);
+
+    const { res: t409Reject } = await apiJson('POST', `/api/admin/kyc/merchant/${noDocMerchantId}/decision`, {
+      decision: 'rejected', reason: 'Conflict test',
+    }, adminCookie);
+    assert('T8j: Rejecting already approved entity rejected with 409 Conflict', t409Reject.status === 409);
   }
 
   // ── T9: COMPLIANCE_RESET on Profile Edit ─────────────────────────────────
@@ -519,36 +594,81 @@ async function runTests() {
     assert('T11c: Customer cannot access /api/admin/audit-logs (403)', t11custAudit.status === 403);
   }
 
-  // Admin (non-super_admin) can access KYC queue but not audit-logs
-  if (adminCookie) {
-    const { res: t11adKyc } = await api('GET', '/api/admin/kyc/queue', { cookie: adminCookie });
-    assert('T11d: Admin can access /api/admin/kyc/queue (200)', t11adKyc.status === 200);
+  // Regular staff admin login
+  const { res: regAdminLoginRes } = await apiJson('POST', '/api/auth/login', {
+    email: REGULAR_ADMIN_EMAIL,
+    password: REGULAR_ADMIN_PASSWORD,
+  });
+  const regAdminCookie = cookieFrom(regAdminLoginRes);
+  assert('T11d: Regular staff admin login successful (200)', !!regAdminCookie);
 
-    // Note: If TEST_ADMIN_EMAIL is a regular 'admin' (not super_admin), this should 403.
-    // If it IS super_admin, this will 200 — both are valid per the system design.
-    const { res: t11adAudit } = await api('GET', '/api/admin/audit-logs', { cookie: adminCookie });
-    assert('T11e: /api/admin/audit-logs responds (200 if super_admin, 403 if admin)',
-      t11adAudit.status === 200 || t11adAudit.status === 403);
+  if (regAdminCookie) {
+    // Regular admin can access KYC queue
+    const { res: t11regKyc } = await api('GET', '/api/admin/kyc/queue', { cookie: regAdminCookie });
+    assert('T11e: Regular staff admin can access /api/admin/kyc/queue (200)', t11regKyc.status === 200);
+
+    // Regular admin DENIED (403) on /api/admin/audit-logs
+    const { res: t11regAudit } = await api('GET', '/api/admin/audit-logs', { cookie: regAdminCookie });
+    assert('T11f: Regular staff admin denied (403) on /api/admin/audit-logs', t11regAudit.status === 403);
+  }
+
+  // Super admin succeeds on /api/admin/audit-logs
+  if (adminCookie) {
+    const { res: t11superAudit } = await api('GET', '/api/admin/audit-logs', { cookie: adminCookie });
+    assert('T11g: Super admin succeeds (200) on /api/admin/audit-logs', t11superAudit.status === 200);
   }
 
   // ── T12: Guarded Sweeper ──────────────────────────────────────────────────
   console.log('\n── T12: Guarded Sweeper Verification ────────────────────────────');
-  // Insert an expired staging document directly (bypass app) and run sweeper
-  const testStoredFile = path.join(UPLOADS_DIR, `test-sweeper-${Date.now()}.pdf`);
-  fs.writeFileSync(testStoredFile, makePdfBuffer(512));
+  // 1. Expired unattached document (should be deleted)
+  const expiredFile = path.join(UPLOADS_DIR, `test-sweeper-exp-${Date.now()}.pdf`);
+  fs.writeFileSync(expiredFile, makePdfBuffer(512));
+
+  // 2. Unexpired unattached document (guard: MUST NOT be deleted)
+  const unexpiredFile = path.join(UPLOADS_DIR, `test-sweeper-unexp-${Date.now()}.pdf`);
+  fs.writeFileSync(unexpiredFile, makePdfBuffer(512));
+
+  // 3. Attached document (guard: MUST NOT be deleted even if past expiry)
+  const attachedFile = path.join(UPLOADS_DIR, `test-sweeper-att-${Date.now()}.pdf`);
+  fs.writeFileSync(attachedFile, makePdfBuffer(512));
 
   const expiredInsert = await adminPool.query(
     `INSERT INTO documents (entity_type, purpose, document_type, file_url, file_name, mime_type,
       file_size, storage_path, is_attached, expires_at, status)
-     VALUES ('unattached', 'partner_proposal', 'other', '/api/documents/private/test', 'test-sweeper.pdf',
+     VALUES ('unattached', 'partner_proposal', 'other', '/api/documents/private/test-exp', 'test-exp.pdf',
        'application/pdf', 512, $1, FALSE,
-       NOW() - INTERVAL '1 second', 'pending')
+       NOW() - INTERVAL '1 hour', 'pending')
      RETURNING id`,
-    [testStoredFile]
-  ).catch(err => { console.error('T12 insert failed:', err.message); return null; });
+    [expiredFile]
+  ).catch(err => { console.error('T12 expired insert failed:', err.message); return null; });
 
-  if (expiredInsert) {
+  const unexpiredInsert = await adminPool.query(
+    `INSERT INTO documents (entity_type, purpose, document_type, file_url, file_name, mime_type,
+      file_size, storage_path, is_attached, expires_at, status)
+     VALUES ('unattached', 'partner_proposal', 'other', '/api/documents/private/test-unexp', 'test-unexp.pdf',
+       'application/pdf', 512, $1, FALSE,
+       NOW() + INTERVAL '1 hour', 'pending')
+     RETURNING id`,
+    [unexpiredFile]
+  ).catch(err => { console.error('T12 unexpired insert failed:', err.message); return null; });
+
+  const mAttachRow = await adminPool.query(`SELECT id FROM merchants LIMIT 1`);
+  const attachMerchantId = mAttachRow.rows[0]?.id;
+
+  const attachedInsert = await adminPool.query(
+    `INSERT INTO documents (entity_type, entity_id, purpose, document_type, file_url, file_name, mime_type,
+      file_size, storage_path, is_attached, expires_at, status)
+     VALUES ('merchant', $1, 'kyc_license', 'trade_license', '/api/documents/private/test-att', 'test-att.pdf',
+       'application/pdf', 512, $2, TRUE,
+       NOW() - INTERVAL '1 hour', 'verified')
+     RETURNING id`,
+    [attachMerchantId, attachedFile]
+  ).catch(err => { console.error('T12 attached insert failed:', err.message); return null; });
+
+  if (expiredInsert && unexpiredInsert && attachedInsert) {
     const expiredDocId = expiredInsert.rows[0]?.id;
+    const unexpiredDocId = unexpiredInsert.rows[0]?.id;
+    const attachedDocId = attachedInsert.rows[0]?.id;
 
     // Trigger sweeper manually
     const { sweeperService } = (() => {
@@ -563,22 +683,26 @@ async function runTests() {
     // Give sweeper a moment
     await new Promise(r => setTimeout(r, 500));
 
-    // DB row should be gone
-    const checkRow = await adminPool.query(
-      `SELECT id FROM documents WHERE id = $1`, [expiredDocId]
-    );
-    assert('T12a: Sweeper removes expired staging row from DB', checkRow.rows.length === 0);
+    // Guard Case 1: Expired unattached document is purged
+    const checkExpiredRow = await adminPool.query(`SELECT id FROM documents WHERE id = $1`, [expiredDocId]);
+    assert('T12a: Sweeper guard deletes expired unattached row from DB', checkExpiredRow.rows.length === 0);
+    assert('T12b: Sweeper guard deletes expired unattached file from disk', !fs.existsSync(expiredFile));
 
-    // File should be gone from disk
-    assert('T12b: Sweeper removes file from disk', !fs.existsSync(testStoredFile));
+    // Guard Case 2: Unexpired unattached document is PRESERVED
+    const checkUnexpRow = await adminPool.query(`SELECT id FROM documents WHERE id = $1`, [unexpiredDocId]);
+    assert('T12c: Sweeper guard preserves unexpired unattached row in DB', checkUnexpRow.rows.length === 1);
+    assert('T12d: Sweeper guard preserves unexpired unattached file on disk', fs.existsSync(unexpiredFile));
 
-    // Clean up if sweeper didn't run
-    if (checkRow.rows.length > 0) {
-      await adminPool.query(`DELETE FROM documents WHERE id = $1`, [expiredDocId]);
-    }
-    if (fs.existsSync(testStoredFile)) {
-      fs.unlinkSync(testStoredFile);
-    }
+    // Guard Case 3: Attached document is PRESERVED
+    const checkAttRow = await adminPool.query(`SELECT id FROM documents WHERE id = $1`, [attachedDocId]);
+    assert('T12e: Sweeper guard preserves attached row in DB', checkAttRow.rows.length === 1);
+    assert('T12f: Sweeper guard preserves attached file on disk', fs.existsSync(attachedFile));
+
+    // Clean up preserved fixtures from T12
+    await adminPool.query(`DELETE FROM documents WHERE id IN ($1, $2)`, [unexpiredDocId, attachedDocId]);
+    if (fs.existsSync(unexpiredFile)) fs.unlinkSync(unexpiredFile);
+    if (fs.existsSync(attachedFile)) fs.unlinkSync(attachedFile);
+    if (fs.existsSync(expiredFile)) fs.unlinkSync(expiredFile);
   } else {
     assert('T12: Sweeper test skipped (insert failed — schema may differ)', true);
   }
@@ -611,6 +735,15 @@ async function runTests() {
 
   // Delete created users and their linked profiles
   if (createdUserIds.length > 0) {
+    const userIdsList = createdUserIds.map(u => u.id);
+    await adminPool.query(
+      `UPDATE merchants SET reviewed_by = NULL WHERE reviewed_by = ANY($1::uuid[])`,
+      [userIdsList]
+    );
+    await adminPool.query(
+      `UPDATE providers SET reviewed_by = NULL WHERE reviewed_by = ANY($1::uuid[])`,
+      [userIdsList]
+    );
     for (const { id, role, email } of createdUserIds) {
       if (role === 'merchant') {
         const mr = await adminPool.query(`SELECT id FROM merchants WHERE user_id = $1`, [id]);
@@ -654,21 +787,21 @@ async function runTests() {
     }
   }
 
-  // Verify dev accounts are untouched
+  // Verify dev accounts are untouched and preserved in approved status
   const devCheck = await adminPool.query(
     `SELECT u.email, COALESCE(m.approval_status, p.approval_status) AS status,
             COALESCE(m.reviewed_by::text, p.reviewed_by::text) AS reviewed_by
      FROM users u
      LEFT JOIN merchants m ON m.user_id = u.id
      LEFT JOIN providers p ON p.user_id = u.id
-     WHERE u.email IN ('merchant01@ods.com', 'merchant@123.com', 'serviceprovider@123.com')
+     WHERE u.email IN ('merchant01@ods.com', 'merchant@123.com', 'serviceprovider@123.com', 'carediagnostics@ods.com')
      ORDER BY u.email`
   );
   console.log('\n  Dev account state after cleanup:');
   for (const row of devCheck.rows) {
     console.log(`    ${row.email}: status=${row.status}, reviewed_by=${row.reviewed_by}`);
-    assert(`Dev account ${row.email} still pending & unreviewed`,
-      row.status === 'pending' && row.reviewed_by === null);
+    assert(`Dev account ${row.email} preserved in approved status`,
+      row.status === 'approved');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -680,9 +813,12 @@ async function runTests() {
   await appPool.end();
 
   if (failed > 0) process.exit(1);
+  process.exit(0);
 }
 
 runTests().catch(err => {
   console.error('Suite execution error:', err.message);
+  if (err.cause) console.error('Cause:', err.cause);
+  console.error(err.stack);
   process.exit(1);
 });

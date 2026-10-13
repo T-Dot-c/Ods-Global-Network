@@ -1,11 +1,16 @@
 -- setup-limited-db-user.sql
 -- Run as superuser in staging/production/dev to provision a least-privilege DB role.
--- Usage: psql -U postgres -d "ods_global.net" -v app_password='YOUR_STRONG_PASSWORD' -f scripts/setup-limited-db-user.sql
+-- Usage: psql -U postgres -d "ods_global" -v app_password='YOUR_STRONG_PASSWORD' -f scripts/setup-limited-db-user.sql
 
 \if :{?app_password}
 \else
-    \echo 'FATAL: Variable app_password must be defined. Usage: psql -U postgres -d "ods_global.net" -v app_password="YOUR_PASSWORD" -f scripts/setup-limited-db-user.sql'
+    \echo 'FATAL: Variable app_password must be defined. Usage: psql -U postgres -d "ods_global" -v app_password="YOUR_PASSWORD" -f scripts/setup-limited-db-user.sql'
     \quit 1
+\endif
+
+\if :{?db_name}
+\else
+    \set db_name 'ods_global'
 \endif
 
 -- 1. Create limited application role if not exists and set supplied password
@@ -19,7 +24,7 @@ END $$;
 ALTER ROLE ods_app WITH PASSWORD :'app_password';
 
 -- 2. Grant connection and schema access
-GRANT CONNECT ON DATABASE "ods_global.net" TO ods_app;
+GRANT CONNECT ON DATABASE :"db_name" TO ods_app;
 GRANT USAGE ON SCHEMA public TO ods_app;
 
 -- 3. Grant table permissions (DML only, append-only for audit_logs)

@@ -200,7 +200,7 @@ router.post('/kyc/:entityType/:id/decision', requireRole('admin', 'super_admin')
     if (decision === 'approved') {
       await client.query(
         `UPDATE documents
-         SET status = 'verified', updated_at = NOW()
+         SET status = 'verified'
          WHERE entity_type = $1 AND entity_id = $2
            AND is_attached = TRUE AND status = 'pending'`,
         [entityType, entityId]
@@ -208,7 +208,7 @@ router.post('/kyc/:entityType/:id/decision', requireRole('admin', 'super_admin')
     } else {
       await client.query(
         `UPDATE documents
-         SET status = 'rejected', rejection_reason = $1, updated_at = NOW()
+         SET status = 'rejected', rejection_reason = $1
          WHERE entity_type = $2 AND entity_id = $3
            AND is_attached = TRUE AND status = 'pending'`,
         [String(reason).trim(), entityType, entityId]

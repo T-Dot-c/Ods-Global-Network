@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-10-08  
-> **CURRENT STAGE**: BATCH 3 Complete — Customer Portal & Security Baseline (Module 3 & Initial Module 10)  
+> **LAST UPDATED**: 2026-10-12  
+> **CURRENT STAGE**: BATCH 4 In Progress — Merchant & Provider Onboarding, Document Management, Admin Console  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -228,16 +228,51 @@
 - [x] **Admin & Database Operations Scripts**:
   - `Backend/scripts/create-admin.js`: CLI script for securely creating administrative users with role validation.
   - `Backend/scripts/setup-limited-db-user.sql`: Production SQL script to provision least-privilege `ods_app` database user.
+  - `Backend/scripts/apply-limited-user.js`: Node.js automation script to provision and verify `ods_app` role and grants.
+
+### BATCH 04: Merchant & Service Provider Onboarding, Shared Document Upload & Admin Console (Modules 4, 5, 8 & 10)
+
+- [x] **Database Migrations (014)**:
+  - `014_onboarding_and_shared_documents.sql`:
+    - Extended `documents` table with `purpose`, `is_attached`, `expires_at`, and check constraint `chk_document_attachment_state`.
+    - Added operating hours, facility capabilities, and reviewer fields (`reviewed_by`, `reviewed_at`, `rejection_reason`) to `merchants` and `providers`.
+    - Role-guarded `ods_app` grants applied across all tables (with `audit_logs` append-only).
+- [x] **Unified Document Upload Service (`Backend/src/services/uploadService.js`)**:
+  - Magic-byte file type sniffing (PDF `%PDF-`, PNG, JPEG) rejecting renamed or disguised executables/scripts.
+  - Multi-tier file size caps: 7 MB authenticated (with client message indicating 10 MB limit), 5 MB anonymous max cap.
+  - Private storage with randomized filenames (`crypto.randomBytes(24)`).
+  - Serving only via authorized endpoints (`/api/documents/:id/view`) with `X-Content-Type-Options: nosniff` and `Cache-Control: no-store` headers.
+  - Periodic and startup background sweeper cleaning abandoned unattached staging documents (capped at 100 MB).
+- [x] **Staging Token & Intake Attachment (`/api/partners`)**:
+  - Dedicated `STAGING_TOKEN_SECRET` with audience `ods:partner_staging` and 2-hour TTL.
+  - Single atomic attachment transaction linking anonymous staging uploads to partner submissions, with automatic rollback.
+- [x] **KYC State Machine & Profile Management (`Backend/src/routes/merchant.js` & `provider.js`)**:
+  - Dynamic profile management, facility metadata, and operating hours.
+  - Strict KYC state machine (`pending` -> `approved` / `rejected`).
+  - COMPLIANCE_RESET: Updating core profile fields or uploading a replacement KYC document on an approved entity resets status back to `pending`, clears reviewer credentials, and generates an audit log entry.
+- [x] **Thin Admin Console Endpoints (`Backend/src/routes/admin.js`)**:
+  - `GET /api/admin/kyc/queue`: Review queue of pending/approved/rejected merchant and provider entities.
+  - `POST /api/admin/kyc/decision`: Atomic KYC decision transaction with 409 conflict guard on non-pending entities and 422 guard requiring attached documents before approval.
+  - `GET /api/admin/intake/overview`: Unified inbox for support requests and partnership proposals.
+  - `GET /api/admin/audit-logs`: RBAC-protected audit log explorer restricted strictly to `super_admin`.
+- [x] **Frontend Portal Dashboards & Admin Console**:
+  - `AdminDashboard.tsx`: Added Verification Queue tab, Document Inspection modal, Intake Inbox, and Super Admin Audit Log viewer.
+  - `MerchantDashboard.tsx` & `ProviderDashboard.tsx`: Live compliance alert banner, document upload controls, business profile editing, and operational hours management.
+  - `PartnerWithUsPage.tsx`: Re-integrated anonymous document upload using the shared upload service and staging tokens.
+- [x] **Least-Privilege Database Execution (`ods_app`)**:
+  - Provisioned and verified `ods_app` least-privilege role (`Backend/scripts/apply-limited-user.js`).
+  - Runtime configured with `DB_USER=ods_app` with append-only access to `audit_logs` (UPDATE/DELETE denied) and DML-only permissions on application tables.
 
 ---
 
 ## 3. Verification & Compliance
 
-- **PostgreSQL Migrations**: 13 of 13 migrations applied to `ods_global.net` on PostgreSQL 18.
-- **Audit Logging**: Verified audit log insertion on customer registration, login, logout, profile update, and password changes.
+- **PostgreSQL Migrations**: 14 of 14 migrations applied to `ods_global` on PostgreSQL 18.6.
+- **Database Least-Privilege Execution**: Application runtime and dev tests verified running as `ods_app`.
+- **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, and document inspection.
+- **Full Automated Test Suite**: `node test-batch4-endpoints.js` passed 55 of 55 tests (0 failed), covering upload limits, magic bytes, staging tokens, KYC state transitions, IDOR cross-tenant isolation, admin RBAC, sweeper, and `ods_app` privileges.
 - **TypeScript Compiler**: `npx tsc --noEmit` exited with 0 errors.
-- **Production Bundle**: `npm run build` completed with exit code 0 (1,616 modules transformed in 2.78s).
-- **Backend Endpoints**: Syntax checked with `node -c` (exit code 0); endpoint verification test suite created in `test-batch3-endpoints.js`.
+- **Production Bundle**: `npm run build` completed with exit code 0.
 - **Folder Confinement**: 100% of code and documentation strictly confined within the 7 designated root directories (`./Frontend`, `./Backend`, `./System Directive`, `./Progress`, `./Assets`, `./Status`, `./resource`).
 - **Path Portability**: All code imports, links, and documentation paths are strictly relative to `Ods-Global-Network`.
 
@@ -245,27 +280,24 @@
 
 ## 4. Release Blockers & Security Notes
 
-1. **Database Superuser Connection (Open)**:
-   - The application currently connects as the PostgreSQL superuser.
-   - Script `Backend/scripts/setup-limited-db-user.sql` has been authored to create a dedicated `ods_app` user with limited grants. This must be executed and `.env` credentials updated prior to production deployment.
-2. **Admin UI Access (Open until Module 8)**:
-   - The default seeded admin was purged in migration 012. Admin users can now be created via `Backend/scripts/create-admin.js`.
-   - Admin login is functional via `/login`, but the full Admin management portal is scheduled for Batch 8 (Module 8).
-3. **Password Change Session Invalidation (Logged Enhancement)**:
+1. **Database Superuser Connection (Resolved in Dev)**:
+   - Development runtime is now active and verified on least-privilege `ods_app` role. Production rollout is scheduled for Batch 12.
+2. **KYC Review & Approver Workflow (Resolved)**:
+   - Full reviewer tracking (`reviewed_by`, `reviewed_at`), state machine enforcement, and document inspection modal are functional in the Admin Console.
+3. **Intake Visibility (Resolved)**:
+   - `/api/admin/intake/overview` and the Admin Dashboard now provide direct administrative visibility into `/support` and `/partner-with-us` submissions.
+4. **Password Change Session Invalidation (Logged Enhancement)**:
    - Old `ods_session` JWT cookies remain valid until expiration (24 hours / 1 day) after a password change because token revocation/versioning is not yet implemented.
-4. **Rate Limiting on Password Endpoint (Logged Enhancement)**:
+5. **Rate Limiting on Password Endpoint (Logged Enhancement)**:
    - `/api/customer/change-password` is covered by the general customer router rate limit (30 req / 15 min), but does not yet have a dedicated stricter brute-force limit.
-5. **Intake Visibility (Open until Batch 8 & 9)**:
-   - Support requests and partnership inquiries remain visible only via direct database queries until the Admin Dashboard (Batch 8) and Notification Engine (Batch 9) are built.
 
 ---
 
 ## 5. Immediate Next Steps
 
-1. **Batch 4: Merchant & Service Provider Onboarding (Module 4 & 5)**:
-   - KYC document upload endpoint with file type and size restrictions.
-   - Merchant and Service Provider profile management and operating hours.
-2. **Batch 6: Service Catalog & Offerings (Module 6)**:
+1. **Batch 6: Service Catalog & Offerings (Module 6)**:
    - Service listing, category tagging, and pricing configuration.
-3. **Batch 7: Appointment Booking Engine (Module 7)**:
+2. **Batch 7: Appointment Booking Engine (Module 7)**:
    - Availability slot generation, booking creation, and collision prevention.
+3. **Batch 8: Advanced Admin & Operations Management (Module 8)**:
+   - System configurations, platform analytics, and operational metrics.
