@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
 > **LAST UPDATED**: 2026-10-19  
-> **CURRENT STAGE**: BATCH 6 COMPLETED & CLOSED — Payments Engine, Chapa Sandbox Integration, HMAC Webhooks, Idempotent Processing & Customer Receipts (Automated verification: PASSED, Human Sign-Off: "Approved: proceed" received)  
+> **CURRENT STAGE**: BATCH 7 COMPLETED & VERIFIED — Gifting & Vouchers Engine, Digital Customer Wallet, VIP/Emerald Gift Cards, Occasion Presets, In-Clinic Provider Delivery, and Atomic Double-Spend Redemption Engine (17/17 tests passing, 197/197 total suite passing)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -376,25 +376,23 @@
 
 ## 5. Immediate Next Steps
 
-1. **Batch 6 Closed**:
-   - Migration 016 applied cleanly with least-privilege `ods_app` grants (`DELETE` denied).
-   - Automated test suite passing 16/16 (`test-batch6-endpoints.js`).
-   - All past regression test suites intact (Batch 5: 51/51, Batch 3: 17/17, Batch 4: 96/96).
-   - TypeScript compiler passing with 0 errors; Vite production build passing with exit code 0.
-   - User sign-off received: `"Approved: proceed"`.
-2. **Batch 7: Gifting and Vouchers**:
-   - Digital gift cards, custom vouchers, and balance management.
-   - Gift card purchase, generation, and transfer.
-   - Voucher balance tracking and redemption engine.
-4. **Batch 8: Service Catalog and Directory**:
-   - Service listing, category tagging, and pricing configuration.
-5. **Batch 9: Appointment Booking Engine**:
+1. **Batch 7 Completed & Verified**:
+   - Migration 017 (`017_create_gifting_and_wallets_tables.sql`) applied cleanly with rollback (`rollback_017.sql`).
+   - Least-privilege `ods_app` enforcement verified: `SELECT`, `INSERT`, `UPDATE` granted; `DELETE` strictly denied with SQL state `42501` on `gift_cards`, `gift_card_redemptions`, and `customer_wallets`.
+   - Gifting service (`giftCardService.js`) and endpoints (`POST /purchase`, `POST /redeem`, `POST /check`, `POST /confirm-delivery`, `GET /wallet`, `GET /my-cards`) implemented.
+   - Atomic double-spend prevention verified via `SELECT ... FOR UPDATE` row locks; 5 concurrent parallel claims resulted in exactly 1 success and 4 rejected with 400.
+   - Cultural occasion presets (Birthday, Wedding, Graduation, Enkutatash, Genna, Fasika, Eid, Health Blessing, Thank You) and VIP Luxury vs. Classic Emerald cards integrated.
+   - Frontend Customer Portal "Gift Cards & Wallet" tab implemented (`CustomerGiftingTab.tsx`), integrated with QR code generator, live wallet balance, send/redeem modals, and printable cards.
+   - Automated verification: 17/17 tests passing (`test-batch7-endpoints.js`); 197/197 total repository regression tests passing.
+2. **Batch 8: Service Catalog and Directory (Next)**:
+   - Service listing, category tagging, provider association, and pricing configuration.
+3. **Batch 9: Appointment Booking Engine**:
    - Availability slot generation, booking creation, and collision prevention.
-6. **Batch 10: Full Admin Console**:
+4. **Batch 10: Full Admin Console**:
    - Comprehensive platform analytics, management tools, and operational controls.
-7. **Batch 11: Notification Engine**:
+5. **Batch 11: Notification Engine**:
    - Multi-channel notification delivery (Email, SMS, Push).
-8. **Batch 12: Production Hardening and Go-Live Gate**:
+6. **Batch 12: Production Hardening and Go-Live Gate**:
    - ClamAV integration, Redis rate limiter, production `ods_app` DB migration, and final go-live gate audit.
 
 

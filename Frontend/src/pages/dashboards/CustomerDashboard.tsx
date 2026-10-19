@@ -15,6 +15,7 @@ import { DashboardLayout, SidebarItem, StatCardItem, QuickActionItem } from './D
 import { CustomerProfileTab } from './customer/CustomerProfileTab';
 import { CustomerSecurityTab } from './customer/CustomerSecurityTab';
 import { CustomerTransactionsTab } from './customer/CustomerTransactionsTab';
+import { CustomerGiftingTab } from './customer/CustomerGiftingTab';
 
 interface CustomerDashboardProps {
   onNavigate: (view: string) => void;
@@ -29,13 +30,13 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ onNavigate
     { id: 'security', label: 'Security', icon: <Shield size={17} /> },
     { id: 'transactions', label: 'Transactions', icon: <CreditCard size={17} /> },
     { id: 'appointments', label: 'Appointments', icon: <Calendar size={17} /> },
-    { id: 'giftcards', label: 'Gift Cards', icon: <Gift size={17} /> },
+    { id: 'giftcards', label: 'Gift Cards & Wallet', icon: <Gift size={17} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={17} /> },
   ];
 
   const statCards: StatCardItem[] = [
     { label: 'Appointments', value: 'Not available yet', subtext: 'Medical & diagnostic consultations', icon: <Calendar size={22} /> },
-    { label: 'Gift Vouchers', value: 'Not available yet', subtext: 'Digital wellness balance', icon: <Gift size={22} /> },
+    { label: 'Gift Cards & Wallet', value: 'Active', subtext: 'Digital balance & wellness vouchers', icon: <Gift size={22} /> },
     { label: 'Account Status', value: 'Active', subtext: 'Verified Customer Account', icon: <Shield size={22} /> },
   ];
 
@@ -44,6 +45,11 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ onNavigate
       label: 'Explore Services',
       icon: <Search size={16} color="var(--color-gold-bright)" />,
       onClick: () => onNavigate('home'),
+    },
+    {
+      label: 'Gift Cards & Wallet',
+      icon: <Gift size={16} color="var(--color-gold-bright)" />,
+      onClick: () => setActiveTab('giftcards'),
     },
     {
       label: 'Edit Profile',
@@ -148,58 +154,8 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ onNavigate
       )}
 
       {activeTab === 'giftcards' && (
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '16px',
-            padding: '48px 32px',
-            textAlign: 'center',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '16px',
-          }}
-        >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '16px',
-              backgroundColor: 'rgba(190, 155, 73, 0.12)',
-              border: '1px solid rgba(190, 155, 73, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Gift size={32} color="var(--color-gold-deep)" />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-navy-dark)', margin: '0 0 6px' }}>
-              Gift Cards Not Available Yet
-            </h3>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '480px', margin: '0 auto', lineHeight: 1.6 }}>
-              Digital wellness voucher purchases, balance tracking, and gifting redemptions are not available yet.
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('home')}
-            style={{
-              marginTop: '8px',
-              padding: '10px 24px',
-              borderRadius: '8px',
-              border: '1px solid var(--color-gold-deep)',
-              backgroundColor: 'transparent',
-              color: 'var(--color-gold-deep)',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            View Gifting Options
-          </button>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px 32px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)' }}>
+          <CustomerGiftingTab />
         </div>
       )}
 

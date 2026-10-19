@@ -167,6 +167,16 @@ app.use('/api/admin', adminRoutes);
 const paymentRoutes = require('./routes/payments');
 app.use('/api/payments', paymentRoutes);
 
+/* ── Gifting & Vouchers routes (Batch 7) ──────────────────── */
+const giftingRoutes = require('./routes/gifting');
+app.use('/api/gifting', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many gifting requests — please slow down.' },
+}), giftingRoutes);
+
 /* ── Start unattached document sweeper ────────────────────── */
 const { startSweeper } = require('./services/sweeperService');
 startSweeper();
