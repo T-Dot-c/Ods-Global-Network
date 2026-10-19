@@ -115,9 +115,10 @@ router.post('/initialize', requireAuth, requireVerifiedEmail, initLimiter, async
       transaction,
     });
   } catch (err) {
-    return res.status(500).json({
+    console.error('[Payment init failure]:', err.message);
+    return res.status(err.providerStatus || 500).json({
       success: false,
-      message: 'Failed to initiate payment session. Please try again.',
+      message: err.message || 'Failed to initiate payment session. Please try again.',
     });
   } finally {
     client.release();
