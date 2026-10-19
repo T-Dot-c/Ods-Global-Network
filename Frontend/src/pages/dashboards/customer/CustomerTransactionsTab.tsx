@@ -62,6 +62,9 @@ export const CustomerTransactionsTab: React.FC = () => {
     setPayLoading(false);
 
     if (res.success && res.checkout_url) {
+      if (res.tx_ref) {
+        sessionStorage.setItem('ods_last_payment_tx_ref', res.tx_ref);
+      }
       // Redirect to Chapa checkout / simulator
       window.location.href = res.checkout_url;
     } else {

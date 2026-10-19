@@ -15,7 +15,15 @@ export const PaymentSuccessPage: React.FC<PaymentSuccessPageProps> = ({ onNaviga
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const txRef = params.get('tx_ref') || params.get('txRef');
+    const txRef = params.get('tx_ref') ||
+      params.get('txRef') ||
+      params.get('trx_ref') ||
+      params.get('reference') ||
+      sessionStorage.getItem('ods_last_payment_tx_ref');
+
+    if (sessionStorage.getItem('ods_last_payment_tx_ref')) {
+      sessionStorage.removeItem('ods_last_payment_tx_ref');
+    }
 
     if (!txRef) {
       setLoading(false);

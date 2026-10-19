@@ -84,7 +84,7 @@ router.post('/initialize', requireAuth, requireVerifiedEmail, initLimiter, async
     const transaction = insertRes.rows[0];
 
     const callbackUrl = `${BACKEND_BASE_URL}/api/payments/webhook/chapa`;
-    const returnUrl = `${FRONTEND_ORIGIN}/payment/success`;
+    const returnUrl = `${FRONTEND_ORIGIN}/payment/success?tx_ref=${encodeURIComponent(txRef)}`;
 
     // Initialize with Chapa / Simulator
     const nameParts = (req.user.full_name || 'ODS Customer').trim().split(' ');
