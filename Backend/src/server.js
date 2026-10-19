@@ -92,11 +92,16 @@ app.use(cors({
   },
   credentials: true,               // required for HttpOnly cookie round-trips
   methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-chapa-signature', 'chapa-signature'],
 }));
 
 /* ── Body parsing + cookies ───────────────────────────────── */
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({
+  limit: '2mb',
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
@@ -157,6 +162,10 @@ app.use('/api/provider', providerRoutes);
 /* ── Admin routes (Batch 4) ───────────────────────────────── */
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
+
+/* ── Payment routes (Batch 6) ─────────────────────────────── */
+const paymentRoutes = require('./routes/payments');
+app.use('/api/payments', paymentRoutes);
 
 /* ── Start unattached document sweeper ────────────────────── */
 const { startSweeper } = require('./services/sweeperService');

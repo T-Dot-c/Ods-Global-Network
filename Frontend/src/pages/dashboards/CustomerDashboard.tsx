@@ -9,22 +9,25 @@ import {
   Search,
   HelpCircle,
   Key,
+  CreditCard,
 } from 'lucide-react';
 import { DashboardLayout, SidebarItem, StatCardItem, QuickActionItem } from './DashboardLayout';
 import { CustomerProfileTab } from './customer/CustomerProfileTab';
 import { CustomerSecurityTab } from './customer/CustomerSecurityTab';
+import { CustomerTransactionsTab } from './customer/CustomerTransactionsTab';
 
 interface CustomerDashboardProps {
   onNavigate: (view: string) => void;
 }
 
 export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'security' | 'appointments' | 'giftcards' | 'notifications'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'security' | 'transactions' | 'appointments' | 'giftcards' | 'notifications'>('overview');
 
   const sidebarItems: SidebarItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={17} /> },
     { id: 'profile', label: 'My Profile', icon: <User size={17} /> },
     { id: 'security', label: 'Security', icon: <Shield size={17} /> },
+    { id: 'transactions', label: 'Transactions', icon: <CreditCard size={17} /> },
     { id: 'appointments', label: 'Appointments', icon: <Calendar size={17} /> },
     { id: 'giftcards', label: 'Gift Cards', icon: <Gift size={17} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={17} /> },
@@ -79,6 +82,12 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ onNavigate
       {activeTab === 'security' && (
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px 32px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)' }}>
           <CustomerSecurityTab />
+        </div>
+      )}
+
+      {activeTab === 'transactions' && (
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px 32px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)' }}>
+          <CustomerTransactionsTab />
         </div>
       )}
 

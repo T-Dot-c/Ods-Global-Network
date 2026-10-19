@@ -174,6 +174,56 @@ async function sendDuplicateRegistrationAlert({ to, email }) {
   return dispatchMail({ to: recipient, subject, html, text });
 }
 
+/**
+ * Dispatches an itemized payment receipt confirmation email.
+ */
+async function sendPaymentReceiptEmail({ to, email, fullName, txRef, amount, currency = 'ETB', purpose = 'Payment', date = new Date() }) {
+  const recipient = to || email;
+  const subject = `Payment Receipt - ${txRef}`;
+  const formattedDate = new Date(date).toUTCString();
+  const text = `ODS Global Network — Payment Receipt\n\nDear ${fullName || 'Valued Customer'},\n\nYour payment has been successfully processed.\n\nTransaction Reference: ${txRef}\nAmount: ${amount} ${currency}\nPurpose: ${purpose}\nDate: ${formattedDate}\n\nThank you for choosing ODS Global Network.`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px;">
+      <div style="background-color: #0F285B; padding: 16px; border-radius: 6px; text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 0.5px;">ODS Global Network</h1>
+        <p style="color: #BE9B49; margin: 4px 0 0 0; font-size: 13px;">Official Payment Receipt</p>
+      </div>
+      <p style="color: #334155; font-size: 15px;">Dear <strong>${fullName || 'Valued Customer'}</strong>,</p>
+      <p style="color: #334155; font-size: 14px;">Your payment has been successfully received and verified. Below are your transaction details:</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 8px 0; color: #64748b;">Transaction Ref:</td>
+          <td style="padding: 8px 0; text-align: right; font-family: monospace; font-weight: bold; color: #0F285B;">${txRef}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 8px 0; color: #64748b;">Amount Paid:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #047857; font-size: 16px;">${amount} ${currency}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 8px 0; color: #64748b;">Purpose:</td>
+          <td style="padding: 8px 0; text-align: right; color: #334155;">${purpose}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 8px 0; color: #64748b;">Date & Time:</td>
+          <td style="padding: 8px 0; text-align: right; color: #334155;">${formattedDate}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b;">Status:</td>
+          <td style="padding: 8px 0; text-align: right; color: #047857; font-weight: bold;">Completed</td>
+        </tr>
+      </table>
+
+      <p style="color: #64748b; font-size: 13px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+        You can review your full transaction history anytime in your Customer Portal.<br />
+        If you have any questions, please contact our support team.
+      </p>
+    </div>
+  `;
+
+  return dispatchMail({ to: recipient, subject, html, text });
+}
+
 module.exports = {
   createTransporter,
   sendVerificationEmail,
@@ -181,6 +231,7 @@ module.exports = {
   sendPasswordChangedAlert,
   sendPasswordChangedNotice: sendPasswordChangedAlert,
   sendDuplicateRegistrationAlert,
+  sendPaymentReceiptEmail,
   // Exported for testing / internal helpers
   dispatchMail,
   sanitizeHeader,

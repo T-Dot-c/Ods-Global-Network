@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
 > **LAST UPDATED**: 2026-10-19  
-> **CURRENT STAGE**: BATCH 5 COMPLETED & CLOSED — Email Foundation, Account Recovery, Session Invalidation & Registration Verification (Automated verification: PASSED, Human UI verification: PASSED, Human Sign-Off: "Approved: proceed" received)  
+> **CURRENT STAGE**: BATCH 6 COMPLETED & CLOSED — Payments Engine, Chapa Sandbox Integration, HMAC Webhooks, Idempotent Processing & Customer Receipts (Automated verification: PASSED, Human Sign-Off: "Approved: proceed" received)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -303,19 +303,47 @@
   - `DashboardShell.tsx`: unverified email warning banner with 120s cooldown resend button.
 - [x] **Human UI Verification**: COMPLETED (Manual browser verification of forgot password, reset password with fragment token, verify email flow, and dashboard unverified banner passed).
 
+### TASK 06: Payments Engine, Chapa Sandbox Integration, HMAC Webhooks, Idempotency & Receipts (Batch 6)
+
+- [x] **Database Migration 016 (`016_create_transactions_table.sql`)**:
+  - Created `transactions` table with multi-currency (`currency VARCHAR(3) DEFAULT 'ETB'`), status constraints (`pending`, `completed`, `failed`, `cancelled`), gateway reference (`chapa_reference`), payment method, purpose, and metadata JSONB.
+  - Performance indexes added: `idx_transactions_user_id`, `idx_transactions_tx_ref`, and partial index `idx_transactions_status_pending`.
+  - Least-privilege `ods_app` grants applied: `SELECT`, `INSERT`, `UPDATE` allowed; `DELETE` strictly denied.
+- [x] **Chapa Payment Client & Offline Mock Simulator (`Backend/src/services/chapaService.js`)**:
+  - Live test mode client communicating with Chapa Test API using Bearer test secret keys (`CHASECK_TEST-...`).
+  - Built-in instant mock simulator mode (`CHAPA_SIMULATOR_MODE=true` / test environment) allowing 100% offline, integration-free, and deterministic test execution with zero external network flakiness.
+  - Zero-secret-leak logging: sensitive API credentials and bearer tokens are strictly sanitized from output.
+- [x] **Cryptographic HMAC Webhook & Idempotent Processing (`Backend/src/routes/payments.js` & `server.js`)**:
+  - Express raw body capture configured via `express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } })` in `server.js`.
+  - `POST /api/payments/webhook/chapa`: Cryptographic HMAC-SHA256 signature verification comparing `x-chapa-signature` against calculated hex digest using `crypto.timingSafeEqual`. Fast 200 acknowledgment with 401 rejection for missing or tampered signatures.
+  - Atomic status guard (`UPDATE transactions SET status = $1, chapa_reference = $2, completed_at = NOW() WHERE tx_ref = $3 AND status = 'pending' RETURNING *;`) guaranteeing zero double-processing on webhook retries or replay attacks.
+- [x] **Payment Endpoints & Sensitive Route Protection**:
+  - `POST /api/payments/initialize`: Gated by `requireAuth` and `requireVerifiedEmail`, rate-limited (30 req/hr), validating positive amount and inserting `pending` transaction.
+  - `GET /api/payments/verify/:txRef`: Verifies transaction status with cross-tenant IDOR defense (non-owner customer denied with 403).
+  - `GET /api/payments/receipt/:txRef`: Itemized printable receipt payload with IDOR defense.
+  - `GET /api/payments/history`: User transaction history ledger.
+- [x] **Transactional Payment Receipts (`Backend/src/services/emailService.js`)**:
+  - Branded responsive luxury HTML receipt email template (`#0F285B` Deep Navy, `#BE9B49` Gold) dispatched non-blocking via `setImmediate()`.
+- [x] **Frontend Payment Experience & Customer Dashboard**:
+  - Frontend API client `Frontend/src/services/paymentService.ts`.
+  - Luxury receipt verification page `Frontend/src/pages/PaymentSuccessPage.tsx` with print/download actions and return to dashboard.
+  - "Transactions & Receipts" tab in `Frontend/src/pages/dashboards/CustomerDashboard.tsx` with test payment trigger modal, searchable history table, and printable receipt modal.
+  - Mounted `/payment/success` and `/payment/verify` routes in `Frontend/src/App.tsx`.
+
 ---
 
 ## 3. Verification & Compliance
 
-- **PostgreSQL Migrations**: 15 of 15 migrations applied to `ods_global.net` on PostgreSQL 18.6.
+- **PostgreSQL Migrations**: 16 of 16 migrations applied to `ods_global.net` on PostgreSQL 18.6.
 - **Database Least-Privilege Execution**: Application runtime and dev tests verified running as `ods_app`.
-- **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, and document inspection.
+- **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, document inspection, and payment completions.
 - **Full Automated Test Suite**:
+  - `test-batch6-endpoints.js`: 16 Passed / 0 Failed (schema, grants, init, HMAC, idempotency, IDOR, receipts).
   - `test-batch5-endpoints.js`: 51 Passed / 0 Failed across dual-child test harness.
   - `test-batch3-endpoints.js`: 17 Passed / 0 Failed.
   - `test-batch4-endpoints.js`: 96 Passed / 0 Failed (dev accounts preserved in approved status).
 - **TypeScript Compiler**: `npx tsc --noEmit` exited with 0 errors.
-- **Production Bundle**: `npm run build` completed with exit code 0 (1627 modules transformed, dist generated in 5.03s).
+- **Production Bundle**: `npm run build` completed with exit code 0 (dist generated in 5.49s).
 - **Folder Confinement**: 100% of code and documentation strictly confined within the 7 designated root directories (`./Frontend`, `./Backend`, `./System Directive`, `./Progress`, `./Assets`, `./Status`, `./resource`).
 - **Path Portability**: All code imports, links, and documentation paths are strictly relative to `Ods-Global-Network`.
 
@@ -348,18 +376,16 @@
 
 ## 5. Immediate Next Steps
 
-1. **Batch 5 Closed**:
-   - Migration 015 applied cleanly with least-privilege `ods_app` grants.
-   - Dual-child automated test harness passing 51/51 (`test-batch5-endpoints.js`).
-   - Batch 3 (17/17) and Batch 4 (96/96) regression suites intact.
-   - Reviewer-mandated fixes verified and signed off with `"Approved: proceed"`.
-2. **Batch 6: Payments**:
-   - Chapa test mode integration.
-   - Cryptographic HMAC webhook verification.
-   - Idempotent transaction processing.
-   - Transaction records and receipt generation.
-3. **Batch 7: Gifting and Vouchers**:
+1. **Batch 6 Closed**:
+   - Migration 016 applied cleanly with least-privilege `ods_app` grants (`DELETE` denied).
+   - Automated test suite passing 16/16 (`test-batch6-endpoints.js`).
+   - All past regression test suites intact (Batch 5: 51/51, Batch 3: 17/17, Batch 4: 96/96).
+   - TypeScript compiler passing with 0 errors; Vite production build passing with exit code 0.
+   - User sign-off received: `"Approved: proceed"`.
+2. **Batch 7: Gifting and Vouchers**:
    - Digital gift cards, custom vouchers, and balance management.
+   - Gift card purchase, generation, and transfer.
+   - Voucher balance tracking and redemption engine.
 4. **Batch 8: Service Catalog and Directory**:
    - Service listing, category tagging, and pricing configuration.
 5. **Batch 9: Appointment Booking Engine**:

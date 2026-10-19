@@ -16,6 +16,7 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { CompanyPage } from './pages/CompanyPage';
 import { SupportPage } from './pages/SupportPage';
 import { PartnerWithUsPage } from './pages/PartnerWithUsPage';
+import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
 
 /* ── View type ────────────────────────────────────────────── */
@@ -34,7 +35,8 @@ export type View =
   | 'verify-email'
   | 'company'
   | 'support'
-  | 'partner-with-us';
+  | 'partner-with-us'
+  | 'payment/success';
 
 const DASHBOARD_VIEWS: View[] = [
   'dashboard',
@@ -65,6 +67,7 @@ function normalizeRoute(path: string): View {
   if (clean === 'company') return 'company';
   if (clean === 'support') return 'support';
   if (clean === 'partner-with-us') return 'partner-with-us';
+  if (clean === 'payment/success' || clean === 'payment-success' || clean === 'payment/verify') return 'payment/success';
 
   if (clean === 'dashboard' || clean === 'dashboard/customer') return 'dashboard';
   if (clean === 'merchant/dashboard' || clean === 'dashboard/merchant') return 'merchant/dashboard';
@@ -220,6 +223,9 @@ const AppInner: React.FC = () => {
         )}
         {currentView === 'verify-email' && (
           <VerifyEmailPage onNavigate={handleNavigate} />
+        )}
+        {currentView === 'payment/success' && (
+          <PaymentSuccessPage onNavigate={handleNavigate} />
         )}
 
         {/* ── Role-protected dashboards ─────────────────── */}
