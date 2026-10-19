@@ -14,7 +14,7 @@ const crypto = require('crypto');
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const pool = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, isVerifiedOrExempt } = require('../middleware/auth');
 const { logAuditEvent } = require('../services/auditService');
 const {
   authUpload,
@@ -41,15 +41,14 @@ const anonUploadLimiter = rateLimit({
 });
 
 /* ── Helper: Optional Auth Extractor for Upload ──────────────── */
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET;
+const { resolveSession } = require('../services/sessionService');
 
-function extractOptionalAuth(req) {
+async function extractOptionalAuth(req) {
   const token = req.cookies?.ods_session || (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
   if (!token) return null;
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    return payload;
+    const user = await resolveSession(token);
+    return user;
   } catch (err) {
     return null;
   }
@@ -59,15 +58,26 @@ function extractOptionalAuth(req) {
    POST /api/documents/upload
    Unified upload handler for Authenticated & Anonymous modes
    ───────────────────────────────────────────────────────────── */
-router.post('/upload', (req, res, next) => {
+router.post('/upload', async (req, res, next) => {
   // If not authenticated, apply strict rate limiting
-  const user = extractOptionalAuth(req);
+  const user = await extractOptionalAuth(req);
   const isAuthenticated = !!user;
+  req.resolvedUser = user;
   if (!isAuthenticated) {
     return anonUploadLimiter(req, res, () => {
       uploadMiddleware(req, res, next, false);
     });
   }
+
+  // Gating per Batch 5 spec: require verified email on authenticated KYC upload
+  if (!isVerifiedOrExempt(user)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Email verification required to upload KYC documents.',
+      code: 'EMAIL_VERIFICATION_REQUIRED',
+    });
+  }
+
   return uploadMiddleware(req, res, next, true);
 });
 
@@ -89,7 +99,7 @@ function uploadMiddleware(req, res, next, isAuthMode) {
       return res.status(400).json({ success: false, message: 'No file uploaded. Expected field name: "file".' });
     }
 
-    const authUser = extractOptionalAuth(req);
+    const authUser = req.resolvedUser;
     const isAuthenticated = !!authUser;
     const purpose = req.body.purpose ? String(req.body.purpose).trim().toLowerCase() : '';
 

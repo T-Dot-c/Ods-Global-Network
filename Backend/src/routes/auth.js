@@ -20,8 +20,17 @@ const router     = require('express').Router();
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const crypto     = require('crypto');
+const rateLimit  = require('express-rate-limit');
 const pool       = require('../db');
 const { logAuditEvent } = require('../services/auditService');
+const { requireAuth } = require('../middleware/auth');
+const { revokeUserSessions } = require('../services/sessionService');
+const {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+  sendDuplicateRegistrationAlert,
+  sendPasswordChangedNotice,
+} = require('../services/emailService');
 
 const JWT_SECRET      = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -32,6 +41,60 @@ const COOKIE_MAX_AGE  = parseInt(process.env.COOKIE_MAX_AGE_MS || '86400000', 10
 const COOKIE_SECURE   = process.env.COOKIE_SECURE === 'true';
 const MAX_FAILURES    = 5;
 const LOCKOUT_MINUTES = 15;
+
+/* ── Batch 5 Rate Limiters ───────────────────────────────────── */
+// Forgot-password IP limiter (default: 5 / 15m in strict, 1000 in generous)
+const forgotPasswordIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_FORGOT_IP_MAX || '1000', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many recovery requests from this IP. Please try again later.' },
+});
+
+// Reset-password IP limiter (default: 5 / 15m in strict, 1000 in generous)
+const resetPasswordIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_RESET_IP_MAX || '1000', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many reset attempts from this IP. Please try again later.' },
+});
+
+// Register IP limiter (default: 5 / 1h in strict, 1000 in generous)
+const registerIpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_REGISTER_IP_MAX || '1000', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many registrations from this IP. Please try again later.' },
+});
+
+// Resend verification IP limiter (default: 5 / 15m in strict, 1000 in generous)
+const resendVerificationIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_RESEND_IP_MAX || '1000', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many verification resend requests from this IP. Please try again later.' },
+});
+
+// In-memory sliding window store for per-email silent skips
+// Limitation noted per Step 0(g): In-memory store is ephemeral and per-process.
+// Multiple worker nodes would each maintain independent counters, which is standard for secondary abuse mitigations.
+const emailRateLimitStore = new Map(); // key -> timestamps[]
+
+function isEmailLimitExceeded(key, maxRequests, windowMs) {
+  const now = Date.now();
+  const timestamps = (emailRateLimitStore.get(key) || []).filter(t => now - t < windowMs);
+  if (timestamps.length >= maxRequests) {
+    emailRateLimitStore.set(key, timestamps);
+    return true; // Exceeded
+  }
+  timestamps.push(now);
+  emailRateLimitStore.set(key, timestamps);
+  return false;
+}
 
 /* ── RFC 5322 Compliant Email Validation Regex ────────────── */
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -118,7 +181,7 @@ function mapProviderType(type) {
   return 'clinic';
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerIpLimiter, async (req, res) => {
   const {
     email, password, full_name, phone, role,
     preferred_language, notification_preference,
@@ -147,11 +210,36 @@ router.post('/register', async (req, res) => {
   if (trimmedEmail.length > 255 || !EMAIL_REGEX.test(trimmedEmail)) {
     return res.status(400).json({ success: false, message: 'Please provide a valid email address (up to 255 characters).' });
   }
-  if (password.length < 8 || password.length > 128) {
-    return res.status(400).json({ success: false, message: 'Password must be between 8 and 128 characters.' });
+
+  // Enforce 8-72 byte ceiling (bcrypt constraint)
+  const pwBytes = Buffer.byteLength(password, 'utf8');
+  if (pwBytes < 8 || pwBytes > 72) {
+    return res.status(400).json({ success: false, message: 'Password must be between 8 and 72 bytes.' });
   }
+
   if (phone && (typeof phone !== 'string' || phone.trim().length > 32)) {
     return res.status(400).json({ success: false, message: 'Phone number cannot exceed 32 characters.' });
+  }
+
+  // Check per-email rate limit (default: 3 / 1h in strict, 1000 in generous)
+  const regEmailMax = parseInt(process.env.RATE_LIMIT_REGISTER_EMAIL_MAX || '1000', 10);
+  const regEmailKey = `reg:${trimmedEmail}`;
+  const isEmailCapExceeded = isEmailLimitExceeded(regEmailKey, regEmailMax, 60 * 60 * 1000);
+
+  // If email limit exceeded, anti-enumeration requires silent skip:
+  // Match bcrypt work, return identical 201 response, skip DB insert & email
+  if (isEmailCapExceeded) {
+    await bcrypt.hash(password, 12);
+    return res.status(201).json({
+      success: true,
+      user: {
+        id: crypto.randomUUID(),
+        email: trimmedEmail,
+        full_name: trimmedName,
+        role,
+        approval_status: role === 'customer' ? 'approved' : 'pending',
+      },
+    });
   }
 
   const client = await pool.connect();
@@ -162,17 +250,50 @@ router.post('/register', async (req, res) => {
     const existing = await client.query(
       'SELECT id FROM users WHERE email = $1', [trimmedEmail]
     );
+
     if (existing.rows.length > 0) {
       await client.query('ROLLBACK');
-      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+
+      // Duplicate registration anti-enumeration:
+      // Perform identical bcrypt work, generate random UUID, return identical 201 response shape,
+      // and asynchronously dispatch duplicate registration notice to existing user.
+      await bcrypt.hash(password, 12);
+      const fakeId = crypto.randomUUID();
+
+      setImmediate(async () => {
+        try {
+          await sendDuplicateRegistrationAlert({ to: trimmedEmail });
+        } catch (e) {
+          console.error('[emailService] Duplicate reg alert error:', e.originalCode || e.code || 'UNKNOWN_ERROR');
+        }
+      });
+
+      return res.status(201).json({
+        success: true,
+        user: {
+          id: fakeId,
+          email: trimmedEmail,
+          full_name: trimmedName,
+          role,
+          approval_status: role === 'customer' ? 'approved' : 'pending',
+        },
+      });
     }
 
     const password_hash = await bcrypt.hash(password, 12);
 
-    // Insert base user row
+    // Generate 32-byte verification token and SHA-256 hash
+    const rawVerificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenHash = crypto.createHash('sha256').update(rawVerificationToken).digest('hex');
+    const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Insert base user row with is_email_verified = FALSE and verification token
     const userResult = await client.query(
-      `INSERT INTO users (email, password_hash, full_name, phone, role, preferred_language, notification_preference)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO users (
+         email, password_hash, full_name, phone, role, preferred_language, notification_preference,
+         is_email_verified, email_verification_token, email_verification_expires
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE, $8, $9)
        RETURNING id, email, full_name, phone, role, created_at`,
       [
         trimmedEmail,
@@ -181,7 +302,9 @@ router.post('/register', async (req, res) => {
         phone ? phone.trim() : null,
         role,
         preferred_language || 'en',
-        notification_preference || 'email'
+        notification_preference || 'email',
+        verificationTokenHash,
+        verificationExpiresAt,
       ]
     );
     const user = userResult.rows[0];
@@ -284,6 +407,15 @@ router.post('/register', async (req, res) => {
       details: { role },
     });
 
+    // Send verification email in background (non-blocking)
+    setImmediate(async () => {
+      try {
+        await sendVerificationEmail({ to: user.email, token: rawVerificationToken });
+      } catch (e) {
+        console.error('[emailService] Registration verification mail error:', e.originalCode || e.code || 'UNKNOWN_ERROR');
+      }
+    });
+
     const approval_status = await getApprovalStatus(role, user.id);
 
     return res.status(201).json({
@@ -317,7 +449,8 @@ router.post('/login', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, email, password_hash, full_name, phone, role,
-              failed_login_attempts, locked_until, last_login_at
+              failed_login_attempts, locked_until, last_login_at,
+              token_version, is_email_verified
        FROM users
        WHERE email = $1 AND is_active = TRUE`,
       [email.toLowerCase()]
@@ -402,17 +535,24 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    const sessionPayload = {
+    // Per Batch 5 spec: Session JWT contains ONLY minimal claims: { id, token_version }
+    const sessionJwtPayload = {
+      id: user.id,
+      token_version: user.token_version,
+    };
+    issueSessionCookie(res, sessionJwtPayload);
+
+    // Response body returns user profile for client state
+    const responsePayload = {
       id:              user.id,
       email:           user.email,
       role:            effectiveRole,
       full_name:       user.full_name,
       approval_status,
+      is_email_verified: Boolean(user.is_email_verified),
     };
 
-    issueSessionCookie(res, sessionPayload);
-
-    return res.json({ success: true, user: sessionPayload });
+    return res.json({ success: true, user: responsePayload });
   } catch (err) {
     console.error('[login]', err.message);
     return res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
@@ -421,34 +561,26 @@ router.post('/login', async (req, res) => {
 
 /* ─────────────────────────────────────────────────────────────
    GET /api/auth/me
+   Uses requireAuth and returns explicit allowlist:
+   id, email, full_name, phone, role, last_login_at, approval_status, is_email_verified
+   Never leaks token_version, is_active, or internal fields.
    ───────────────────────────────────────────────────────────── */
-router.get('/me', async (req, res) => {
-  const payload = verifySession(req);
-  if (!payload) {
-    return res.status(401).json({ success: false, message: 'Not authenticated.' });
-  }
-
+router.get('/me', requireAuth, async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT id, email, full_name, phone, role, last_login_at
-       FROM users WHERE id = $1 AND is_active = TRUE`,
-      [payload.id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'User not found.' });
-    }
-    const user = result.rows[0];
-    const approval_status = await getApprovalStatus(user.role, user.id);
-
-    let effectiveRole = user.role;
-    if (user.role === 'admin') {
-      const adminRow = await pool.query('SELECT admin_level FROM admins WHERE user_id = $1', [user.id]);
-      if (adminRow.rows.length > 0 && adminRow.rows[0].admin_level === 'super_admin') {
-        effectiveRole = 'super_admin';
-      }
-    }
-
-    return res.json({ success: true, user: { ...user, role: effectiveRole, approval_status } });
+    const user = req.user;
+    return res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        phone: user.phone || null,
+        role: user.role,
+        last_login_at: user.last_login_at || null,
+        approval_status: user.approval_status || null,
+        is_email_verified: Boolean(user.is_email_verified),
+      },
+    });
   } catch (err) {
     console.error('[me]', err.message);
     return res.status(500).json({ success: false, message: 'Could not retrieve profile.' });
@@ -469,158 +601,342 @@ router.post('/logout', (_req, res) => {
 
 /* ─────────────────────────────────────────────────────────────
    POST /api/auth/forgot-password
-   Anti-enumeration: Always returns HTTP 200 with uniform message
+   Anti-enumeration: Responds immediately (<100ms) with uniform 200 message.
+   Background (setImmediate): Looks up user, checks per-email rate limit,
+   generates 32-byte token, hashes to SHA-256 in users.password_reset_token,
+   and dispatches reset email with fragment link.
    ───────────────────────────────────────────────────────────── */
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', forgotPasswordIpLimiter, (req, res) => {
   const { email } = req.body || {};
-  const neutralMessage = 'If an account exists with this email, a reset code has been sent.';
+  const uniformMessage = 'If an account exists with this email, recovery instructions have been sent.';
 
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ success: false, message: 'Valid email address is required.' });
   }
 
   const trimmedEmail = email.toLowerCase().trim();
-  if (!EMAIL_REGEX.test(trimmedEmail)) {
+  if (trimmedEmail.length > 255 || !EMAIL_REGEX.test(trimmedEmail)) {
     return res.status(400).json({ success: false, message: 'Valid email address is required.' });
   }
 
-  try {
-    const userResult = await pool.query(
-      `SELECT id, email, is_active FROM users WHERE email = $1`,
-      [trimmedEmail]
-    );
+  // 1. Respond IMMEDIATELY to prevent timing attacks and decouple from SMTP/DB latency
+  res.json({ success: true, message: uniformMessage });
 
-    // If user does not exist or is inactive, return 200 with neutral message (anti-enumeration)
-    if (userResult.rows.length === 0 || !userResult.rows[0].is_active) {
-      console.log(`[ODS RECOVERY DEV] ℹ️ Password reset requested for non-existent/inactive email: ${trimmedEmail}`);
-      return res.json({ success: true, message: neutralMessage });
+  // 2. Execute recovery workflow in background
+  setImmediate(async () => {
+    try {
+      // Check per-email rate limit (default 3 / 15m in Child #2 strict, 1000 in Child #1 generous)
+      const emailMax = parseInt(process.env.RATE_LIMIT_FORGOT_EMAIL_MAX || '1000', 10);
+      const emailKey = `forgot:${trimmedEmail}`;
+      if (isEmailLimitExceeded(emailKey, emailMax, 15 * 60 * 1000)) {
+        // Silently skip email dispatch per anti-enumeration requirements
+        return;
+      }
+
+      // Check user existence and active status
+      const userRes = await pool.query(
+        'SELECT id, is_active FROM users WHERE email = $1',
+        [trimmedEmail]
+      );
+
+      if (userRes.rows.length === 0 || !userRes.rows[0].is_active) {
+        // Silent skip for non-existent or inactive user
+        return;
+      }
+
+      const user = userRes.rows[0];
+
+      // Generate 32-byte raw token and SHA-256 hash
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      // Store hash only in DB
+      await pool.query(
+        `UPDATE users
+         SET password_reset_token = $1, password_reset_expires = $2
+         WHERE id = $3`,
+        [tokenHash, expiresAt, user.id]
+      );
+
+      // Dispatch reset email
+      try {
+        await sendPasswordResetEmail({ to: trimmedEmail, token: rawToken });
+      } catch (err) {
+        console.error('[emailService] Background reset dispatch error:', err.originalCode || err.code || 'UNKNOWN_ERROR');
+      }
+    } catch (err) {
+      console.error('[forgot-password background error]:', err.message);
     }
-
-    const user = userResult.rows[0];
-
-    // Invalidate existing unused recovery OTPs for this user
-    await pool.query(
-      `DELETE FROM otp_codes WHERE user_id = $1 AND purpose = 'password_recovery' AND verified_at IS NULL`,
-      [user.id]
-    );
-
-    // Generate cryptographically secure 6-digit numeric OTP code
-    const rawOtp = crypto.randomInt(100000, 1000000).toString();
-    const codeHash = await bcrypt.hash(rawOtp, 10);
-
-    // Insert into otp_codes (15-minute expiration)
-    await pool.query(
-      `INSERT INTO otp_codes (user_id, code_hash, purpose, expires_at)
-       VALUES ($1, $2, 'password_recovery', now() + interval '15 minutes')`,
-      [user.id, codeHash]
-    );
-
-    // Development terminal logging for local testing
-    console.log(`\n=============================================================`);
-    console.log(`[ODS RECOVERY DEV] 🔑 PASSWORD RESET CODE FOR ${trimmedEmail}:`);
-    console.log(`                    >>> ${rawOtp} <<<`);
-    console.log(`                    (Valid for 15 minutes)`);
-    console.log(`=============================================================\n`);
-
-    return res.json({ success: true, message: neutralMessage });
-  } catch (err) {
-    console.error('[forgot-password]', err.message);
-    return res.status(500).json({ success: false, message: 'Server error processing request.' });
-  }
+  });
 });
 
 /* ─────────────────────────────────────────────────────────────
    POST /api/auth/reset-password
-   Verifies OTP code and sets new bcrypt password
+   Body token exchange: { token: string, newPassword: string }
+   Validates SHA-256 token hash against users.password_reset_token,
+   enforces 15m expiration, verifies 8-72 byte password bounds,
+   atomically updates password_hash, clears reset & email verification tokens,
+   marks is_email_verified = TRUE, bumps token_version, and revokes sessions.
    ───────────────────────────────────────────────────────────── */
-router.post('/reset-password', async (req, res) => {
-  const { email, code, newPassword } = req.body || {};
+router.post('/reset-password', resetPasswordIpLimiter, async (req, res) => {
+  const { token, newPassword } = req.body || {};
+  const genericInvalidMessage = 'The password reset link is invalid or has expired. Please request a new one.';
 
-  if (!email || !code || !newPassword || typeof email !== 'string' || typeof code !== 'string' || typeof newPassword !== 'string') {
-    return res.status(400).json({ success: false, message: 'Email, code, and new password are required.' });
+  if (!token || typeof token !== 'string') {
+    return res.status(400).json({ success: false, message: 'Reset token is required.' });
   }
 
-  const trimmedEmail = email.toLowerCase().trim();
-  const trimmedCode = code.trim();
-
-  if (newPassword.length < 8 || newPassword.length > 128) {
-    return res.status(400).json({ success: false, message: 'Password must be between 8 and 128 characters.' });
+  if (!newPassword || typeof newPassword !== 'string') {
+    return res.status(400).json({ success: false, message: 'New password is required.' });
   }
 
-  const genericInvalidMessage = 'The recovery code is invalid or has expired. Please check your code or request a new one.';
+  // Enforce 8-72 byte ceiling (bcrypt constraint)
+  const pwBytes = Buffer.byteLength(newPassword, 'utf8');
+  if (pwBytes < 8 || pwBytes > 72) {
+    return res.status(400).json({ success: false, message: 'New password must be between 8 and 72 bytes.' });
+  }
+
+  const rawToken = token.trim();
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    // 1. Find user
+    // Find active user with matching unexpired password_reset_token
     const userRes = await client.query(
-      `SELECT id, is_active FROM users WHERE email = $1`,
-      [trimmedEmail]
+      `SELECT id, email, password_reset_expires
+       FROM users
+       WHERE password_reset_token = $1 AND is_active = TRUE
+       FOR UPDATE`,
+      [tokenHash]
     );
 
-    if (userRes.rows.length === 0 || !userRes.rows[0].is_active) {
+    if (userRes.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(400).json({ success: false, message: genericInvalidMessage });
     }
 
-    const userId = userRes.rows[0].id;
-
-    // 2. Fetch latest active OTP for password recovery
-    const otpRes = await client.query(
-      `SELECT id, code_hash, expires_at
-       FROM otp_codes
-       WHERE user_id = $1 AND purpose = 'password_recovery' AND verified_at IS NULL
-       ORDER BY created_at DESC LIMIT 1`,
-      [userId]
-    );
-
-    if (otpRes.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ success: false, message: genericInvalidMessage });
-    }
-
-    const otpRecord = otpRes.rows[0];
+    const user = userRes.rows[0];
 
     // Check expiry
-    if (new Date(otpRecord.expires_at) < new Date()) {
+    if (new Date(user.password_reset_expires) < new Date()) {
       await client.query('ROLLBACK');
       return res.status(400).json({ success: false, message: genericInvalidMessage });
     }
 
-    // Verify OTP code
-    const isCodeMatch = await bcrypt.compare(trimmedCode, otpRecord.code_hash);
-    if (!isCodeMatch) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ success: false, message: genericInvalidMessage });
-    }
+    // Hash new password with bcrypt work factor 12
+    const newHash = await bcrypt.hash(newPassword, 12);
 
-    // 3. Hash new password with bcrypt (12 rounds per directive)
-    const newPasswordHash = await bcrypt.hash(newPassword, 12);
-
-    // 4. Update user's password and reset lockout counters
+    // Atomically update password, clear reset & verification tokens, verify email, bump token_version
     await client.query(
       `UPDATE users
-       SET password_hash = $1, failed_login_attempts = 0, locked_until = NULL, updated_at = now()
+       SET password_hash = $1,
+           password_reset_token = NULL,
+           password_reset_expires = NULL,
+           email_verification_token = NULL,
+           email_verification_expires = NULL,
+           is_email_verified = TRUE,
+           token_version = token_version + 1,
+           failed_login_attempts = 0,
+           locked_until = NULL,
+           updated_at = NOW()
        WHERE id = $2`,
-      [newPasswordHash, userId]
-    );
-
-    // 5. Mark OTP code as consumed
-    await client.query(
-      `UPDATE otp_codes SET verified_at = now() WHERE id = $1`,
-      [otpRecord.id]
+      [newHash, user.id]
     );
 
     await client.query('COMMIT');
 
-    console.log(`[ODS RECOVERY DEV] ✅ Password successfully reset for ${trimmedEmail}`);
+    // Audit log & session revocation
+    await logAuditEvent({
+      userId: user.id,
+      action: 'PASSWORD_RESET',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
-    return res.json({ success: true, message: 'Your password has been reset successfully.' });
+    // Send confirmation security notice in background
+    setImmediate(async () => {
+      try {
+        await sendPasswordChangedNotice({
+          email: user.email,
+          userAgent: req.headers['user-agent'] || 'Unknown client',
+          ip: req.ip || 'Unknown IP',
+        });
+      } catch (e) {
+        console.error('[emailService] Background notice dispatch error:', e.originalCode || e.code || 'UNKNOWN_ERROR');
+      }
+    });
+
+    return res.json({ success: true, message: 'Password has been reset successfully. You may now log in with your new password.' });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('[reset-password]', err.message);
-    return res.status(500).json({ success: false, message: 'Server error processing reset.' });
+    return res.status(500).json({ success: false, message: 'Server error processing password reset.' });
+  } finally {
+    client.release();
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/resend-verification
+   Anti-enumeration: Responds immediately (<100ms) with uniform 200 message.
+   Enforces 2-minute per-email cooldown and 5 per day limit in background.
+   Generates new 32-byte token, updates DB, dispatches verification email.
+   Silently skips verified users, deactivated users, or cooldown hits.
+   ───────────────────────────────────────────────────────────── */
+// Cooldown store for resend: key -> lastTimestamp
+// Per Step 0(g): In-memory store is ephemeral and per-process.
+const resendCooldownStore = new Map();
+const RESEND_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+
+router.post('/resend-verification', resendVerificationIpLimiter, (req, res) => {
+  const { email } = req.body || {};
+  const uniformMessage = 'If an unverified account exists with this email, a verification link has been sent.';
+
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ success: false, message: 'Valid email address is required.' });
+  }
+
+  const trimmedEmail = email.toLowerCase().trim();
+  if (trimmedEmail.length > 255 || !EMAIL_REGEX.test(trimmedEmail)) {
+    return res.status(400).json({ success: false, message: 'Valid email address is required.' });
+  }
+
+  // 1. Respond immediately (<100ms)
+  res.json({ success: true, message: uniformMessage });
+
+  // 2. Execute background processing
+  setImmediate(async () => {
+    try {
+      // Cooldown check (2 minutes per email)
+      const now = Date.now();
+      const lastSent = resendCooldownStore.get(trimmedEmail);
+      if (lastSent && (now - lastSent < RESEND_COOLDOWN_MS)) {
+        // Silently skip if within cooldown
+        return;
+      }
+
+      // Check user existence, is_active, and is_email_verified
+      const userRes = await pool.query(
+        'SELECT id, is_active, is_email_verified FROM users WHERE email = $1',
+        [trimmedEmail]
+      );
+
+      if (userRes.rows.length === 0 || !userRes.rows[0].is_active) {
+        return; // Silent skip
+      }
+
+      const user = userRes.rows[0];
+      if (user.is_email_verified) {
+        return; // Silent skip for already-verified accounts
+      }
+
+      // Record new cooldown timestamp
+      resendCooldownStore.set(trimmedEmail, now);
+
+      // Generate new 32-byte verification token and SHA-256 hash
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      await pool.query(
+        `UPDATE users
+         SET email_verification_token = $1, email_verification_expires = $2
+         WHERE id = $3`,
+        [tokenHash, expiresAt, user.id]
+      );
+
+      try {
+        await sendVerificationEmail({ to: trimmedEmail, token: rawToken });
+      } catch (err) {
+        console.error('[emailService] Background resend verification error:', err.originalCode || err.code || 'UNKNOWN_ERROR');
+      }
+    } catch (err) {
+      console.error('[resend-verification background error]:', err.message);
+    }
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/verify-email
+   Body token exchange: { token: string }
+   Matches SHA-256 token hash against users.email_verification_token,
+   verifies token is unexpired, marks is_email_verified = TRUE,
+   clears email_verification_token & email_verification_expires,
+   and bumps token_version to refresh RBAC privileges.
+   ───────────────────────────────────────────────────────────── */
+router.post('/verify-email', async (req, res) => {
+  const { token } = req.body || {};
+  const genericErrorMessage = 'The verification link is invalid or has expired. Please request a new verification link.';
+
+  if (!token || typeof token !== 'string') {
+    return res.status(400).json({ success: false, message: 'Verification token is required.' });
+  }
+
+  const rawToken = token.trim();
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Find active user with matching unexpired verification token
+    const userRes = await client.query(
+      `SELECT id, email, is_email_verified, email_verification_expires
+       FROM users
+       WHERE email_verification_token = $1 AND is_active = TRUE
+       FOR UPDATE`,
+      [tokenHash]
+    );
+
+    if (userRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: genericErrorMessage });
+    }
+
+    const user = userRes.rows[0];
+
+    // Check expiry (24-hour window)
+    if (new Date(user.email_verification_expires) < new Date()) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: genericErrorMessage });
+    }
+
+    // Atomically mark verified, clear verification tokens, and bump token_version
+    const updateRes = await client.query(
+      `UPDATE users
+       SET is_email_verified = TRUE,
+           email_verification_token = NULL,
+           email_verification_expires = NULL,
+           token_version = token_version + 1,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING token_version`,
+      [user.id]
+    );
+
+    const newVersion = updateRes.rows[0].token_version;
+    issueSessionCookie(res, { id: user.id, token_version: newVersion });
+
+    await client.query('COMMIT');
+
+    await logAuditEvent({
+      userId: user.id,
+      action: 'EMAIL_VERIFIED',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    return res.json({
+      success: true,
+      message: 'Your email address has been successfully verified! You may now access all features.',
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[verify-email]', err.message);
+    return res.status(500).json({ success: false, message: 'Server error processing verification.' });
   } finally {
     client.release();
   }
@@ -630,3 +946,4 @@ router.ALLOWED_DOCUMENT_TYPES = ALLOWED_DOCUMENT_TYPES;
 router.isValidDocumentType = isValidDocumentType;
 
 module.exports = router;
+

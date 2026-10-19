@@ -1362,8 +1362,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   marginBottom: '32px',
                 }}
               >
-                <p style={{ margin: '0 0 4px' }}>Your account has been created successfully.</p>
-                <p style={{ margin: 0 }}>You can now sign in using your credentials.</p>
+                <p style={{ margin: '0 0 6px', fontWeight: 600, color: 'var(--color-navy-dark)' }}>
+                  Check your email.
+                </p>
+                <p style={{ margin: 0 }}>
+                  We've sent a verification link to your email address. Please check your inbox to activate your account.
+                </p>
               </div>
 
               {/* Primary Action Button: Sign In → */}

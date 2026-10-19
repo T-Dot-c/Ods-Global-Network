@@ -20,6 +20,7 @@ export interface AuthUser {
   full_name: string;
   role: UserRole;
   approval_status: ApprovalStatus;
+  is_email_verified: boolean;
 }
 
 interface AuthContextValue {
@@ -27,6 +28,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (user: AuthUser) => void;
   updateUser: (fields: Partial<AuthUser>) => void;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -40,20 +42,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser]       = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session from cookie on mount
-  useEffect(() => {
-    fetch(`${API_BASE}/api/auth/me`, {
-      credentials: 'include',
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.success && data.user) setUser(data.user);
-      })
-      .catch(() => {
-        // No active session — not an error
-      })
-      .finally(() => setLoading(false));
+  const refreshUser = useCallback(async () => {
+    try {
+      const r = await fetch(`${API_BASE}/api/auth/me`, {
+        credentials: 'include',
+      });
+      if (r.ok) {
+        const data = await r.json();
+        if (data?.success && data.user) {
+          setUser(data.user);
+          return;
+        }
+      }
+      setUser(null);
+    } catch {
+      // Network or unhandled failure
+    }
   }, []);
+
+  // Restore session from cookie on mount and sync across tabs/focus
+  useEffect(() => {
+    refreshUser().finally(() => setLoading(false));
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'ods_auth_refresh') {
+        refreshUser();
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshUser();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, [refreshUser]);
 
   const login = useCallback((userData: AuthUser) => {
     setUser(userData);
@@ -76,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, updateUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, updateUser, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -9,9 +9,10 @@
  *   4. Coming soon notice
  *   5. Logout button
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth, UserRole, ApprovalStatus } from '../../context/AuthContext';
-import { LogOut, ShieldCheck, CheckCircle2, Clock, Construction } from 'lucide-react';
+import { LogOut, ShieldCheck, CheckCircle2, Clock, Construction, AlertTriangle, Mail } from 'lucide-react';
+import { resendVerification } from '../../services/recoveryService';
 
 interface DashboardShellProps {
   onNavigate: (view: string) => void;
@@ -41,12 +42,36 @@ const STATUS_STYLE: Record<ApprovalStatus, { bg: string; text: string; border: s
 
 export const DashboardShell: React.FC<DashboardShellProps> = ({ onNavigate }) => {
   const { user, logout } = useAuth();
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   if (!user) return null;
 
   const roleColors  = ROLE_COLOR[user.role];
   const showStatus  = user.role === 'merchant' || user.role === 'provider';
   const statusStyle = STATUS_STYLE[user.approval_status] ?? STATUS_STYLE.pending;
+  const isUnverified = !user.is_email_verified && user.role !== 'admin' && user.role !== 'super_admin';
+
+  const handleResend = async () => {
+    if (resendCooldown > 0 || !user.email) return;
+    setResendMessage('Sending verification link...');
+    setResendCooldown(120);
+
+    try {
+      await resendVerification(user.email);
+      setResendMessage('A fresh verification link has been dispatched to your inbox.');
+    } catch {
+      setResendMessage('Unable to send verification link. Please try again later.');
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -117,8 +142,76 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ onNavigate }) =>
         <img
           src="/assets/brand/vector/ods-logo-gold-primary.svg"
           alt="ODS Global Network"
-          style={{ height: '44px', marginBottom: '32px' }}
+          style={{ height: '44px', marginBottom: isUnverified ? '20px' : '32px' }}
         />
+
+        {/* ── Unverified Email Banner ─────────────────────────── */}
+        {isUnverified && (
+          <div
+            style={{
+              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '28px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div
+                style={{
+                  color: '#f59e0b',
+                  flexShrink: 0,
+                  marginTop: '2px',
+                }}
+              >
+                <AlertTriangle size={20} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ color: '#fbbf24', fontSize: '0.92rem', fontWeight: 700, margin: '0 0 4px' }}>
+                  Email Verification Required
+                </h4>
+                <p style={{ color: '#cbd5e1', fontSize: '0.84rem', lineHeight: 1.5, margin: 0 }}>
+                  Your email address (<strong>{user.email}</strong>) is not yet verified. Please verify your email to unlock all features including profile updates and document uploads.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingTop: '4px' }}>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendCooldown > 0}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: resendCooldown > 0 ? 'rgba(255, 255, 255, 0.08)' : 'rgba(245, 158, 11, 0.25)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  color: resendCooldown > 0 ? '#94a3b8' : '#fef3c7',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Mail size={14} />
+                {resendCooldown > 0 ? `Resend link in ${resendCooldown}s` : 'Resend verification link'}
+              </button>
+
+              {resendMessage && (
+                <span style={{ fontSize: '0.8rem', color: '#fef3c7', fontStyle: 'italic' }}>
+                  {resendMessage}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ── 1. Welcome Header ─────────────────────────────── */}
         <h1

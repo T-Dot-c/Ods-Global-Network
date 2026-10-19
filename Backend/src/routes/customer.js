@@ -5,10 +5,23 @@
 'use strict';
 
 const router = require('express').Router();
+const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { logAuditEvent } = require('../services/auditService');
+const { revokeUserSessions, issueSessionCookie } = require('../services/sessionService');
+const { sendPasswordChangedNotice } = require('../services/emailService');
+
+/* ── Change Password Limiter ───────────────────────────────── */
+const changePasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: parseInt(process.env.RATE_LIMIT_CHANGE_PASSWORD_MAX || '1000', 10),
+  keyGenerator: (req) => req.user?.id || req.ip,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many password changes. Please try again later.' },
+});
 
 /* ── Whitelists ─────────────────────────────────────────────── */
 const ALLOWED_LANGUAGES = ['en', 'am'];
@@ -217,7 +230,7 @@ router.put('/profile', requireAuth, requireRole('customer', 'admin', 'super_admi
 /* ─────────────────────────────────────────────────────────────
    POST /api/customer/change-password
    ───────────────────────────────────────────────────────────── */
-router.post('/change-password', requireAuth, async (req, res) => {
+router.post('/change-password', requireAuth, changePasswordLimiter, async (req, res) => {
   const userId = req.user.id;
   const { current_password, new_password } = req.body || {};
 
@@ -229,13 +242,15 @@ router.post('/change-password', requireAuth, async (req, res) => {
     return res.status(400).json({ success: false, message: 'New password is required.' });
   }
 
-  if (new_password.length < 8 || new_password.length > 128) {
-    return res.status(400).json({ success: false, message: 'New password must be between 8 and 128 characters.' });
+  // Enforce 8-72 bytes (bcrypt max length limit)
+  const pwBytes = Buffer.byteLength(new_password, 'utf8');
+  if (pwBytes < 8 || pwBytes > 72) {
+    return res.status(400).json({ success: false, message: 'New password must be between 8 and 72 bytes.' });
   }
 
   try {
     const userRes = await pool.query(
-      `SELECT id, password_hash FROM users WHERE id = $1 AND is_active = TRUE`,
+      `SELECT id, email, password_hash FROM users WHERE id = $1 AND is_active = TRUE`,
       [userId]
     );
 
@@ -261,18 +276,43 @@ router.post('/change-password', requireAuth, async (req, res) => {
     // Hash new password with work factor 12
     const newHash = await bcrypt.hash(new_password, 12);
 
-    await pool.query(
+    // Atomically update password and bump token_version in one single query
+    const updateRes = await pool.query(
       `UPDATE users
-       SET password_hash = $1, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW()
-       WHERE id = $2`,
+       SET password_hash = $1,
+           token_version = token_version + 1,
+           failed_login_attempts = 0,
+           locked_until = NULL,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING token_version`,
       [newHash, userId]
     );
+
+    const newVersion = updateRes.rows[0].token_version;
+
+    // Re-issue fresh session cookie with new token_version so current session remains authenticated
+    issueSessionCookie(res, { id: userId, token_version: newVersion });
 
     await logAuditEvent({
       userId,
       action: 'PASSWORD_CHANGE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
+    });
+
+    // Send security notification email in background (non-blocking)
+    setImmediate(async () => {
+      try {
+        await sendPasswordChangedNotice({
+          email: user.email,
+          userAgent: req.headers['user-agent'] || 'Unknown client',
+          ip: req.ip || 'Unknown IP',
+        });
+      } catch (e) {
+        // Log sanitized failure per emailService policy
+        console.error('[emailService] Background notice dispatch error:', e.originalCode || e.code || 'UNKNOWN_ERROR');
+      }
     });
 
     return res.json({ success: true, message: 'Password updated successfully.' });

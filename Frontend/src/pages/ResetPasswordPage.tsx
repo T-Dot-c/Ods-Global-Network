@@ -30,6 +30,12 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
   onStartAgain,
 }) => {
   const { user } = useAuth();
+  const [token, setToken] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    const hash = window.location.hash || '';
+    const match = hash.match(/token=([0-9a-fA-F]{64})/i) || hash.match(/#([0-9a-fA-F]{64})/i);
+    return match ? match[1] : '';
+  });
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -54,12 +60,40 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
     }
   }, [user, onNavigate]);
 
+  // Extract token from URL fragment (#token=...) and add no-referrer meta
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="referrer"]');
+    let addedMeta = false;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'referrer');
+      meta.setAttribute('content', 'no-referrer');
+      document.head.appendChild(meta);
+      addedMeta = true;
+    }
+
+    if (window.location.hash) {
+      const match = window.location.hash.match(/token=([0-9a-fA-F]{64})/i) || window.location.hash.match(/#([0-9a-fA-F]{64})/i);
+      if (match && !token) {
+        setToken(match[1]);
+      }
+      // Strip fragment immediately from browser address bar
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    return () => {
+      if (addedMeta && meta && meta.parentNode) {
+        meta.parentNode.removeChild(meta);
+      }
+    };
+  }, [token]);
+
   // D-03: Focus movement on Start Again card mount
   useEffect(() => {
-    if (!email && !isSuccess) {
+    if (!email && !token && !isSuccess) {
       startAgainHeadingRef.current?.focus();
     }
-  }, [email, isSuccess]);
+  }, [email, token, isSuccess]);
 
   // D-03: Focus movement on Success card appearance
   useEffect(() => {
@@ -95,10 +129,9 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
         setResendStatus('New verification code dispatched.');
         setResendCooldown(60);
       } else {
-        // D-01: Map failure to fixed page copy
         setResendStatus("We couldn't complete your request. Please try again.");
       }
-    } catch (err) {
+    } catch {
       setResendStatus("We couldn't complete your request. Please try again.");
     }
   };
@@ -107,29 +140,23 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!email) {
-      setErrorMessage("We couldn't complete your request. Please try again.");
-      return;
-    }
-
-    const trimmedCode = code.trim();
-    if (!trimmedCode || trimmedCode.length < 6) {
-      setErrorMessage('Please enter the complete 6-digit verification code.');
-      // D-03: Move focus to first invalid field
+    const activeToken = token || code.trim();
+    if (!activeToken) {
+      setErrorMessage('Please enter the verification code or use the link from your email.');
       document.getElementById('reset-code-input')?.focus();
       return;
     }
 
-    if (newPassword.length < 8) {
-      setErrorMessage('New password must be at least 8 characters long.');
-      // D-03: Move focus to first invalid field
+    // Password byte length validation (8-72 bytes per plan)
+    const pwBytes = new TextEncoder().encode(newPassword).length;
+    if (pwBytes < 8 || pwBytes > 72) {
+      setErrorMessage('New password must be between 8 and 72 bytes.');
       document.getElementById('reset-new-password-input')?.focus();
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setErrorMessage('Passwords do not match. Please re-enter your password.');
-      // D-03: Move focus to first invalid field
       document.getElementById('reset-confirm-password-input')?.focus();
       return;
     }
@@ -137,33 +164,33 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
     setIsSubmitting(true);
 
     try {
-      const result = await confirmPasswordReset(email, trimmedCode, newPassword);
+      const result = await confirmPasswordReset(activeToken, newPassword);
 
       if (result.success) {
         setIsSuccess(true);
-        // Clear sensitive credentials and inform parent to clear memory email
         setCode('');
+        setToken('');
         setNewPassword('');
         setConfirmPassword('');
         onResetSuccess();
       } else {
-        // D-01: invalid_code shows generic invalid/expired copy; network, server, unknown show generic failure
         if (result.errorKind === 'invalid_code') {
-          setErrorMessage('The recovery code is invalid or has expired. Please check your code or request a new one.');
+          setErrorMessage('The recovery link or code is invalid or has expired. Please request a new one.');
+        } else if (result.errorKind === 'rate_limited') {
+          setErrorMessage('Too many attempts. Please try again after 15 minutes.');
         } else {
           setErrorMessage("We couldn't complete your request. Please try again.");
         }
       }
-    } catch (err) {
-      // D-01: Network failure shows generic failure
+    } catch {
       setErrorMessage("We couldn't complete your request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Condition 2: If no active email in state, render Start Again fallback card
-  if (!email && !isSuccess) {
+  // Condition 2: If no active email or token in state, render Start Again fallback card
+  if (!email && !token && !isSuccess) {
     return (
       <div
         className="batch1-page"
@@ -398,7 +425,9 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
                   Set New Password
                 </h1>
                 <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                  Enter the 6-digit code sent to <strong>{email}</strong> and specify your new password.
+                  {token
+                    ? 'Enter and confirm your new secure password below.'
+                    : `Enter the code sent to ${email || 'your email'} and specify your new password.`}
                 </p>
 
                 <div style={{ marginTop: '6px' }}>
@@ -416,7 +445,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
                       borderRadius: '4px',
                     }}
                   >
-                    Use a different email
+                    Start over
                   </button>
                 </div>
               </div>
@@ -460,46 +489,50 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
               )}
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* 6-Digit Code Input */}
-                <div>
-                  <Input
-                    id="reset-code-input"
-                    theme="light"
-                    label="6-Digit Verification Code"
-                    placeholder="Enter 6-digit code"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    required
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
-                    leftIcon={<KeyRound size={18} />}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
-                    <button
-                      type="button"
-                      onClick={handleResendCode}
-                      disabled={resendCooldown > 0}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        color: resendCooldown > 0 ? 'var(--color-text-muted)' : 'var(--color-gold-deep)',
-                        cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: '2px 4px',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      <RefreshCw size={12} />
-                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
-                    </button>
+                {/* 6-Digit Code Input — only shown if not using fragment token link */}
+                {!token && (
+                  <div>
+                    <Input
+                      id="reset-code-input"
+                      theme="light"
+                      label="6-Digit Verification Code"
+                      placeholder="Enter 6-digit code"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      required={!token}
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      leftIcon={<KeyRound size={18} />}
+                    />
+                    {email && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={handleResendCode}
+                          disabled={resendCooldown > 0}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: resendCooldown > 0 ? 'var(--color-text-muted)' : 'var(--color-gold-deep)',
+                            cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <RefreshCw size={12} />
+                          {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 {/* New Password */}
                 <div>

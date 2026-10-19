@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-10-13  
-> **CURRENT STAGE**: BATCH 4 Complete — Merchant & Provider Onboarding, Document Management, Admin Console  
+> **LAST UPDATED**: 2026-10-19  
+> **CURRENT STAGE**: BATCH 5 COMPLETED & CLOSED — Email Foundation, Account Recovery, Session Invalidation & Registration Verification (Automated verification: PASSED, Human UI verification: PASSED, Human Sign-Off: "Approved: proceed" received)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -266,16 +266,56 @@
   - Runtime configured with `DB_USER=ods_app` with append-only access to `audit_logs` (UPDATE/DELETE denied) and DML-only permissions on application tables.
   - **Checklist Requirement**: New tables need explicit `ods_app` grants in future migrations (`GRANT SELECT, INSERT, UPDATE ON <table_name> TO ods_app;`) because tables created by postgres/superuser do not automatically grant permissions.
 
+### TASK 05: Email Foundation, Account Recovery, Session Invalidation & Registration Verification (Batch 5 — DRAFT)
+
+- [x] **Database Migration 015 (`015_email_verification_and_session_invalidation.sql`)**:
+  - `token_version` column (`INT NOT NULL DEFAULT 1`) with partial index `idx_users_token_version`.
+  - `password_reset_token` and `password_reset_expires` with partial index `idx_users_password_reset_token`.
+  - `email_verification_token` and `email_verification_expires` with partial index `idx_users_email_verification_token`.
+  - Explicit least-privilege `ods_app` SELECT and UPDATE grants; existing dev users grandfathered as verified.
+- [x] **Session Service & Immediate Revocation (`Backend/src/services/sessionService.js`)**:
+  - `resolveSession(token)`: Parameterized query joining `admins`, `merchants`, `providers`, computing effective role (with `super_admin` elevation) and `approval_status`, failing closed on inactive or revoked accounts.
+  - `revokeUserSessions(userId)`: Increments `token_version` to immediately invalidate all existing JWT cookies.
+- [x] **Transactional Email Service (`Backend/src/services/emailService.js`)**:
+  - Nodemailer transporter configured for Mailpit (`127.0.0.1:1025`) in dev and SMTP in production.
+  - Header injection sanitization (strips `\r` and `\n`), normalized origin links, sanitized error codes (zero secret/token logging).
+  - Tolerates SMTP downtime without throwing unhandled exceptions into request handlers.
+- [x] **Session Invalidation Across Routes**:
+  - `async requireAuth` middleware resolves session from database every request.
+  - Minimal JWT minting `{ id, token_version }` on `POST /api/auth/login`.
+  - `GET /api/auth/me` returns explicit allowlist omitting internal columns.
+  - `POST /api/customer/change-password` enforces 8-72 byte limit, calls `revokeUserSessions`, and dispatches background security alert.
+- [x] **Account Recovery Engine (`POST /api/auth/forgot-password` & `POST /api/auth/reset-password`)**:
+  - Respond-first architecture: `forgot-password` returns 200 under 100ms with uniform message.
+  - Background SHA-256 token hashing (15-minute expiry) and URL fragment link dispatch (`#token=...`).
+  - `reset-password` validates SHA-256 hash, enforces 8-72 byte password, atomically invalidates token and bumps `token_version`.
+- [x] **Registration Verification & Sensitive Action Gating**:
+  - Anti-enumeration uniform 201 response with matching bcrypt work and mock UUID for duplicate registrations.
+  - `POST /api/auth/resend-verification` with 2-minute in-memory cooldown.
+  - `POST /api/auth/verify-email` verifies account, clears verification token, and bumps version.
+  - `requireVerifiedEmail` protects KYC uploads (pre-Multer) and `PUT /profile` routes (exempting admin/super_admin).
+- [x] **Frontend UI & Handshake**:
+  - `AuthContext`: exports `is_email_verified` and `refreshUser()`.
+  - `VerifyEmailPage.tsx`: extracts token from fragment, strips address bar, injects `no-referrer` meta, auto-refreshes session context.
+  - `ResetPasswordPage.tsx`: extracts token from fragment, strips address bar, injects `no-referrer` meta, validates 8-72 bytes.
+  - `ForgotPasswordPage.tsx`: anti-enumeration confirmation state.
+  - `RegisterPage.tsx`: uniform verification email instruction.
+  - `DashboardShell.tsx`: unverified email warning banner with 120s cooldown resend button.
+- [x] **Human UI Verification**: COMPLETED (Manual browser verification of forgot password, reset password with fragment token, verify email flow, and dashboard unverified banner passed).
+
 ---
 
 ## 3. Verification & Compliance
 
-- **PostgreSQL Migrations**: 14 of 14 migrations applied to `ods_global.net` on PostgreSQL 18.6.
+- **PostgreSQL Migrations**: 15 of 15 migrations applied to `ods_global.net` on PostgreSQL 18.6.
 - **Database Least-Privilege Execution**: Application runtime and dev tests verified running as `ods_app`.
 - **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, and document inspection.
-- **Full Automated Test Suite**: `node test-batch4-endpoints.js` passing all 96 tests (0 failed) twice back-to-back without restarting server.
+- **Full Automated Test Suite**:
+  - `test-batch5-endpoints.js`: 51 Passed / 0 Failed across dual-child test harness.
+  - `test-batch3-endpoints.js`: 17 Passed / 0 Failed.
+  - `test-batch4-endpoints.js`: 96 Passed / 0 Failed (dev accounts preserved in approved status).
 - **TypeScript Compiler**: `npx tsc --noEmit` exited with 0 errors.
-- **Production Bundle**: `npm run build` completed with exit code 0 (1626 modules transformed, dist generated in 11.09s).
+- **Production Bundle**: `npm run build` completed with exit code 0 (1627 modules transformed, dist generated in 5.03s).
 - **Folder Confinement**: 100% of code and documentation strictly confined within the 7 designated root directories (`./Frontend`, `./Backend`, `./System Directive`, `./Progress`, `./Assets`, `./Status`, `./resource`).
 - **Path Portability**: All code imports, links, and documentation paths are strictly relative to `Ods-Global-Network`.
 
@@ -302,19 +342,17 @@
 3. **Concurrent Anonymous-Upload Cap Race (B12)**: Resolve simultaneous burst upload race conditions with distributed atomic counters or database locks.
 4. **Multi-Document KYC Requirement**: Enforce requiring both license AND registration documents before approving KYC (currently at least one verified document is required).
 5. **Database Grants Policy**: New tables created in future migrations need explicit `ods_app` grants (`GRANT SELECT, INSERT, UPDATE ON <table_name> TO ods_app;` — ledger and audit tables get `SELECT, INSERT` only).
-6. **Role Baked into JWT Token (Batch 5 Session Invalidation)**: The user role is baked into the 24-hour `ods_session` JWT token at login; administrative changes to `admins.admin_level` (e.g. promoting staff admin to super admin) do not apply until token expiration or re-login. To be resolved in Batch 5 via session invalidation / token versioning.
+6. **Role Baked into JWT Token**: **Closed in Batch 5** — Minimized JWT to `{ id, token_version }`; `resolveSession` performs fresh DB lookup on every request and computes effective role dynamically. Immediate revocation active on password reset/change.
 
 ---
 
 ## 5. Immediate Next Steps
 
-1. **Batch 5: Email Foundation and Account Recovery**:
-   - SMTP sender foundation and transactional email delivery.
-   - Forgot/reset password workflows replacing the development OTP.
-   - Email verification flow.
-   - Session invalidation on password change (token revocation/versioning).
-   - Change-password dedicated rate limit.
-   - *(Note: Module 5 is Provider Onboarding and was completed in Batch 4).*
+1. **Batch 5 Closed**:
+   - Migration 015 applied cleanly with least-privilege `ods_app` grants.
+   - Dual-child automated test harness passing 51/51 (`test-batch5-endpoints.js`).
+   - Batch 3 (17/17) and Batch 4 (96/96) regression suites intact.
+   - Reviewer-mandated fixes verified and signed off with `"Approved: proceed"`.
 2. **Batch 6: Payments**:
    - Chapa test mode integration.
    - Cryptographic HMAC webhook verification.

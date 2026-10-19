@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth, UserRole, ApprovalStatus } from '../../context/AuthContext';
 import {
   Bell,
@@ -10,7 +10,10 @@ import {
   CheckCircle2,
   XCircle,
   ClipboardList,
+  AlertTriangle,
+  Mail,
 } from 'lucide-react';
+import { resendVerification } from '../../services/recoveryService';
 
 export interface SidebarItem {
   id: string;
@@ -69,6 +72,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { user, logout } = useAuth();
   const [internalTab, setInternalTab] = useState('overview');
   const [profileOpen, setProfileOpen] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+
+  const isUnverified = Boolean(user && !user.is_email_verified && user.role !== 'admin' && user.role !== 'super_admin');
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleResend = async () => {
+    if (resendCooldown > 0 || !user?.email) return;
+    setResendMessage('Sending verification link...');
+    setResendCooldown(120);
+
+    try {
+      await resendVerification(user.email);
+      setResendMessage('A fresh verification link has been dispatched to your inbox.');
+    } catch {
+      setResendMessage('Unable to send verification link. Please try again later.');
+    }
+  };
 
   const currentTab = controlledTab !== undefined ? controlledTab : internalTab;
 
@@ -463,6 +491,73 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             maxWidth: '1280px',
           }}
         >
+          {/* Unverified Email Warning Banner */}
+          {isUnverified && (
+            <div
+              style={{
+                marginBottom: '24px',
+                padding: '16px 20px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                <div
+                  style={{
+                    color: '#d97706',
+                    flexShrink: 0,
+                    marginTop: '2px',
+                  }}
+                >
+                  <AlertTriangle size={20} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ color: '#b45309', fontSize: '0.95rem', fontWeight: 700, margin: '0 0 4px' }}>
+                    Email Verification Required
+                  </h4>
+                  <p style={{ color: '#475569', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
+                    Your email address (<strong>{user?.email}</strong>) is not yet verified. Please verify your email to unlock all platform features.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', paddingTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendCooldown > 0}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: resendCooldown > 0 ? '#f1f5f9' : 'rgba(245, 158, 11, 0.15)',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    color: resendCooldown > 0 ? '#94a3b8' : '#b45309',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Mail size={15} />
+                  {resendCooldown > 0 ? `Resend link in ${resendCooldown}s` : 'Resend verification link'}
+                </button>
+
+                {resendMessage && (
+                  <span style={{ fontSize: '0.84rem', color: '#b45309', fontStyle: 'italic', fontWeight: 500 }}>
+                    {resendMessage}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Header Greeting */}
           <div style={{ marginBottom: '28px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>

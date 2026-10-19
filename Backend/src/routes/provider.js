@@ -10,7 +10,7 @@
 
 const express = require('express');
 const pool = require('../db');
-const { requireAuth, requireRole } = require('../middleware/auth');
+const { requireAuth, requireRole, requireVerifiedEmail } = require('../middleware/auth');
 const { logAuditEvent } = require('../services/auditService');
 
 const router = express.Router();
@@ -73,7 +73,7 @@ router.get('/profile', async (req, res) => {
 /* ─────────────────────────────────────────────────────────────
    PUT /api/provider/profile
    ───────────────────────────────────────────────────────────── */
-router.put('/profile', async (req, res) => {
+router.put('/profile', requireVerifiedEmail, async (req, res) => {
   const {
     provider_name,
     provider_type,

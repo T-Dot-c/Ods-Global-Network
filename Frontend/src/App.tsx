@@ -12,6 +12,7 @@ import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { TermsPage } from './pages/TermsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { CompanyPage } from './pages/CompanyPage';
 import { SupportPage } from './pages/SupportPage';
 import { PartnerWithUsPage } from './pages/PartnerWithUsPage';
@@ -30,6 +31,7 @@ export type View =
   | 'terms'
   | 'forgot-password'
   | 'reset-password'
+  | 'verify-email'
   | 'company'
   | 'support'
   | 'partner-with-us';
@@ -59,6 +61,7 @@ function normalizeRoute(path: string): View {
   if (clean === 'terms') return 'terms';
   if (clean === 'forgot-password') return 'forgot-password';
   if (clean === 'reset-password') return 'reset-password';
+  if (clean === 'verify-email') return 'verify-email';
   if (clean === 'company') return 'company';
   if (clean === 'support') return 'support';
   if (clean === 'partner-with-us') return 'partner-with-us';
@@ -214,6 +217,9 @@ const AppInner: React.FC = () => {
               handleNavigate('forgot-password');
             }}
           />
+        )}
+        {currentView === 'verify-email' && (
+          <VerifyEmailPage onNavigate={handleNavigate} />
         )}
 
         {/* ── Role-protected dashboards ─────────────────── */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, ArrowLeft, KeyRound, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import { Mail, ArrowLeft, KeyRound, ShieldCheck, UserCheck } from 'lucide-react';
 import { useAuth, UserRole } from '../context/AuthContext';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
@@ -71,7 +71,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
 
       if (result.success) {
         // Uniform neutral notice on success
-        setSuccessNotice('If an account exists with this email, a reset code has been sent.');
+        setSuccessNotice('If an account exists with this email, recovery instructions have been sent.');
       } else {
         // D-01: Strictly fixed generic text on every failure — never result.message
         setErrorMessage("We couldn't complete your request. Please try again.");
@@ -292,7 +292,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
                       marginBottom: '4px',
                     }}
                   >
-                    Reset Code Dispatched
+                    Recovery Instructions Dispatched
                   </h3>
                   <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
                     {successNotice}
@@ -300,14 +300,31 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
                 </div>
               </div>
 
-              <Button
-                variant="gold"
-                size="md"
-                fullWidth
-                onClick={() => onCodeSent(email.trim().toLowerCase())}
-              >
-                Enter Reset Code <ArrowRight size={16} />
-              </Button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <Button
+                  variant="gold"
+                  size="md"
+                  fullWidth
+                  onClick={() => onNavigate('login')}
+                >
+                  Return to Sign In
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => onCodeSent(email.trim().toLowerCase())}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-text-muted)',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    padding: '4px',
+                  }}
+                >
+                  Have a reset token? Enter it manually
+                </button>
+              </div>
             </Card>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

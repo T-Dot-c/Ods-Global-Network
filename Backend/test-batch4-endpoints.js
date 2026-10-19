@@ -132,6 +132,8 @@ async function uploadFile(buffer, filename, purpose, cookie) {
 /* ── Register a fresh fixture user and return session cookie ─────────────────── */
 async function registerAndLogin(email, password, role, extra = {}) {
   await apiJson('POST', '/api/auth/register', { email, password, full_name: email, role, ...extra });
+  // Per Batch 5 plan requirement: mark user verified so KYC upload & profile updates succeed
+  await adminPool.query('UPDATE users SET is_email_verified = TRUE WHERE email = $1', [email.toLowerCase().trim()]);
   const { res: lr } = await apiJson('POST', '/api/auth/login', { email, password });
   const cookie = cookieFrom(lr);
   return cookie;

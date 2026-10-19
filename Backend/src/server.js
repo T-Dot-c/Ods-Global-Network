@@ -39,6 +39,16 @@ if (!isDevOrTest) {
     console.error('[FATAL SECURITY ERROR] STAGING_TOKEN_SECRET must be set to at least 32 characters unless NODE_ENV is explicitly development or test.');
     process.exit(1);
   }
+  try {
+    const originUrl = new URL(FRONTEND_ORIGIN);
+    if (originUrl.protocol !== 'https:') {
+      console.error(`[FATAL SECURITY ERROR] FRONTEND_ORIGIN must use HTTPS outside development/test (current FRONTEND_ORIGIN="${FRONTEND_ORIGIN}").`);
+      process.exit(1);
+    }
+  } catch {
+    console.error(`[FATAL SECURITY ERROR] FRONTEND_ORIGIN is not a valid URL: "${FRONTEND_ORIGIN}".`);
+    process.exit(1);
+  }
 }
 
 /* ── Trust Proxy Configuration ────────────────────────────── */
