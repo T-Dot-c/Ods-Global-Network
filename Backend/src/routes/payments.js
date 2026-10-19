@@ -239,13 +239,58 @@ router.get('/verify/:txRef', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Transaction not found.' });
     }
 
-    const tx = txRes.rows[0];
+    let tx = txRes.rows[0];
 
     // Cross-tenant IDOR protection: only owner or admin can view
     const isOwner = req.user.id === tx.user_id;
     const isAdmin = ['admin', 'super_admin'].includes(req.user.role);
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: 'Access denied to transaction.' });
+    }
+
+    // Fallback gateway verification if transaction is still pending
+    if (tx.status === 'pending') {
+      try {
+        const verifyResult = await chapaService.verifyPayment(txRef);
+        if (verifyResult && (verifyResult.status === 'success' || verifyResult.data?.status === 'success')) {
+          const chapaRef = verifyResult.data?.reference || `ref-${txRef}`;
+          const updateRes = await pool.query(
+            `UPDATE transactions
+             SET status = 'completed', chapa_reference = $1, completed_at = NOW(), updated_at = NOW()
+             WHERE tx_ref = $2 AND status = 'pending'
+             RETURNING *`,
+            [chapaRef, txRef]
+          );
+
+          if (updateRes.rows.length > 0) {
+            tx = updateRes.rows[0];
+
+            if (req.user && req.user.email) {
+              setImmediate(async () => {
+                try {
+                  await sendPaymentReceiptEmail({
+                    to: req.user.email,
+                    fullName: req.user.full_name || 'Customer',
+                    txRef: tx.tx_ref,
+                    amount: tx.amount,
+                    currency: tx.currency,
+                    purpose: tx.purpose,
+                    date: tx.completed_at || new Date(),
+                  });
+                } catch (_) {}
+              });
+            }
+
+            await recordAuditLog(tx.user_id, 'PAYMENT_COMPLETED', req, {
+              tx_ref: tx.tx_ref,
+              amount: tx.amount,
+              currency: tx.currency,
+              reference: chapaRef,
+              verified_via: 'gateway_lookup',
+            });
+          }
+        }
+      } catch (_) {}
     }
 
     return res.status(200).json({
@@ -277,13 +322,60 @@ router.get('/receipt/:txRef', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Receipt not found.' });
     }
 
-    const tx = receiptRes.rows[0];
+    let tx = receiptRes.rows[0];
 
     // Cross-tenant IDOR guard
     const isOwner = req.user.id === tx.user_id;
     const isAdmin = ['admin', 'super_admin'].includes(req.user.role);
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: 'Access denied to receipt.' });
+    }
+
+    // Fallback gateway verification if transaction is still pending
+    if (tx.status === 'pending') {
+      try {
+        const verifyResult = await chapaService.verifyPayment(txRef);
+        if (verifyResult && (verifyResult.status === 'success' || verifyResult.data?.status === 'success')) {
+          const chapaRef = verifyResult.data?.reference || `ref-${txRef}`;
+          const updateRes = await pool.query(
+            `UPDATE transactions
+             SET status = 'completed', chapa_reference = $1, completed_at = NOW(), updated_at = NOW()
+             WHERE tx_ref = $2 AND status = 'pending'
+             RETURNING *`,
+            [chapaRef, txRef]
+          );
+
+          if (updateRes.rows.length > 0) {
+            tx = { ...tx, ...updateRes.rows[0] };
+
+            const userEmail = tx.user_email || req.user.email;
+            const userName = tx.user_name || req.user.full_name;
+            if (userEmail) {
+              setImmediate(async () => {
+                try {
+                  await sendPaymentReceiptEmail({
+                    to: userEmail,
+                    fullName: userName,
+                    txRef: tx.tx_ref,
+                    amount: tx.amount,
+                    currency: tx.currency,
+                    purpose: tx.purpose,
+                    date: tx.completed_at || new Date(),
+                  });
+                } catch (_) {}
+              });
+            }
+
+            await recordAuditLog(tx.user_id, 'PAYMENT_COMPLETED', req, {
+              tx_ref: tx.tx_ref,
+              amount: tx.amount,
+              currency: tx.currency,
+              reference: chapaRef,
+              verified_via: 'gateway_lookup',
+            });
+          }
+        }
+      } catch (_) {}
     }
 
     return res.status(200).json({

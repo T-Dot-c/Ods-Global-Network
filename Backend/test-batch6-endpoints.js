@@ -98,7 +98,7 @@ function spawnTestServer() {
     child.on('error', reject);
 
     setTimeout(() => {
-      reject(new Error(`Test server on port ${TEST_PORT} failed to start in 8s`));
+      reject(new Error(`Test server on port ${TEST_PORT} failed to start in 8s. Logs:\n${capturedLogs}`));
     }, 8000);
   });
 }
