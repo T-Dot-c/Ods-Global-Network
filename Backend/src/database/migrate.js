@@ -13,7 +13,16 @@
 require('dotenv').config();
 const fs   = require('fs');
 const path = require('path');
-const pool = require('../db');
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432', 10),
+  database: process.env.DB_NAME || 'ods_global.net',
+  user: process.env.TEST_ADMIN_DB_USER || 'postgres',
+  password: process.env.TEST_ADMIN_DB_PASSWORD || process.env.DB_PASSWORD,
+  ssl: false,
+});
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 

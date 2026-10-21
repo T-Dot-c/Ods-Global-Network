@@ -17,6 +17,7 @@ import { CompanyPage } from './pages/CompanyPage';
 import { SupportPage } from './pages/SupportPage';
 import { PartnerWithUsPage } from './pages/PartnerWithUsPage';
 import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
+import { GiftClaimPage } from './pages/GiftClaimPage';
 import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
 
 /* ── View type ────────────────────────────────────────────── */
@@ -36,7 +37,8 @@ export type View =
   | 'company'
   | 'support'
   | 'partner-with-us'
-  | 'payment/success';
+  | 'payment/success'
+  | 'gift/claim';
 
 const DASHBOARD_VIEWS: View[] = [
   'dashboard',
@@ -68,6 +70,7 @@ function normalizeRoute(path: string): View {
   if (clean === 'support') return 'support';
   if (clean === 'partner-with-us') return 'partner-with-us';
   if (clean === 'payment/success' || clean === 'payment-success' || clean === 'payment/verify') return 'payment/success';
+  if (clean === 'gift/claim' || clean === 'gift-claim' || clean === 'gift/redeem' || clean === 'claim') return 'gift/claim';
 
   if (clean === 'dashboard' || clean === 'dashboard/customer') return 'dashboard';
   if (clean === 'merchant/dashboard' || clean === 'dashboard/merchant') return 'merchant/dashboard';
@@ -226,6 +229,9 @@ const AppInner: React.FC = () => {
         )}
         {currentView === 'payment/success' && (
           <PaymentSuccessPage onNavigate={handleNavigate} />
+        )}
+        {currentView === 'gift/claim' && (
+          <GiftClaimPage onNavigate={handleNavigate} />
         )}
 
         {/* ── Role-protected dashboards ─────────────────── */}

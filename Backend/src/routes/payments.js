@@ -18,6 +18,7 @@ const pool = require('../db');
 const { requireAuth, requireVerifiedEmail } = require('../middleware/auth');
 const chapaService = require('../services/chapaService');
 const { sendPaymentReceiptEmail } = require('../services/emailService');
+const giftCardService = require('../services/giftCardService');
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:3001';
@@ -214,6 +215,17 @@ router.post('/webhook/chapa', async (req, res) => {
         currency: tx.currency,
         reference: chapaReference,
       });
+
+      // If this transaction was for a gift card purchase, finalize and issue the card
+      if (tx.purpose === 'gift_card_purchase' && tx.metadata?.giftCardDetails) {
+        setImmediate(async () => {
+          try {
+            await giftCardService.finalizePaidGiftCard(tx);
+          } catch (gcErr) {
+            console.error('[webhook/chapa] finalizePaidGiftCard error:', gcErr.message);
+          }
+        });
+      }
     }
 
     // Always return HTTP 200 to acknowledge webhook
@@ -289,6 +301,15 @@ router.get('/verify/:txRef', requireAuth, async (req, res) => {
               reference: chapaRef,
               verified_via: 'gateway_lookup',
             });
+
+            // If this transaction was for a gift card purchase, finalize and issue the card
+            if (tx.purpose === 'gift_card_purchase' && tx.metadata?.giftCardDetails) {
+              try {
+                await giftCardService.finalizePaidGiftCard(tx);
+              } catch (gcErr) {
+                console.error('[payments/verify] finalizePaidGiftCard error:', gcErr.message);
+              }
+            }
           }
         }
       } catch (_) {}

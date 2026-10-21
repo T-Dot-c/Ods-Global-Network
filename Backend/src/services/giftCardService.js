@@ -51,6 +51,8 @@ async function purchaseGiftCard({
   recipientEmail = null,
   recipientPhone = null,
   personalMessage = null,
+  scheduledDeliveryDate = null,
+  status = 'active',
   expiryMonths = 12,
   metadata = {},
 }) {
@@ -79,23 +81,27 @@ async function purchaseGiftCard({
     codeHash = hashClaimCode(claimCode);
 
     try {
+      const validStatuses = ['pending_payment', 'active', 'redeemed', 'delivered', 'expired', 'cancelled', 'refunded'];
+      const cardStatus = validStatuses.includes(status) ? status : 'active';
+      const scheduledDate = scheduledDeliveryDate ? new Date(scheduledDeliveryDate) : null;
+
       const insertRes = await pool.query(
         `INSERT INTO gift_cards (
           sender_id, code, code_hash, initial_amount, balance, currency,
           gift_type, package_type, occasion, service_title, service_category,
           service_provider_id, status, recipient_email, recipient_phone,
-          recipient_name, personal_message, expiry_date, metadata
+          recipient_name, personal_message, expiry_date, scheduled_delivery_date, metadata
         ) VALUES (
           $1, $2, $3, $4, $4, $5,
           $6, $7, $8, $9, $10,
-          $11, 'active', $12, $13,
-          $14, $15, $16, $17
+          $11, $12, $13, $14,
+          $15, $16, $17, $18, $19
         ) RETURNING *`,
         [
           senderId, claimCode, codeHash, parsedAmount, cleanCurrency,
           cleanGiftType, cleanPackage, cleanOccasion, serviceTitle, serviceCategory,
-          serviceProviderId, recipientEmail, recipientPhone,
-          recipientName, personalMessage, expiryDate, JSON.stringify(metadata)
+          serviceProviderId, cardStatus, recipientEmail, recipientPhone,
+          recipientName, personalMessage, expiryDate, scheduledDate, JSON.stringify(metadata)
         ]
       );
 
@@ -155,6 +161,10 @@ async function checkGiftCard(rawCode) {
 
   const card = res.rows[0];
 
+  if (card.status === 'pending_payment') {
+    return { valid: false, reason: 'This gift card is awaiting payment confirmation.' };
+  }
+
   if (card.status === 'redeemed' || card.status === 'delivered') {
     return { valid: false, reason: 'This gift card has already been redeemed.' };
   }
@@ -163,9 +173,17 @@ async function checkGiftCard(rawCode) {
     return { valid: false, reason: 'This gift card has been cancelled.' };
   }
 
+  if (card.status === 'refunded') {
+    return { valid: false, reason: 'This gift card has been refunded.' };
+  }
+
   const now = new Date();
   if (new Date(card.expiry_date) <= now || card.status === 'expired') {
     return { valid: false, reason: 'This gift card has expired.' };
+  }
+
+  if (card.status !== 'active') {
+    return { valid: false, reason: `This gift card is ${card.status}.` };
   }
 
   return {
@@ -465,15 +483,395 @@ async function getReceivedGiftCards(userId) {
   }));
 }
 
+/**
+ * Purchase a gift card or voucher using customer's digital wallet balance
+ */
+async function purchaseGiftCardWithWallet({
+  senderId,
+  amount,
+  currency = 'ETB',
+  giftType = 'monetary',
+  packageType = 'custom',
+  occasion = 'general',
+  serviceTitle,
+  serviceCategory,
+  serviceProviderId,
+  recipientEmail,
+  recipientPhone,
+  recipientName,
+  personalMessage,
+  scheduledDeliveryDate = null,
+  metadata = {},
+}) {
+  const numericAmount = parseFloat(amount);
+  if (isNaN(numericAmount) || numericAmount <= 0) {
+    const err = new Error('Gift card amount must be greater than zero.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Lock customer wallet
+    const walletRes = await client.query(
+      `SELECT * FROM customer_wallets WHERE user_id = $1 FOR UPDATE`,
+      [senderId]
+    );
+
+    const currentBal = walletRes.rows.length > 0 ? parseFloat(walletRes.rows[0].balance) : 0;
+    if (walletRes.rows.length === 0 || currentBal < numericAmount) {
+      await client.query('ROLLBACK');
+      const err = new Error(
+        `Insufficient digital wallet balance. Current balance is ${currentBal.toFixed(2)} ${currency}, but ${numericAmount.toFixed(2)} ${currency} is required.`
+      );
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const newBalance = currentBal - numericAmount;
+
+    // 2. Deduct from wallet
+    await client.query(
+      `UPDATE customer_wallets SET balance = $1, updated_at = NOW() WHERE user_id = $2`,
+      [newBalance, senderId]
+    );
+
+    // 3. Generate claim code
+    let claimCode = '';
+    let codeHash = '';
+    let attempts = 0;
+    while (attempts < 5) {
+      claimCode = generateClaimCode();
+      codeHash = hashClaimCode(claimCode);
+      const existing = await client.query('SELECT id FROM gift_cards WHERE code_hash = $1', [codeHash]);
+      if (existing.rows.length === 0) break;
+      attempts++;
+    }
+    if (attempts >= 5) {
+      await client.query('ROLLBACK');
+      throw new Error('Failed to generate unique claim code. Please try again.');
+    }
+
+    const expiryMonths = packageType === 'vip' ? 24 : 12;
+    const expiryDate = new Date();
+    expiryDate.setMonth(expiryDate.getMonth() + expiryMonths);
+
+    const mergedMetadata = {
+      ...metadata,
+      paymentMethod: 'wallet',
+      paidViaWallet: true,
+      deductedAt: new Date().toISOString(),
+    };
+
+    const scheduledDate = scheduledDeliveryDate ? new Date(scheduledDeliveryDate) : null;
+
+    // 4. Insert gift card
+    const insertRes = await client.query(
+      `INSERT INTO gift_cards (
+        sender_id, code, code_hash, initial_amount, balance, currency,
+        gift_type, package_type, occasion, service_title, service_category,
+        service_provider_id, status, recipient_email, recipient_phone,
+        recipient_name, personal_message, expiry_date, scheduled_delivery_date, metadata
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, $17, $18, $19)
+      RETURNING *`,
+      [
+        senderId, claimCode, codeHash, numericAmount, numericAmount, currency,
+        giftType, packageType, occasion, serviceTitle || null, serviceCategory || null,
+        serviceProviderId || null, recipientEmail || null, recipientPhone || null,
+        recipientName || null, personalMessage || null, expiryDate, scheduledDate, JSON.stringify(mergedMetadata),
+      ]
+    );
+
+    await client.query('COMMIT');
+
+    const createdCard = insertRes.rows[0];
+
+    return {
+      success: true,
+      giftCard: {
+        id: createdCard.id,
+        code: claimCode,
+        initialAmount: parseFloat(createdCard.initial_amount),
+        balance: parseFloat(createdCard.balance),
+        currency: createdCard.currency,
+        giftType: createdCard.gift_type,
+        packageType: createdCard.package_type,
+        occasion: createdCard.occasion,
+        serviceTitle: createdCard.service_title,
+        serviceCategory: createdCard.service_category,
+        recipientEmail: createdCard.recipient_email,
+        recipientPhone: createdCard.recipient_phone,
+        recipientName: createdCard.recipient_name,
+        personalMessage: createdCard.personal_message,
+        expiryDate: createdCard.expiry_date,
+        createdAt: createdCard.created_at,
+        metadata: createdCard.metadata,
+      },
+      newWalletBalance: newBalance,
+    };
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {}
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Retrieve patient service vouchers associated with a provider
+ */
+async function getProviderVouchers({ providerId, status, search, limit = 50, offset = 0 }) {
+  const whereClauses = [];
+  const params = [];
+
+  if (providerId) {
+    params.push(providerId);
+    whereClauses.push(`(g.service_provider_id = $${params.length} OR (g.service_provider_id IS NULL AND g.gift_type = 'service'))`);
+  } else {
+    whereClauses.push(`g.gift_type = 'service'`);
+  }
+
+  if (status && status !== 'all') {
+    params.push(status);
+    whereClauses.push(`g.status = $${params.length}`);
+  }
+
+  if (search && search.trim()) {
+    params.push(`%${search.trim()}%`);
+    const sIdx = params.length;
+    whereClauses.push(`(
+      g.code ILIKE $${sIdx} OR
+      g.recipient_name ILIKE $${sIdx} OR
+      g.recipient_email ILIKE $${sIdx} OR
+      g.recipient_phone ILIKE $${sIdx} OR
+      g.service_title ILIKE $${sIdx} OR
+      u.full_name ILIKE $${sIdx}
+    )`);
+  }
+
+  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+  // Stats query
+  const statsQuery = `
+    SELECT
+      COUNT(*)::int AS total,
+      COUNT(CASE WHEN g.status = 'active' THEN 1 END)::int AS active_count,
+      COUNT(CASE WHEN g.status = 'delivered' THEN 1 END)::int AS delivered_count,
+      COALESCE(SUM(CASE WHEN g.status = 'delivered' THEN g.initial_amount ELSE 0 END), 0)::numeric AS delivered_value
+    FROM gift_cards g
+    LEFT JOIN users u ON g.sender_id = u.id
+    ${whereSql}
+  `;
+
+  const statsRes = await pool.query(statsQuery, params);
+  const statsRow = statsRes.rows[0] || {};
+
+  // List query with pagination
+  const listParams = [...params];
+  listParams.push(limit);
+  const limitIdx = listParams.length;
+  listParams.push(offset);
+  const offsetIdx = listParams.length;
+
+  const listQuery = `
+    SELECT
+      g.id, g.code, g.initial_amount, g.balance, g.currency,
+      g.gift_type, g.package_type, g.occasion, g.service_title,
+      g.service_category, g.service_provider_id, g.status,
+      g.recipient_name, g.recipient_email, g.recipient_phone,
+      g.personal_message, g.expiry_date, g.created_at,
+      g.redeemed_at, g.delivered_at, g.metadata,
+      u.full_name AS sender_name, u.email AS sender_email,
+      p.provider_name
+    FROM gift_cards g
+    LEFT JOIN users u ON g.sender_id = u.id
+    LEFT JOIN providers p ON g.service_provider_id = p.id
+    ${whereSql}
+    ORDER BY g.created_at DESC
+    LIMIT $${limitIdx} OFFSET $${offsetIdx}
+  `;
+
+  const listRes = await pool.query(listQuery, listParams);
+
+  return {
+    vouchers: listRes.rows.map((row) => ({
+      id: row.id,
+      code: row.code,
+      initial_amount: parseFloat(row.initial_amount),
+      balance: parseFloat(row.balance),
+      currency: row.currency,
+      gift_type: row.gift_type,
+      package_type: row.package_type,
+      occasion: row.occasion,
+      service_title: row.service_title,
+      service_category: row.service_category,
+      service_provider_id: row.service_provider_id,
+      provider_name: row.provider_name,
+      status: row.status,
+      recipient_name: row.recipient_name,
+      recipient_email: row.recipient_email,
+      recipient_phone: row.recipient_phone,
+      sender_name: row.sender_name,
+      sender_email: row.sender_email,
+      personal_message: row.personal_message,
+      expiry_date: row.expiry_date,
+      created_at: row.created_at,
+      redeemed_at: row.redeemed_at,
+      delivered_at: row.delivered_at,
+      metadata: row.metadata,
+    })),
+    stats: {
+      total: parseInt(statsRow.total || 0, 10),
+      activeCount: parseInt(statsRow.active_count || 0, 10),
+      deliveredCount: parseInt(statsRow.delivered_count || 0, 10),
+      deliveredValue: parseFloat(statsRow.delivered_value || 0),
+    },
+  };
+}
+
+/**
+ * Finalizes gift card creation when a Chapa payment transaction completes
+ */
+async function finalizePaidGiftCard(tx) {
+  if (!tx || !tx.metadata || !tx.metadata.giftCardDetails) return null;
+
+  // Check if gift card was already created in pending_payment state
+  const pendingCard = await pool.query(
+    `SELECT * FROM gift_cards WHERE metadata->>'tx_ref' = $1`,
+    [tx.tx_ref]
+  );
+
+  if (pendingCard.rows.length > 0) {
+    const card = pendingCard.rows[0];
+    if (card.status === 'pending_payment') {
+      const updateRes = await pool.query(
+        `UPDATE gift_cards
+         SET status = 'active',
+             metadata = metadata || $1::jsonb
+         WHERE id = $2
+         RETURNING *`,
+        [JSON.stringify({ chapa_reference: tx.chapa_reference, paidAt: tx.completed_at || new Date().toISOString() }), card.id]
+      );
+      return updateRes.rows[0];
+    }
+    return card;
+  }
+
+  const d = tx.metadata.giftCardDetails || {};
+  const mergedMetadata = {
+    ...d.metadata,
+    tx_ref: tx.tx_ref,
+    chapa_reference: tx.chapa_reference,
+    paymentMethod: 'chapa',
+    paidAt: tx.completed_at || new Date().toISOString(),
+  };
+
+  const giftCard = await purchaseGiftCard({
+    senderId: tx.user_id,
+    amount: parseFloat(tx.amount),
+    currency: tx.currency,
+    giftType: d.giftType || 'monetary',
+    packageType: d.packageType || 'basic',
+    occasion: d.occasion || 'General',
+    serviceTitle: d.serviceTitle,
+    serviceCategory: d.serviceCategory,
+    serviceProviderId: d.serviceProviderId,
+    recipientEmail: d.recipientEmail,
+    recipientPhone: d.recipientPhone,
+    recipientName: d.recipientName,
+    personalMessage: d.personalMessage,
+    scheduledDeliveryDate: d.scheduledDeliveryDate || null,
+    status: 'active',
+    metadata: mergedMetadata,
+  });
+
+  // Update transaction metadata with gift card id and code
+  await pool.query(
+    `UPDATE transactions
+     SET metadata = metadata || $1::jsonb
+     WHERE id = $2`,
+    [JSON.stringify({ gift_card_id: giftCard.id, gift_card_code: giftCard.code }), tx.id]
+  );
+
+  return giftCard;
+}
+
+/**
+ * Publicly view a gift card for guest claim / preview without sensitive PII
+ */
+async function getPublicGiftCard(rawCode) {
+  const codeHash = hashClaimCode(rawCode);
+  if (!codeHash) {
+    const err = new Error('Invalid voucher code format.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const res = await pool.query(
+    `SELECT g.id, g.code, g.initial_amount, g.balance, g.currency,
+            g.gift_type, g.package_type, g.occasion, g.service_title,
+            g.service_category, g.status, g.recipient_name,
+            g.personal_message, g.expiry_date, g.created_at,
+            g.scheduled_delivery_date, g.delivered_at,
+            u.full_name AS sender_name,
+            p.provider_name
+     FROM gift_cards g
+     LEFT JOIN users u ON g.sender_id = u.id
+     LEFT JOIN providers p ON g.service_provider_id = p.id
+     WHERE g.code_hash = $1`,
+    [codeHash]
+  );
+
+  if (res.rows.length === 0) {
+    const err = new Error('Gift voucher not found.');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const row = res.rows[0];
+  const isExpired = new Date(row.expiry_date) <= new Date();
+
+  return {
+    id: row.id,
+    code: row.code,
+    senderName: row.sender_name || 'An ODS Member',
+    recipientName: row.recipient_name || 'Valued Recipient',
+    initialAmount: parseFloat(row.initial_amount),
+    balance: parseFloat(row.balance),
+    currency: row.currency,
+    giftType: row.gift_type,
+    packageType: row.package_type,
+    occasion: row.occasion,
+    serviceTitle: row.service_title,
+    serviceCategory: row.service_category,
+    providerName: row.provider_name,
+    personalMessage: row.personal_message,
+    status: isExpired && row.status === 'active' ? 'expired' : row.status,
+    expiryDate: row.expiry_date,
+    scheduledDeliveryDate: row.scheduled_delivery_date,
+    createdAt: row.created_at,
+    deliveredAt: row.delivered_at,
+    isClaimable: row.status === 'active' && !isExpired && parseFloat(row.balance) > 0,
+  };
+}
+
 module.exports = {
   generateClaimCode,
   hashClaimCode,
   purchaseGiftCard,
+  purchaseGiftCardWithWallet,
+  finalizePaidGiftCard,
   checkGiftCard,
+  getPublicGiftCard,
   redeemGiftCard,
   confirmServiceDelivery,
   getWalletBalance,
   getWalletActivity,
   getSentGiftCards,
   getReceivedGiftCards,
+  getProviderVouchers,
 };

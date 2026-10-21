@@ -11,10 +11,12 @@ import {
   CheckCircle2,
   XCircle,
   CalendarCheck,
+  Gift,
 } from 'lucide-react';
 import { DashboardLayout, SidebarItem, StatCardItem, QuickActionItem } from './DashboardLayout';
 import { ProviderProfileTab } from './provider/ProviderProfileTab';
 import { ProviderDocumentsTab } from './provider/ProviderDocumentsTab';
+import { ProviderVouchersTab } from './provider/ProviderVouchersTab';
 import { useAuth, ApprovalStatus } from '../../context/AuthContext';
 import { getProviderProfile, ProviderProfile } from '../../services/providerService';
 
@@ -44,6 +46,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
 
   const sidebarItems: SidebarItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={17} /> },
+    { id: 'vouchers', label: 'Patient Vouchers & Gifting', icon: <Gift size={17} /> },
     { id: 'profile', label: 'Facility Profile', icon: <User size={17} /> },
     { id: 'documents', label: 'KYC Documents', icon: <FileText size={17} /> },
     { id: 'services', label: 'Clinical Services', icon: <Stethoscope size={17} /> },
@@ -59,6 +62,11 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
   ];
 
   const quickActions: QuickActionItem[] = [
+    {
+      label: 'Verify Voucher',
+      icon: <Gift size={16} color="var(--color-gold-bright)" />,
+      onClick: () => setActiveTab('vouchers'),
+    },
     {
       label: 'Provider Profile',
       icon: <User size={16} color="var(--color-gold-bright)" />,
@@ -179,6 +187,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
       )}
 
       {/* Tab views */}
+      {activeTab === 'vouchers' && (
+        <ProviderVouchersTab providerName={profile?.provider_name || user?.full_name} />
+      )}
       {activeTab === 'profile' && (
         <ProviderProfileTab onProfileUpdated={(p) => setProfile(p)} />
       )}

@@ -242,7 +242,7 @@ async function sendGiftCardPresentationEmail({
   expiryDate,
 }) {
   const origin = getNormalizedOrigin();
-  const claimUrl = `${origin}/dashboard/customer?tab=gifting&claim=${encodeURIComponent(code)}`;
+  const claimUrl = `${origin}/gift/claim?code=${encodeURIComponent(code)}`;
   const isVip = packageType === 'vip';
   const recipient = sanitizeHeader(to);
 

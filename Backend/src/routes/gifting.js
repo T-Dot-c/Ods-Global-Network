@@ -2,28 +2,112 @@
  * ODS Global Network — Gifting & Digital Vouchers Router
  *
  * Implements:
- * - POST /api/gifting/purchase: Purchase a monetary gift card or service voucher
+ * - POST /api/gifting/purchase: Purchase a monetary gift card or service voucher (direct, wallet, chapa)
  * - POST /api/gifting/redeem: Atomically redeem a gift card into customer wallet
  * - POST /api/gifting/check: Public/safe preview of gift card balance and validity
  * - POST /api/gifting/confirm-delivery: Provider confirmation of service delivery
+ * - GET  /api/gifting/provider/vouchers: Provider list and metrics for clinical service vouchers
  * - GET  /api/gifting/wallet: Get current user wallet balance and redemption ledger
  * - GET  /api/gifting/my-cards: Get list of sent and received gift cards
  */
 'use strict';
 
 const express = require('express');
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 const { requireAuth, requireRole, requireVerifiedEmail } = require('../middleware/auth');
 const giftCardService = require('../services/giftCardService');
 const emailService = require('../services/emailService');
+const chapaService = require('../services/chapaService');
 const { logAuditEvent } = require('../services/auditService');
+
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
 const router = express.Router();
 
 /* ─────────────────────────────────────────────────────────────
+   Abuse Controls: Rate Limiters for Redemption & Purchase
+   ───────────────────────────────────────────────────────────── */
+const giftCheckLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30, // 30 requests per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test' || process.env.ALLOW_DESTRUCTIVE_TESTS === '1',
+  message: { success: false, message: 'Too many gift voucher lookup attempts. Please try again later.' },
+});
+
+const giftPurchaseLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 40, // 40 purchases per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test' || process.env.ALLOW_DESTRUCTIVE_TESTS === '1',
+  message: { success: false, message: 'Too many gift card purchase requests. Please try again later.' },
+});
+
+/* ─────────────────────────────────────────────────────────────
+   GET /api/gifting/public/claim/:code (Public Guest Claim & Preview)
+   ───────────────────────────────────────────────────────────── */
+router.get('/public/claim/:code', giftCheckLimiter, async (req, res) => {
+  const { code } = req.params;
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ success: false, message: 'Please provide a valid gift voucher claim code.' });
+  }
+
+  try {
+    const card = await giftCardService.getPublicGiftCard(code);
+    return res.json({
+      success: true,
+      card,
+    });
+  } catch (err) {
+    const status = err.statusCode || 500;
+    return res.status(status).json({ success: false, message: err.message || 'Error retrieving gift voucher.' });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   GET /api/gifting/provider/vouchers (Healthcare Provider Inbox)
+   ───────────────────────────────────────────────────────────── */
+router.get('/provider/vouchers', requireAuth, requireRole('provider', 'super_admin', 'admin'), async (req, res) => {
+  try {
+    let providerId = req.query.provider_id || null;
+
+    if (req.user.role === 'provider') {
+      const pRes = await pool.query(`SELECT id FROM providers WHERE user_id = $1`, [req.user.id]);
+      if (pRes.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Provider facility profile not found.' });
+      }
+      providerId = pRes.rows[0].id;
+    }
+
+    const { status, search, limit = 50, offset = 0 } = req.query;
+
+    const data = await giftCardService.getProviderVouchers({
+      providerId,
+      status,
+      search,
+      limit: parseInt(limit, 10) || 50,
+      offset: parseInt(offset, 10) || 0,
+    });
+
+    return res.json({
+      success: true,
+      ...data,
+    });
+  } catch (err) {
+    console.error('[gifting/provider/vouchers] Error:', err.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve provider service vouchers.' });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────
    POST /api/gifting/check (Public / Safe Preview)
    ───────────────────────────────────────────────────────────── */
-router.post('/check', async (req, res) => {
+router.post('/check', giftCheckLimiter, async (req, res) => {
   const { code } = req.body;
   if (!code || typeof code !== 'string') {
     return res.status(400).json({ success: false, message: 'Please provide a valid gift card code.' });
@@ -48,8 +132,9 @@ router.post('/check', async (req, res) => {
 
 /* ─────────────────────────────────────────────────────────────
    POST /api/gifting/purchase
+   Supports payment_method: 'direct' | 'wallet' | 'chapa'
    ───────────────────────────────────────────────────────────── */
-router.post('/purchase', requireAuth, requireVerifiedEmail, async (req, res) => {
+router.post('/purchase', giftPurchaseLimiter, requireAuth, requireVerifiedEmail, async (req, res) => {
   const amount = req.body.amount;
   const currency = req.body.currency;
   const gift_type = req.body.gift_type || req.body.giftType;
@@ -62,6 +147,8 @@ router.post('/purchase', requireAuth, requireVerifiedEmail, async (req, res) => 
   const recipient_phone = req.body.recipient_phone || req.body.recipientPhone;
   const recipient_name = req.body.recipient_name || req.body.recipientName;
   const personal_message = req.body.personal_message || req.body.personalMessage;
+  const scheduled_delivery_date = req.body.scheduled_delivery_date || req.body.scheduledDeliveryDate || null;
+  const payment_method = (req.body.payment_method || req.body.paymentMethod || 'direct').toLowerCase();
   const metadata = req.body.metadata;
 
   const numericAmount = parseFloat(amount);
@@ -73,6 +160,170 @@ router.post('/purchase', requireAuth, requireVerifiedEmail, async (req, res) => 
     return res.status(400).json({ success: false, message: 'Service title is required for service-linked gifts.' });
   }
 
+  // 1. Payment via Digital Wallet Balance
+  if (payment_method === 'wallet') {
+    try {
+      const result = await giftCardService.purchaseGiftCardWithWallet({
+        senderId: req.user.id,
+        amount: numericAmount,
+        currency: currency || 'ETB',
+        giftType: gift_type || 'monetary',
+        packageType: package_type || 'basic',
+        occasion: occasion || 'Generic',
+        serviceTitle: service_title,
+        serviceCategory: service_category,
+        serviceProviderId: service_provider_id,
+        recipientEmail: recipient_email,
+        recipientPhone: recipient_phone,
+        recipientName: recipient_name,
+        personalMessage: personal_message,
+        scheduledDeliveryDate: scheduled_delivery_date,
+        metadata,
+      });
+
+      const giftCard = result.giftCard;
+
+      if (recipient_email) {
+        const isScheduled = scheduled_delivery_date && new Date(scheduled_delivery_date) > new Date();
+        if (!isScheduled) {
+          emailService.sendGiftCardPresentationEmail({
+            to: recipient_email,
+            recipientName: recipient_name,
+            senderName: req.user.fullName || req.user.email,
+            code: giftCard.code,
+            amount: giftCard.initialAmount,
+            currency: giftCard.currency,
+            giftType: giftCard.giftType,
+            packageType: giftCard.packageType,
+            occasion: giftCard.occasion,
+            serviceTitle: giftCard.serviceTitle,
+            personalMessage: personal_message,
+            expiryDate: giftCard.expiryDate,
+          }).catch((mailErr) => {
+            console.error('[gifting/purchase:wallet] Email dispatch warning:', mailErr.message);
+          });
+        }
+      }
+
+      try {
+        await logAuditEvent({
+          userId: req.user.id,
+          action: 'GIFT_CARD_PURCHASED_WALLET',
+          targetId: giftCard.id,
+          details: {
+            code: giftCard.code,
+            amount: giftCard.initialAmount,
+            currency: giftCard.currency,
+            occasion: giftCard.occasion,
+            packageType: giftCard.packageType,
+            recipientEmail: recipient_email,
+            scheduledDeliveryDate: scheduled_delivery_date,
+            newWalletBalance: result.newWalletBalance,
+          },
+        });
+      } catch (_) {}
+
+      return res.status(201).json({
+        success: true,
+        message: 'Gift card created and paid via digital wallet.',
+        giftCard,
+        newWalletBalance: result.newWalletBalance,
+        paidViaWallet: true,
+      });
+    } catch (err) {
+      console.error('[gifting/purchase:wallet] Error:', err.message);
+      const status = err.statusCode || 400;
+      return res.status(status).json({ success: false, message: err.message || 'Failed to purchase gift card via wallet.' });
+    }
+  }
+
+  // 2. Payment via Chapa Gateway
+  if (payment_method === 'chapa') {
+    const txRef = `ods-gc-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const cleanCurrency = String(currency || 'ETB').trim().toUpperCase().slice(0, 3);
+
+    try {
+      // Pre-create gift card in 'pending_payment' state
+      const pendingCard = await giftCardService.purchaseGiftCard({
+        senderId: req.user.id,
+        amount: numericAmount,
+        currency: cleanCurrency,
+        giftType: gift_type || 'monetary',
+        packageType: package_type || 'basic',
+        occasion: occasion || 'Generic',
+        serviceTitle: service_title,
+        serviceCategory: service_category,
+        serviceProviderId: service_provider_id,
+        recipientEmail: recipient_email,
+        recipientPhone: recipient_phone,
+        recipientName: recipient_name,
+        personalMessage: personal_message,
+        scheduledDeliveryDate: scheduled_delivery_date,
+        status: 'pending_payment',
+        metadata: {
+          ...(metadata || {}),
+          tx_ref: txRef,
+          paymentMethod: 'chapa',
+        },
+      });
+
+      const giftCardDetails = {
+        giftCardId: pendingCard.id,
+        senderId: req.user.id,
+        amount: numericAmount,
+        currency: cleanCurrency,
+        giftType: gift_type || 'monetary',
+        packageType: package_type || 'basic',
+        occasion: occasion || 'Generic',
+        serviceTitle: service_title,
+        serviceCategory: service_category,
+        serviceProviderId: service_provider_id,
+        recipientEmail: recipient_email,
+        recipientPhone: recipient_phone,
+        recipientName: recipient_name,
+        personalMessage: personal_message,
+        scheduledDeliveryDate: scheduled_delivery_date,
+        metadata,
+      };
+
+      await pool.query(
+        `INSERT INTO transactions (user_id, tx_ref, amount, currency, status, payment_method, purpose, metadata)
+         VALUES ($1, $2, $3, $4, 'pending', 'chapa', 'gift_card_purchase', $5)`,
+        [req.user.id, txRef, numericAmount, cleanCurrency, JSON.stringify({ giftCardDetails, gift_card_id: pendingCard.id })]
+      );
+
+      const nameParts = (req.user.fullName || req.user.full_name || 'ODS Customer').trim().split(' ');
+      const firstName = nameParts[0] || 'ODS';
+      const lastName = nameParts.slice(1).join(' ') || 'Customer';
+
+      const chapaRes = await chapaService.initializePayment({
+        amount: numericAmount,
+        currency: cleanCurrency,
+        email: req.user.email,
+        firstName,
+        lastName,
+        txRef,
+        callbackUrl: `${BACKEND_BASE_URL}/api/payments/webhook/chapa`,
+        returnUrl: `${FRONTEND_ORIGIN}/payment/success?tx_ref=${encodeURIComponent(txRef)}`,
+      });
+
+      return res.status(200).json({
+        success: true,
+        paymentRequired: true,
+        txRef,
+        giftCardId: pendingCard.id,
+        checkoutUrl: chapaRes.data?.checkout_url || chapaRes.checkout_url,
+        mode: chapaRes.mode,
+        message: 'Payment initialized with Chapa gateway.',
+      });
+    } catch (err) {
+      console.error('[gifting/purchase:chapa] Error:', err.message);
+      const status = err.statusCode || 500;
+      return res.status(status).json({ success: false, message: err.message || 'Failed to initialize payment gateway.' });
+    }
+  }
+
+  // 3. Direct issuance (Dev / Sandbox / Admin issuance)
   try {
     const giftCard = await giftCardService.purchaseGiftCard({
       senderId: req.user.id,
@@ -88,27 +339,31 @@ router.post('/purchase', requireAuth, requireVerifiedEmail, async (req, res) => 
       recipientPhone: recipient_phone,
       recipientName: recipient_name,
       personalMessage: personal_message,
+      scheduledDeliveryDate: scheduled_delivery_date,
       metadata,
     });
 
     // Asynchronously dispatch gift card presentation email if recipient email provided
     if (recipient_email) {
-      emailService.sendGiftCardPresentationEmail({
-        to: recipient_email,
-        recipientName: recipient_name,
-        senderName: req.user.fullName || req.user.email,
-        code: giftCard.code,
-        amount: giftCard.initialAmount,
-        currency: giftCard.currency,
-        giftType: giftCard.giftType,
-        packageType: giftCard.packageType,
-        occasion: giftCard.occasion,
-        serviceTitle: giftCard.serviceTitle,
-        personalMessage: personal_message,
-        expiryDate: giftCard.expiryDate,
-      }).catch((mailErr) => {
-        console.error('[gifting/purchase] Email dispatch warning:', mailErr.message);
-      });
+      const isScheduled = scheduled_delivery_date && new Date(scheduled_delivery_date) > new Date();
+      if (!isScheduled) {
+        emailService.sendGiftCardPresentationEmail({
+          to: recipient_email,
+          recipientName: recipient_name,
+          senderName: req.user.fullName || req.user.email,
+          code: giftCard.code,
+          amount: giftCard.initialAmount,
+          currency: giftCard.currency,
+          giftType: giftCard.giftType,
+          packageType: giftCard.packageType,
+          occasion: giftCard.occasion,
+          serviceTitle: giftCard.serviceTitle,
+          personalMessage: personal_message,
+          expiryDate: giftCard.expiryDate,
+        }).catch((mailErr) => {
+          console.error('[gifting/purchase] Email dispatch warning:', mailErr.message);
+        });
+      }
     }
 
     try {
@@ -123,6 +378,7 @@ router.post('/purchase', requireAuth, requireVerifiedEmail, async (req, res) => 
           occasion: giftCard.occasion,
           packageType: giftCard.packageType,
           recipientEmail: recipient_email,
+          scheduledDeliveryDate: scheduled_delivery_date,
         },
       });
     } catch (_) {}
@@ -142,7 +398,7 @@ router.post('/purchase', requireAuth, requireVerifiedEmail, async (req, res) => 
 /* ─────────────────────────────────────────────────────────────
    POST /api/gifting/redeem
    ───────────────────────────────────────────────────────────── */
-router.post('/redeem', requireAuth, requireVerifiedEmail, async (req, res) => {
+router.post('/redeem', giftCheckLimiter, requireAuth, requireVerifiedEmail, async (req, res) => {
   const { code } = req.body;
   if (!code || typeof code !== 'string') {
     return res.status(400).json({ success: false, message: 'Please enter a gift card claim code.' });

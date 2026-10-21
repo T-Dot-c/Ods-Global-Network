@@ -12,6 +12,7 @@ import {
   Clock,
   ShieldCheck,
   Award,
+  CreditCard,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import {
@@ -75,6 +76,8 @@ export const CustomerGiftingTab: React.FC = () => {
     recipientEmail: '',
     recipientPhone: '',
     personalMessage: '',
+    scheduledDeliveryDate: '',
+    paymentMethod: 'wallet' as 'wallet' | 'chapa' | 'direct',
   });
   const [purchaseSubmitting, setPurchaseSubmitting] = useState<boolean>(false);
 
@@ -158,9 +161,27 @@ export const CustomerGiftingTab: React.FC = () => {
         recipient_email: purchaseForm.recipientEmail.trim() || undefined,
         recipient_phone: purchaseForm.recipientPhone.trim() || undefined,
         personal_message: purchaseForm.personalMessage.trim() || undefined,
+        scheduled_delivery_date: purchaseForm.scheduledDeliveryDate || undefined,
+        payment_method: purchaseForm.paymentMethod,
       });
 
-      setSuccessMsg(`Gift Card created successfully! Claim Code: ${res.giftCard.code}`);
+      if (res.paymentRequired && res.checkoutUrl) {
+        if (res.txRef) {
+          sessionStorage.setItem('ods_last_payment_tx_ref', res.txRef);
+        }
+        setSuccessMsg('Payment session created. Redirecting to Chapa checkout...');
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+
+      if (res.paidViaWallet) {
+        setSuccessMsg(
+          `Gift Card created successfully and paid from your Digital Wallet! Remaining balance: ${res.newWalletBalance?.toLocaleString()} ETB.`
+        );
+      } else {
+        setSuccessMsg(`Gift Card created successfully! Claim Code: ${res.giftCard?.code}`);
+      }
+
       setIsPurchaseModalOpen(false);
       setPurchaseForm({
         amount: 1000,
@@ -175,6 +196,8 @@ export const CustomerGiftingTab: React.FC = () => {
         recipientEmail: '',
         recipientPhone: '',
         personalMessage: '',
+        scheduledDeliveryDate: '',
+        paymentMethod: 'wallet',
       });
 
       await loadGiftingData();
@@ -663,6 +686,10 @@ export const CustomerGiftingTab: React.FC = () => {
                                 ? '#e0f2fe'
                                 : card.status === 'delivered'
                                 ? '#f3e8ff'
+                                : card.status === 'pending_payment'
+                                ? '#fef3c7'
+                                : card.status === 'refunded'
+                                ? '#ffedd5'
                                 : '#fee2e2',
                             color:
                               card.status === 'active'
@@ -671,11 +698,21 @@ export const CustomerGiftingTab: React.FC = () => {
                                 ? '#0369a1'
                                 : card.status === 'delivered'
                                 ? '#7e22ce'
+                                : card.status === 'pending_payment'
+                                ? '#b45309'
+                                : card.status === 'refunded'
+                                ? '#c2410c'
                                 : '#b91c1c',
                           }}
                         >
-                          {card.status.toUpperCase()}
+                          {card.status.replace('_', ' ').toUpperCase()}
                         </span>
+                        {card.scheduled_delivery_date && (
+                          <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            <Clock size={11} />
+                            Sched: {new Date(card.scheduled_delivery_date).toLocaleDateString()}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: '16px 20px' }}>
                         <button
@@ -783,11 +820,33 @@ export const CustomerGiftingTab: React.FC = () => {
                             borderRadius: '9999px',
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            backgroundColor: card.status === 'active' ? '#dcfce7' : '#e0f2fe',
-                            color: card.status === 'active' ? '#15803d' : '#0369a1',
+                            backgroundColor:
+                              card.status === 'active'
+                                ? '#dcfce7'
+                                : card.status === 'redeemed'
+                                ? '#e0f2fe'
+                                : card.status === 'delivered'
+                                ? '#f3e8ff'
+                                : card.status === 'pending_payment'
+                                ? '#fef3c7'
+                                : card.status === 'refunded'
+                                ? '#ffedd5'
+                                : '#fee2e2',
+                            color:
+                              card.status === 'active'
+                                ? '#15803d'
+                                : card.status === 'redeemed'
+                                ? '#0369a1'
+                                : card.status === 'delivered'
+                                ? '#7e22ce'
+                                : card.status === 'pending_payment'
+                                ? '#b45309'
+                                : card.status === 'refunded'
+                                ? '#c2410c'
+                                : '#b91c1c',
                           }}
                         >
-                          {card.status.toUpperCase()}
+                          {card.status.replace('_', ' ').toUpperCase()}
                         </span>
                       </td>
                       <td style={{ padding: '16px 20px' }}>
@@ -1195,6 +1254,32 @@ export const CustomerGiftingTab: React.FC = () => {
                 </div>
               </div>
 
+              {/* Scheduled Delivery Date */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Scheduled Delivery Date (Optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={purchaseForm.scheduledDeliveryDate}
+                  onChange={(e) => setPurchaseForm({ ...purchaseForm, scheduledDeliveryDate: e.target.value })}
+                  min={new Date().toISOString().slice(0, 16)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.9rem',
+                    boxSizing: 'border-box',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                  }}
+                />
+                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                  Leave blank for immediate delivery upon payment confirmation.
+                </div>
+              </div>
+
               {/* Personal Heartfelt Message */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
@@ -1215,6 +1300,77 @@ export const CustomerGiftingTab: React.FC = () => {
                     fontFamily: 'inherit',
                   }}
                 />
+              </div>
+
+              {/* Payment Method Selection */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+                  Select Payment Method
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPurchaseForm({ ...purchaseForm, paymentMethod: 'chapa' })}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: purchaseForm.paymentMethod === 'chapa' ? '2px solid #0F285B' : '1px solid #cbd5e1',
+                      backgroundColor: purchaseForm.paymentMethod === 'chapa' ? '#f0f4ff' : '#ffffff',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CreditCard size={16} color="#0F285B" />
+                      <strong style={{ color: '#0F285B', fontSize: '0.88rem' }}>Chapa Gateway</strong>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                      Telebirr, CBE Birr, Cards
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPurchaseForm({ ...purchaseForm, paymentMethod: 'wallet' })}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: purchaseForm.paymentMethod === 'wallet' ? '2px solid #047857' : '1px solid #cbd5e1',
+                      backgroundColor: purchaseForm.paymentMethod === 'wallet' ? '#ecfdf5' : '#ffffff',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Wallet size={16} color="#047857" />
+                      <strong style={{ color: '#047857', fontSize: '0.88rem' }}>Digital Wallet</strong>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                      Balance: {walletBalance.toLocaleString()} {currency}
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPurchaseForm({ ...purchaseForm, paymentMethod: 'direct' })}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: purchaseForm.paymentMethod === 'direct' ? '2px solid #d97706' : '1px solid #cbd5e1',
+                      backgroundColor: purchaseForm.paymentMethod === 'direct' ? '#fffbeb' : '#ffffff',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sparkles size={16} color="#d97706" />
+                      <strong style={{ color: '#b45309', fontSize: '0.88rem' }}>Direct / Sandbox</strong>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                      Instant issuance for test
+                    </div>
+                  </button>
+                </div>
               </div>
 
               {/* Submit Buttons */}

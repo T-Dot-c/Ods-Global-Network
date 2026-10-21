@@ -77,6 +77,7 @@ function spawnTestServer() {
     };
 
     const child = spawn(process.execPath, [path.join(__dirname, 'src', 'server.js')], {
+      cwd: __dirname,
       env,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -91,6 +92,12 @@ function spawnTestServer() {
 
     child.stderr.on('data', (d) => {
       capturedServerLogs += d.toString();
+    });
+
+    child.on('exit', (code) => {
+      if (code !== 0 && code !== null) {
+        reject(new Error(`Test server on port ${TEST_PORT} exited early with code ${code}. Logs:\n${capturedServerLogs}`));
+      }
     });
 
     child.on('error', reject);

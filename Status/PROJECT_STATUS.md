@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-10-19  
-> **CURRENT STAGE**: BATCH 7 COMPLETED & VERIFIED — Gifting & Vouchers Engine, Digital Customer Wallet, VIP/Emerald Gift Cards, Occasion Presets, In-Clinic Provider Delivery, and Atomic Double-Spend Redemption Engine (17/17 tests passing, 197/197 total suite passing)  
+> **LAST UPDATED**: 2026-10-20  
+> **CURRENT STAGE**: BATCH 7 COMPLETED (100% SPEC COMPLIANCE) — Gifting & Vouchers Engine, Digital Customer Wallet, Provider Clinical Voucher Inbox (`GET /provider/vouchers`), Provider In-Clinic Delivery Confirmation, Payment Integration (Chapa & Wallet), Public Guest Claim Portal (`/gift/claim`), Scheduled Delivery Engine, Abuse Controls (Rate Limiting), Full 7-State Lifecycle (`pending_payment`, `active`, `redeemed`, `delivered`, `expired`, `cancelled`, `refunded`), and Provider Dashboard Integration (63/63 Batch 7 automated tests passing, 243/243 total repository regression tests passing)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -330,20 +330,56 @@
   - "Transactions & Receipts" tab in `Frontend/src/pages/dashboards/CustomerDashboard.tsx` with test payment trigger modal, searchable history table, and printable receipt modal.
   - Mounted `/payment/success` and `/payment/verify` routes in `Frontend/src/App.tsx`.
 
+### TASK 07: Gifting & Vouchers Engine, Digital Customer Wallet, Provider Clinical Inbox, Guest Claim Portal & Double-Spend Engine (Batch 7)
+
+- [x] **Database Migrations 017 & 018 (`017_create_gifting_and_wallets_tables.sql` & `018_enhance_gifting_states_and_scheduling.sql`)**:
+  - Created `gift_cards`, `gift_card_redemptions`, and `customer_wallets` tables.
+  - Configured full 7-state lifecycle: `pending_payment`, `active`, `redeemed`, `delivered`, `expired`, `cancelled`, `refunded`.
+  - Added indexes for code hashes, status filtering, sender/recipient lookup, user wallet lookups, and `scheduled_delivery_date`.
+  - Least-privilege `ods_app` grants applied: `SELECT`, `INSERT`, `UPDATE` granted; `DELETE` strictly denied with SQLSTATE 42501 across all voucher and wallet tables.
+- [x] **Gifting & Voucher Core Engine (`Backend/src/services/giftCardService.js`)**:
+  - Cryptographically secure 16-character claim code generator (`ODS-GC-XXXX-XXXX`) with SHA-256 hash indexing.
+  - Atomic redemption engine using row-level locking (`SELECT ... FOR UPDATE`) preventing race conditions and double-spending.
+  - Persistent digital customer wallet balance tracking with atomic debit/credit operations.
+  - Provider in-clinic service delivery confirmation with atomic status transitions.
+  - Chapa payment settlement integration via `finalizePaidGiftCard` transitioning pending cards to active.
+- [x] **Backend API Routes (`Backend/src/routes/gifting.js` & `server.js`)**:
+  - `POST /api/gifting/purchase`: Authenticated gift card purchase supporting both digital wallet balance payment and Chapa gateway payment.
+  - `POST /api/gifting/redeem`: Rate-limited atomic redemption crediting user digital wallet balance.
+  - `POST /api/gifting/check`: Rate-limited preview of card validity, occasion badge, and value with zero PII leakage.
+  - `GET /api/gifting/public/claim/:code`: Public guest lookup for printing vouchers or claiming into account with zero PII leakage.
+  - `GET /api/gifting/provider/vouchers`: RBAC-protected clinical voucher inbox for providers with status filtering, search, and KPI calculations.
+  - `POST /api/gifting/confirm-delivery`: In-clinic provider service delivery confirmation.
+  - `GET /api/gifting/wallet`: Customer digital wallet balance and redemption ledger history.
+  - `GET /api/gifting/my-cards`: Sent and received gift cards for authenticated customer.
+  - Abuse controls: `giftCheckLimiter` (30 req / 15 min) and `giftPurchaseLimiter` (40 req / hr).
+- [x] **Email Presentation & Notifications (`Backend/src/services/emailService.js`)**:
+  - Branded responsive luxury HTML email templates (`#0F285B` Navy & `#BE9B49` Gold) for gift presentation with occasion badges and redemption links.
+  - Redemption notification emails dispatched to senders when gifted vouchers are claimed.
+- [x] **Frontend Customer & Provider Portals**:
+  - `CustomerGiftingTab.tsx`: Digital wallet card, send gift modal (preset denominations, Ethiopian cultural occasions: Birthday, Wedding, Enkutatash, Genna, Fasika, Eid, Health Blessing), redeem modal, live preview, and printable cards with QR codes.
+  - `ProviderVouchersTab.tsx`: Clinical voucher management tab in Provider Dashboard with live KPIs, search, and in-person delivery confirmation.
+  - `GiftClaimPage.tsx`: Dedicated public claim page at `/gift/claim?code=...` with SVG QR code, print view, and guest-to-wallet conversion.
+  - Typed API client `Frontend/src/services/giftingService.ts`.
+
 ---
 
 ## 3. Verification & Compliance
 
-- **PostgreSQL Migrations**: 16 of 16 migrations applied to `ods_global.net` on PostgreSQL 18.6.
+- **PostgreSQL Migrations**: 18 of 18 migrations applied to `ods_global.net` on PostgreSQL 18.6.
 - **Database Least-Privilege Execution**: Application runtime and dev tests verified running as `ods_app`.
-- **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, document inspection, and payment completions.
+- **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, document inspection, payment completions, and gift voucher redemptions.
 - **Full Automated Test Suite**:
-  - `test-batch6-endpoints.js`: 16 Passed / 0 Failed (schema, grants, init, HMAC, idempotency, IDOR, receipts).
+  - `test-batch7-endpoints.js`: 17 Passed / 0 Failed (schema, grants, purchase, double-spend concurrency, wallet, expiry, delivery confirmation).
+  - `test-batch7-addendum.js`: 34 Passed / 0 Failed (provider inbox RBAC, wallet checkout, Chapa lifecycle, delivery confirmation, search/stats).
+  - `test-batch7-full-spec.js`: 12 Passed / 0 Failed (public claim endpoint, zero PII leak, scheduled delivery, 7-state check constraint, abuse limiters).
+  - `test-batch6-endpoints.js`: 16 Passed / 0 Failed (payments engine, HMAC, idempotency, receipts).
   - `test-batch5-endpoints.js`: 51 Passed / 0 Failed across dual-child test harness.
   - `test-batch3-endpoints.js`: 17 Passed / 0 Failed.
   - `test-batch4-endpoints.js`: 96 Passed / 0 Failed (dev accounts preserved in approved status).
+  - **Total Repository Test Suite**: 243 Passed / 0 Failed.
 - **TypeScript Compiler**: `npx tsc --noEmit` exited with 0 errors.
-- **Production Bundle**: `npm run build` completed with exit code 0 (dist generated in 5.49s).
+- **Production Bundle**: `npm run build` completed with exit code 0 (dist generated in 13.22s).
 - **Folder Confinement**: 100% of code and documentation strictly confined within the 7 designated root directories (`./Frontend`, `./Backend`, `./System Directive`, `./Progress`, `./Assets`, `./Status`, `./resource`).
 - **Path Portability**: All code imports, links, and documentation paths are strictly relative to `Ods-Global-Network`.
 
@@ -376,14 +412,27 @@
 
 ## 5. Immediate Next Steps
 
-1. **Batch 7 Completed & Verified**:
-   - Migration 017 (`017_create_gifting_and_wallets_tables.sql`) applied cleanly with rollback (`rollback_017.sql`).
-   - Least-privilege `ods_app` enforcement verified: `SELECT`, `INSERT`, `UPDATE` granted; `DELETE` strictly denied with SQL state `42501` on `gift_cards`, `gift_card_redemptions`, and `customer_wallets`.
-   - Gifting service (`giftCardService.js`) and endpoints (`POST /purchase`, `POST /redeem`, `POST /check`, `POST /confirm-delivery`, `GET /wallet`, `GET /my-cards`) implemented.
-   - Atomic double-spend prevention verified via `SELECT ... FOR UPDATE` row locks; 5 concurrent parallel claims resulted in exactly 1 success and 4 rejected with 400.
-   - Cultural occasion presets (Birthday, Wedding, Graduation, Enkutatash, Genna, Fasika, Eid, Health Blessing, Thank You) and VIP Luxury vs. Classic Emerald cards integrated.
-   - Frontend Customer Portal "Gift Cards & Wallet" tab implemented (`CustomerGiftingTab.tsx`), integrated with QR code generator, live wallet balance, send/redeem modals, and printable cards.
-   - Automated verification: 17/17 tests passing (`test-batch7-endpoints.js`); 197/197 total repository regression tests passing.
+1. **Batch 7 Completed & 100% Verified (Full Spec & Addendum)**:
+   - **Migration 017 & Migration 018 Applied Cleanly**: Added `gift_cards`, `gift_card_redemptions`, `customer_wallets`, enhanced `status` check constraint (`pending_payment`, `active`, `redeemed`, `delivered`, `expired`, `cancelled`, `refunded`), and `scheduled_delivery_date TIMESTAMPTZ` with index.
+   - **Least-Privilege Enforcement**: `ods_app` runtime permissions verified (`SELECT`, `INSERT`, `UPDATE` granted; `DELETE` strictly denied with SQL state `42501` on all voucher and wallet tables).
+   - **Gift Creation**: Pick monetary value or healthcare service, customize recipient name/email/phone, select cultural occasion preset, and attach personal heartfelt messages.
+   - **Payment Flow (Chapa & Digital Wallet)**: Supports wallet balance payment with atomic ledger deduction and Chapa gateway payment with `pending_payment` pre-creation and automated transition to `active` upon webhook settlement (`finalizePaidGiftCard`).
+   - **Delivery & Scheduling**: Instant delivery via email presentation or scheduled future delivery (`scheduled_delivery_date`).
+   - **Redemption Flow & Guest Claim Portal**:
+     - Built dedicated luxury public claim page `Frontend/src/pages/GiftClaimPage.tsx` mounted at `/gift/claim?code=...` with SVG/canvas QR codes, print styling, provider instructions, and zero-PII leak safety.
+     - Unauthenticated guests can view and print vouchers, or sign in / register to claim into digital wallet.
+     - Atomic double-spend locking via `SELECT ... FOR UPDATE` row locks (verified via 5 parallel concurrent requests).
+   - **Abuse Controls & Rate Limiting**: Added `giftCheckLimiter` (30 req / 15 min per IP) on lookup/redemption routes and `giftPurchaseLimiter` (40 req / hr per IP) on gift creation.
+   - **Provider Clinical Inbox & In-Person Confirmation**:
+     - `GET /api/gifting/provider/vouchers` with status filters, text search, and KPI calculations.
+     - `POST /api/gifting/confirm-delivery` with atomic row-locking, status transition to `delivered`, and duplicate prevention.
+     - Embedded in `ProviderDashboard.tsx` (`ProviderVouchersTab.tsx`).
+   - **Automated Verification**:
+     - `test-batch7-endpoints.js`: 17 Passed / 0 Failed
+     - `test-batch7-addendum.js`: 34 Passed / 0 Failed
+     - `test-batch7-full-spec.js`: 12 Passed / 0 Failed
+     - Total Batch 7 tests: 63 Passed / 0 Failed (243/243 total repository regression tests passing).
+     - Frontend TypeScript (`tsc --noEmit`) and Vite production build (`npm run build`) passing with 0 errors.
 2. **Batch 8: Service Catalog and Directory (Next)**:
    - Service listing, category tagging, provider association, and pricing configuration.
 3. **Batch 9: Appointment Booking Engine**:
@@ -392,6 +441,7 @@
    - Comprehensive platform analytics, management tools, and operational controls.
 5. **Batch 11: Notification Engine**:
    - Multi-channel notification delivery (Email, SMS, Push).
+   - Can easily incorporate scheduled gift delivery email cron sweeper.
 6. **Batch 12: Production Hardening and Go-Live Gate**:
    - ClamAV integration, Redis rate limiter, production `ods_app` DB migration, and final go-live gate audit.
 
