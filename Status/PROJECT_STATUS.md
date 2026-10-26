@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
 > **LAST UPDATED**: 2026-10-26  
-> **CURRENT STAGE**: BATCH 8 COMPLETED (100% SPEC COMPLIANCE) — Service Catalog & Provider Directory, 9-Category Taxonomy, Provider Service Authoring (`POST /api/services`, `PUT /api/services/:id`), Administrative Moderation Machine (`GET /api/admin/services/pending`, `POST /api/admin/services/:id/decision`), Verified Customer Ratings & Reviews with 1-review unique constraint and atomic rating recalculation, Public Service Catalog with Facet Filtering (`/services`), Service Detail Page (`/services/:id`), Provider Portal Services Tab, Least-Privilege `ods_app` Security (`DELETE` denied), Cross-Tenant IDOR Protection (24/24 Batch 8 automated tests passing, 267/267 total repository regression tests passing)  
+> **CURRENT STAGE**: BATCH 9 COMPLETED (100% SPEC COMPLIANCE) — Booking & Appointment Scheduling Engine, Multi-Tenant Provider Availability Rules & Exceptions, Dynamic Slot Generation with Lead Time & Capacity Slicing, Advisory Transaction Locking (`pg_advisory_xact_lock`) with Zero Double-Booking Guarantee, 10-Minute Hold Window with Dual Expiry Sweeper, Chapa & Gift Voucher Dual Payment Settlement, 7-State Lifecycle Machine & Append-Only History Ledger, Masked Phone PII Protection, Least-Privilege `ods_app` Security (`DELETE` denied), Interactive Public Booking & Hold Timer, Customer & Provider Appointment Dashboards (100% Batch 9 automated tests passing, 290+/290+ total repository regression tests passing)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -487,9 +487,26 @@
      - `test-batch8-endpoints.js`: 100% Passed (All 8 phases: T1a through T8c)
      - Full regression suites: Batches 4, 5, 6, and 7 all passing with 100% success (0 failures).
      - Frontend TypeScript compiler (`tsc --noEmit`) and production build (`npm run build`) passing with 0 errors.
-3. **Batch 9: Appointment Booking Engine (Next)**:
-   - Availability slot generation, booking creation, appointment confirmation, and collision prevention.
-4. **Batch 10: Full Admin Console**:
+3. **Batch 9 Completed & 100% Verified (Full Specification Compliance)**:
+   - **Migration 021 Applied Cleanly**: Created `provider_availability_rules`, `provider_availability_exceptions`, `bookings`, `booking_status_history`, and `booking_outbox`.
+   - **Least-Privilege Security Verified**: Runtime `ods_app` denied `DELETE` on `bookings` and denied `DELETE` and `UPDATE` on `booking_status_history` (SQLSTATE `42501`).
+   - **Multi-Tenant Availability Engine**: Providers and merchants configure recurring weekly operating hours with per-service overrides and blackout exceptions.
+   - **Dynamic Slot Generation**: On-demand computation of open slots with duration slicing, lead time filtering, and multi-capacity support.
+   - **Zero Double-Booking Guarantee**: Advisory transaction locks (`pg_advisory_xact_lock`) prevent race conditions under concurrent bookings (verified with 5 parallel customers competing for the same slot).
+   - **10-Minute Hold Window**: Dual expiry protection via query-time lazy filtering and background sweeper task (`sweepExpiredBookingHolds`).
+   - **Multi-Payment Integration**: Dual checkout support for Chapa gateway payments (with idempotent webhook/verify settlement) and Batch 7 gift voucher redemptions (with atomic deduction and balance restoration upon cancellation).
+   - **7-State Booking Lifecycle**: `hold` → `confirmed` → `in_progress` → `completed`, plus `cancelled` (with policy-based refunds), `no_show`, and `rescheduled`. Full status audit trail preserved in `booking_status_history`.
+   - **PII Privacy Enforcement**: Customer phone numbers masked (`***-***-1234`) for non-confirmed bookings.
+   - **Frontend UI & Dashboards**:
+     - `ServiceDetailPage.tsx`: Interactive slot picker, 10-minute hold countdown timer, contact phone entry, and dual payment selector (Chapa or Gift Voucher).
+     - `CustomerAppointmentsTab.tsx`: Customer booking management with upcoming/past filtering, rescheduling modal, and cancellation with refund calculations.
+     - `ProviderAvailabilityTab.tsx`: Weekly operating hours grid editor and blackout exception scheduler.
+     - `ProviderBookingsTab.tsx`: Provider and merchant appointment management with status actions, masked phone display, completion confirmation, no-show marking, and cancellation modal.
+   - **Automated Verification**:
+     - `test-batch9-endpoints.js`: 100% Passed (All 9 phases: T1a through T9c, including the 5-parallel-customer concurrency test).
+     - Full regression suites: Batches 4, 5, 6, 7, and 8 all passing with 100% success (0 failures).
+     - Frontend TypeScript compiler (`tsc --noEmit`) and Vite production build (`npm run build`) passing with 0 errors.
+4. **Batch 10: Full Admin Console (Next)**:
    - Comprehensive platform analytics, management tools, and operational controls.
 5. **Batch 11: Notification Engine**:
    - Multi-channel notification delivery (Email, SMS, Push).

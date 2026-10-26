@@ -3,7 +3,7 @@
  * ODS Global Network
  */
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:5000';
+const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:3001';
 
 export type ServiceStatus =
   | 'draft'

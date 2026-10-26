@@ -193,6 +193,10 @@ app.get('/api/service-categories', async (_req, res) => {
   }
 });
 
+/* ── Appointment Booking & Availability routes (Batch 9) ─── */
+const bookingRoutes = require('./routes/bookings');
+app.use('/api', bookingRoutes);
+
 /* ── Start unattached document sweeper ────────────────────── */
 const { startSweeper } = require('./services/sweeperService');
 startSweeper();

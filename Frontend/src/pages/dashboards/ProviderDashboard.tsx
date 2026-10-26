@@ -18,6 +18,8 @@ import { ProviderProfileTab } from './provider/ProviderProfileTab';
 import { ProviderDocumentsTab } from './provider/ProviderDocumentsTab';
 import { ProviderVouchersTab } from './provider/ProviderVouchersTab';
 import { ProviderServicesTab } from './provider/ProviderServicesTab';
+import { ProviderBookingsTab } from './provider/ProviderBookingsTab';
+import { ProviderAvailabilityTab } from './provider/ProviderAvailabilityTab';
 import { useAuth, ApprovalStatus } from '../../context/AuthContext';
 import { getProviderProfile, ProviderProfile } from '../../services/providerService';
 
@@ -52,7 +54,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
     { id: 'documents', label: 'KYC Documents', icon: <FileText size={17} /> },
     { id: 'services', label: 'Clinical Services', icon: <Stethoscope size={17} /> },
     { id: 'appointments', label: 'Appointments', icon: <Calendar size={17} /> },
-    { id: 'availability', label: 'Duty Hours', icon: <Clock size={17} /> },
+    { id: 'availability', label: 'Availability', icon: <Clock size={17} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={17} /> },
   ];
 
@@ -199,6 +201,12 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
       )}
       {activeTab === 'services' && (
         <ProviderServicesTab />
+      )}
+      {activeTab === 'appointments' && (
+        <ProviderBookingsTab />
+      )}
+      {activeTab === 'availability' && (
+        <ProviderAvailabilityTab />
       )}
     </DashboardLayout>
   );

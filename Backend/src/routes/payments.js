@@ -226,6 +226,18 @@ router.post('/webhook/chapa', async (req, res) => {
           }
         });
       }
+
+      // If this transaction was for a booking payment, confirm the booking
+      if (tx.purpose === 'booking_payment' && tx.metadata?.booking_id) {
+        setImmediate(async () => {
+          try {
+            const bookingService = require('../services/bookingService');
+            await bookingService.confirmPaidBooking(tx);
+          } catch (bErr) {
+            console.error('[webhook/chapa] confirmPaidBooking error:', bErr.message);
+          }
+        });
+      }
     }
 
     // Always return HTTP 200 to acknowledge webhook
@@ -308,6 +320,16 @@ router.get('/verify/:txRef', requireAuth, async (req, res) => {
                 await giftCardService.finalizePaidGiftCard(tx);
               } catch (gcErr) {
                 console.error('[payments/verify] finalizePaidGiftCard error:', gcErr.message);
+              }
+            }
+
+            // If this transaction was for a booking payment, confirm the booking
+            if (tx.purpose === 'booking_payment' && tx.metadata?.booking_id) {
+              try {
+                const bookingService = require('../services/bookingService');
+                await bookingService.confirmPaidBooking(tx);
+              } catch (bErr) {
+                console.error('[payments/verify] confirmPaidBooking error:', bErr.message);
               }
             }
           }

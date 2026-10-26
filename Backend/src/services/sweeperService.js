@@ -55,19 +55,45 @@ async function sweepExpiredDocuments() {
   }
 }
 
+async function sweepExpiredBookingHolds() {
+  try {
+    const bookingService = require('./bookingService');
+    const cleaned = await bookingService.cleanExpiredHolds();
+    if (cleaned > 0) {
+      console.log(`[Sweeper] Expired ${cleaned} lapsed booking hold(s).`);
+    }
+    return cleaned;
+  } catch (err) {
+    console.error('[Sweeper Booking Holds Error]', err.message);
+    return 0;
+  }
+}
+
 let sweeperInterval = null;
+let bookingHoldInterval = null;
 
 function startSweeper(intervalMs = 15 * 60 * 1000) {
   // Run sweep on startup
   sweepExpiredDocuments().catch(err => console.error('[Sweeper Startup Error]', err.message));
+  sweepExpiredBookingHolds().catch(err => console.error('[Sweeper Hold Startup Error]', err.message));
 
-  // Schedule recurring sweep
+  // Schedule recurring document sweep
   if (!sweeperInterval) {
     sweeperInterval = setInterval(() => {
       sweepExpiredDocuments().catch(err => console.error('[Sweeper Interval Error]', err.message));
     }, intervalMs);
     if (sweeperInterval.unref) {
       sweeperInterval.unref();
+    }
+  }
+
+  // Schedule recurring booking hold expiration check (every 60 seconds)
+  if (!bookingHoldInterval) {
+    bookingHoldInterval = setInterval(() => {
+      sweepExpiredBookingHolds().catch(err => console.error('[Sweeper Hold Interval Error]', err.message));
+    }, 60 * 1000);
+    if (bookingHoldInterval.unref) {
+      bookingHoldInterval.unref();
     }
   }
 }
@@ -77,11 +103,16 @@ function stopSweeper() {
     clearInterval(sweeperInterval);
     sweeperInterval = null;
   }
+  if (bookingHoldInterval) {
+    clearInterval(bookingHoldInterval);
+    bookingHoldInterval = null;
+  }
 }
 
 module.exports = {
   sweepExpiredDocuments,
   runSweeper: sweepExpiredDocuments,
+  sweepExpiredBookingHolds,
   startSweeper,
   stopSweeper,
 };

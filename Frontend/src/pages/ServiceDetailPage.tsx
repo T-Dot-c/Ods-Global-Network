@@ -30,6 +30,13 @@ import {
   serviceCatalogService,
   ServiceDetailItem
 } from '../services/serviceCatalogService';
+import {
+  getAvailableSlots,
+  createBookingHold,
+  payBookingWithGiftCard,
+  TimeSlot,
+  BookingItem
+} from '../services/bookingService';
 import { useAuth } from '../context/AuthContext';
 
 interface ServiceDetailPageProps {
@@ -65,8 +72,133 @@ export const ServiceDetailPage: React.FC<ServiceDetailPageProps> = ({
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  // Booking Modal State (Batch 8 teaser -> Batch 9 full booking)
+  // Booking Flow State (Batch 9)
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingStep, setBookingStep] = useState<'slot' | 'details' | 'hold' | 'confirmed'>('slot');
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = new Date(Date.now() + 24 * 3600 * 1000);
+    return d.toISOString().slice(0, 10);
+  });
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [contactPhone, setContactPhone] = useState('');
+  const [customerNote, setCustomerNote] = useState('');
+  const [creatingHold, setCreatingHold] = useState(false);
+  const [activeBooking, setActiveBooking] = useState<BookingItem | null>(null);
+  const [holdSecondsLeft, setHoldSecondsLeft] = useState<number>(600);
+  const [paymentMethod, setPaymentMethod] = useState<'chapa' | 'gift'>('chapa');
+  const [giftCode, setGiftCode] = useState('');
+  const [redeemingGift, setRedeemingGift] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+
+  // Fetch slots whenever date changes or modal opens
+  useEffect(() => {
+    if (bookingModalOpen && service?.id && selectedDate) {
+      setLoadingSlots(true);
+      setSelectedSlot(null);
+      setBookingError(null);
+      getAvailableSlots(service.id, selectedDate, selectedDate)
+        .then((res) => setAvailableSlots(res.slots || []))
+        .catch((err) => {
+          setAvailableSlots([]);
+          setBookingError(err.message || 'No slots available on this date.');
+        })
+        .finally(() => setLoadingSlots(false));
+    }
+  }, [bookingModalOpen, selectedDate, service?.id]);
+
+  // Hold timer countdown
+  useEffect(() => {
+    if (bookingStep !== 'hold' || !activeBooking?.hold_expires_at) return;
+    const interval = setInterval(() => {
+      const ms = new Date(activeBooking.hold_expires_at!).getTime() - Date.now();
+      const sec = Math.max(0, Math.floor(ms / 1000));
+      setHoldSecondsLeft(sec);
+      if (sec <= 0) {
+        clearInterval(interval);
+        setBookingError('Your 10-minute checkout hold has lapsed. Please reserve the slot again.');
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [bookingStep, activeBooking]);
+
+  const handleStartBooking = () => {
+    if (!user) {
+      onNavigate('login');
+      return;
+    }
+    setBookingStep('slot');
+    setBookingError(null);
+    setBookingModalOpen(true);
+  };
+
+  const handleCreateHold = async () => {
+    if (!service || !selectedSlot) return;
+    if (!contactPhone || contactPhone.trim().length < 7) {
+      setBookingError('Please enter a valid phone number (at least 7 digits).');
+      return;
+    }
+    setCreatingHold(true);
+    setBookingError(null);
+    try {
+      const res = await createBookingHold({
+        service_id: service.id,
+        start_at: selectedSlot,
+        contact_phone: contactPhone.trim(),
+        customer_note: customerNote.trim() || undefined,
+      });
+      setActiveBooking(res.booking);
+      setBookingStep('hold');
+    } catch (err: any) {
+      setBookingError(err.message || 'Failed to place reservation hold.');
+    } finally {
+      setCreatingHold(false);
+    }
+  };
+
+  const handleChapaPay = async () => {
+    if (!activeBooking) return;
+    try {
+      const res = await fetch(`${(import.meta as any).env?.VITE_API_BASE || 'http://localhost:3001'}/api/payments/initialize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          amount: activeBooking.price_amount,
+          currency: activeBooking.currency || 'ETB',
+          purpose: 'booking_payment',
+          metadata: { booking_id: activeBooking.id, reference: activeBooking.reference },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Payment initialization failed.');
+      }
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      }
+    } catch (err: any) {
+      setBookingError(err.message || 'Failed to initiate Chapa payment.');
+    }
+  };
+
+  const handleGiftPay = async () => {
+    if (!activeBooking || !giftCode.trim()) {
+      setBookingError('Please enter your gift card code.');
+      return;
+    }
+    setRedeemingGift(true);
+    setBookingError(null);
+    try {
+      await payBookingWithGiftCard(activeBooking.id, giftCode.trim());
+      setBookingStep('confirmed');
+    } catch (err: any) {
+      setBookingError(err.message || 'Failed to redeem gift card for this booking.');
+    } finally {
+      setRedeemingGift(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -594,7 +726,7 @@ export const ServiceDetailPage: React.FC<ServiceDetailPageProps> = ({
               <div style={{ display: 'grid', gap: '12px', marginBottom: '28px' }}>
                 <Button
                   variant="gold"
-                  onClick={() => setBookingModalOpen(true)}
+                  onClick={handleStartBooking}
                   style={{ width: '100%', padding: '14px', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
                 >
                   <Calendar size={18} />
@@ -654,13 +786,13 @@ export const ServiceDetailPage: React.FC<ServiceDetailPageProps> = ({
         </div>
       </main>
 
-      {/* ── Booking Inquiry Modal ─────────────────────────────────── */}
+      {/* ── Interactive Live Booking Modal (Batch 9) ─────────────── */}
       {bookingModalOpen && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -674,43 +806,309 @@ export const ServiceDetailPage: React.FC<ServiceDetailPageProps> = ({
               borderRadius: '20px',
               border: '1px solid rgba(190, 155, 73, 0.4)',
               padding: '32px',
-              maxWidth: '500px',
+              maxWidth: '540px',
               width: '100%',
-              textAlign: 'center'
+              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+              color: '#ffffff'
             }}
           >
-            <Calendar size={48} style={{ color: '#EDC45B', margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: '1.4rem', color: '#ffffff', marginBottom: '8px' }}>
-              Book {service.title}
-            </h3>
-            <p style={{ color: '#cbd5e1', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '24px' }}>
-              Direct calendar scheduling is being connected for Batch 9! To book this consultation immediately, call{' '}
-              <strong style={{ color: '#EDC45B' }}>{service.official_phone || '+251 960 606 042'}</strong> or gift this service voucher directly.
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <Button variant="outline-gold" onClick={() => setBookingModalOpen(false)}>
-                Close
-              </Button>
-              {service.official_phone && (
-                <a
-                  href={`tel:${service.official_phone}`}
-                  style={{
-                    backgroundColor: '#BE9B49',
-                    color: '#081738',
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Phone size={16} />
-                  <span>Call Provider</span>
-                </a>
-              )}
-            </div>
+            {/* Step 1: Slot Selection */}
+            {bookingStep === 'slot' && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <Calendar size={22} style={{ color: '#EDC45B' }} />
+                  <h3 style={{ fontSize: '1.25rem', color: '#ffffff', margin: 0, fontWeight: 800 }}>
+                    Select Appointment Time
+                  </h3>
+                </div>
+                <p style={{ color: '#cbd5e1', fontSize: '0.88rem', margin: '0 0 20px' }}>
+                  Choose your preferred date and time slot with <strong>{service.provider_name}</strong>.
+                </p>
+
+                {bookingError && (
+                  <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', fontSize: '0.84rem', marginBottom: '16px' }}>
+                    {bookingError}
+                  </div>
+                )}
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#EDC45B', marginBottom: '6px' }}>
+                    Select Date
+                  </label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    min={new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10)}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(8,23,56,0.6)', color: '#ffffff', fontSize: '0.92rem' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#EDC45B', marginBottom: '6px' }}>
+                    Available Time Slots
+                  </label>
+                  {loadingSlots ? (
+                    <div style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8' }}>
+                      <Clock size={20} className="animate-spin" style={{ margin: '0 auto 6px' }} />
+                      <p style={{ margin: 0, fontSize: '0.85rem' }}>Loading open appointments...</p>
+                    </div>
+                  ) : availableSlots.length === 0 ? (
+                    <p style={{ color: '#f87171', fontSize: '0.88rem', margin: 0 }}>
+                      No available slots on this date. Please pick another date.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                      {availableSlots.map((s) => {
+                        const isSel = selectedSlot === s.start_at;
+                        const st = new Date(s.start_at);
+                        return (
+                          <button
+                            key={s.start_at}
+                            type="button"
+                            onClick={() => setSelectedSlot(s.start_at)}
+                            style={{
+                              padding: '10px',
+                              borderRadius: '8px',
+                              border: isSel ? '2px solid #EDC45B' : '1px solid rgba(255,255,255,0.15)',
+                              backgroundColor: isSel ? 'rgba(237, 196, 91, 0.2)' : 'rgba(8, 23, 56, 0.5)',
+                              color: isSel ? '#EDC45B' : '#ffffff',
+                              fontWeight: 700,
+                              fontSize: '0.88rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {st.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <Button variant="outline-gold" onClick={() => setBookingModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="gold"
+                    disabled={!selectedSlot}
+                    onClick={() => setBookingStep('details')}
+                  >
+                    Continue to Details
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Contact Details */}
+            {bookingStep === 'details' && (
+              <div>
+                <h3 style={{ fontSize: '1.25rem', color: '#ffffff', margin: '0 0 6px', fontWeight: 800 }}>
+                  Contact Information
+                </h3>
+                <p style={{ color: '#cbd5e1', fontSize: '0.88rem', margin: '0 0 20px' }}>
+                  Provide your phone number so the clinic can coordinate your appointment.
+                </p>
+
+                {bookingError && (
+                  <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', fontSize: '0.84rem', marginBottom: '16px' }}>
+                    {bookingError}
+                  </div>
+                )}
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#EDC45B', marginBottom: '6px' }}>
+                    Contact Phone Number (Required)
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+251 911 223344"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(8,23,56,0.6)', color: '#ffffff', fontSize: '0.92rem' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#EDC45B', marginBottom: '6px' }}>
+                    Special Request or Clinical Notes (Optional)
+                  </label>
+                  <textarea
+                    placeholder="Provide any symptoms, medical history or instructions..."
+                    value={customerNote}
+                    onChange={(e) => setCustomerNote(e.target.value)}
+                    rows={3}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(8,23,56,0.6)', color: '#ffffff', fontSize: '0.88rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                  <Button variant="outline-gold" onClick={() => setBookingStep('slot')}>
+                    Back
+                  </Button>
+                  <Button
+                    variant="gold"
+                    disabled={creatingHold}
+                    onClick={handleCreateHold}
+                  >
+                    {creatingHold ? 'Reserving...' : 'Reserve Slot (10-Min Hold)'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Hold Active & Payment Options */}
+            {bookingStep === 'hold' && activeBooking && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '0.82rem', fontFamily: 'monospace', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(237, 196, 91, 0.2)', color: '#EDC45B' }}>
+                    {activeBooking.reference}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b', fontWeight: 700, fontSize: '0.92rem' }}>
+                    <Clock size={16} />
+                    <span>Hold Expires in: {Math.floor(holdSecondsLeft / 60)}:{(holdSecondsLeft % 60).toString().padStart(2, '0')}</span>
+                  </div>
+                </div>
+
+                <h3 style={{ fontSize: '1.25rem', color: '#ffffff', margin: '0 0 6px', fontWeight: 800 }}>
+                  Complete Payment to Confirm
+                </h3>
+                <p style={{ color: '#cbd5e1', fontSize: '0.88rem', margin: '0 0 20px' }}>
+                  Amount due: <strong style={{ color: '#EDC45B' }}>{activeBooking.price_amount} {activeBooking.currency || 'ETB'}</strong>
+                </p>
+
+                {bookingError && (
+                  <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', fontSize: '0.84rem', marginBottom: '16px' }}>
+                    {bookingError}
+                  </div>
+                )}
+
+                {/* Payment method toggle */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('chapa')}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: paymentMethod === 'chapa' ? '2px solid #EDC45B' : '1px solid rgba(255,255,255,0.15)',
+                      backgroundColor: paymentMethod === 'chapa' ? 'rgba(237, 196, 91, 0.2)' : 'rgba(8,23,56,0.6)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>💳 Chapa Gateway</span>
+                    <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Telebirr / CBE / Card</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('gift')}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: paymentMethod === 'gift' ? '2px solid #EDC45B' : '1px solid rgba(255,255,255,0.15)',
+                      backgroundColor: paymentMethod === 'gift' ? 'rgba(237, 196, 91, 0.2)' : 'rgba(8,23,56,0.6)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>🎁 Gift Card</span>
+                    <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Redeem full voucher</span>
+                  </button>
+                </div>
+
+                {paymentMethod === 'chapa' ? (
+                  <div style={{ marginBottom: '24px' }}>
+                    <p style={{ fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.5, marginBottom: '16px' }}>
+                      Click below to proceed to the secure Chapa checkout portal. Upon successful payment verification, your appointment is instantly locked in.
+                    </p>
+                    <Button
+                      variant="gold"
+                      style={{ width: '100%', padding: '12px', fontSize: '0.96rem' }}
+                      onClick={handleChapaPay}
+                    >
+                      Pay {activeBooking.price_amount} {activeBooking.currency} with Chapa
+                    </Button>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#EDC45B', marginBottom: '6px' }}>
+                      Gift Card Voucher Code
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        placeholder="ODS-GC-XXXX-XXXX"
+                        value={giftCode}
+                        onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
+                        style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(8,23,56,0.6)', color: '#ffffff', fontSize: '0.92rem', textTransform: 'uppercase', letterSpacing: '1px' }}
+                      />
+                      <Button
+                        variant="gold"
+                        disabled={redeemingGift}
+                        onClick={handleGiftPay}
+                      >
+                        {redeemingGift ? 'Applying...' : 'Apply Voucher'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => setBookingModalOpen(false)}
+                    style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.84rem', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Close & return to page
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Booking Confirmed */}
+            {bookingStep === 'confirmed' && (
+              <div style={{ textAlign: 'center' }}>
+                <CheckCircle2 size={54} color="#10b981" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: '1.4rem', color: '#ffffff', marginBottom: '8px', fontWeight: 800 }}>
+                  Appointment Confirmed!
+                </h3>
+                <p style={{ color: '#cbd5e1', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '16px' }}>
+                  Your appointment for <strong>{service.title}</strong> has been secured with reference:
+                </p>
+                <div style={{ fontSize: '1.1rem', fontFamily: 'monospace', fontWeight: 800, color: '#EDC45B', padding: '10px 20px', borderRadius: '8px', backgroundColor: 'rgba(8,23,56,0.8)', border: '1px dashed #EDC45B', width: 'fit-content', margin: '0 auto 24px' }}>
+                  {activeBooking?.reference}
+                </div>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <Button
+                    variant="outline-gold"
+                    onClick={() => setBookingModalOpen(false)}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    variant="gold"
+                    onClick={() => {
+                      setBookingModalOpen(false);
+                      onNavigate('customer/dashboard');
+                    }}
+                  >
+                    View in My Appointments
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

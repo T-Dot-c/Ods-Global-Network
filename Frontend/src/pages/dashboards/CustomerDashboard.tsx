@@ -16,6 +16,7 @@ import { CustomerProfileTab } from './customer/CustomerProfileTab';
 import { CustomerSecurityTab } from './customer/CustomerSecurityTab';
 import { CustomerTransactionsTab } from './customer/CustomerTransactionsTab';
 import { CustomerGiftingTab } from './customer/CustomerGiftingTab';
+import { CustomerAppointmentsTab } from './customer/CustomerAppointmentsTab';
 
 interface CustomerDashboardProps {
   onNavigate: (view: string) => void;
@@ -98,58 +99,8 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ onNavigate
       )}
 
       {activeTab === 'appointments' && (
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '16px',
-            padding: '48px 32px',
-            textAlign: 'center',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '16px',
-          }}
-        >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '16px',
-              backgroundColor: 'rgba(190, 155, 73, 0.12)',
-              border: '1px solid rgba(190, 155, 73, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Calendar size={32} color="var(--color-gold-deep)" />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-navy-dark)', margin: '0 0 6px' }}>
-              Appointments Not Available Yet
-            </h3>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '480px', margin: '0 auto', lineHeight: 1.6 }}>
-              Direct online scheduling for medical consultations, laboratory tests, and specialized healthcare appointments is not available yet.
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('home')}
-            style={{
-              marginTop: '8px',
-              padding: '10px 24px',
-              borderRadius: '8px',
-              border: '1px solid var(--color-gold-deep)',
-              backgroundColor: 'transparent',
-              color: 'var(--color-gold-deep)',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            Explore Provider Categories
-          </button>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px 32px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)' }}>
+          <CustomerAppointmentsTab />
         </div>
       )}
 
