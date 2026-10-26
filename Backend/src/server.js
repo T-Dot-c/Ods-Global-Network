@@ -91,7 +91,7 @@ app.use(cors({
     return callback(new Error(`CORS policy rejection: origin ${origin} is not allowed.`));
   },
   credentials: true,               // required for HttpOnly cookie round-trips
-  methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-chapa-signature', 'chapa-signature'],
 }));
 
@@ -176,6 +176,22 @@ app.use('/api/gifting', rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many gifting requests — please slow down.' },
 }), giftingRoutes);
+
+/* ── Service Catalog & Provider Directory routes (Batch 8) ─ */
+const serviceRoutes = require('./routes/services');
+const myServicesRoutes = require('./routes/myServices');
+const serviceCatalogService = require('./services/serviceCatalogService');
+
+app.use('/api/services', serviceRoutes);
+app.use('/api/my/services', myServicesRoutes);
+app.get('/api/service-categories', async (_req, res) => {
+  try {
+    const categories = await serviceCatalogService.getCategoryTaxonomy();
+    res.json({ success: true, data: categories });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 /* ── Start unattached document sweeper ────────────────────── */
 const { startSweeper } = require('./services/sweeperService');

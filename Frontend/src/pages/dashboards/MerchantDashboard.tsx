@@ -15,6 +15,7 @@ import {
 import { DashboardLayout, SidebarItem, StatCardItem, QuickActionItem } from './DashboardLayout';
 import { MerchantProfileTab } from './merchant/MerchantProfileTab';
 import { MerchantDocumentsTab } from './merchant/MerchantDocumentsTab';
+import { MerchantServicesTab } from './merchant/MerchantServicesTab';
 import { useAuth, ApprovalStatus } from '../../context/AuthContext';
 import { getMerchantProfile, MerchantProfile } from '../../services/merchantService';
 
@@ -72,7 +73,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({ onNavigate
     {
       label: 'Manage Catalog',
       icon: <Layers size={16} color="var(--color-gold-bright)" />,
-      onClick: () => alert('Add or update health and wellness offerings.'),
+      onClick: () => setActiveTab('services'),
     },
     {
       label: 'View Bookings',
@@ -184,6 +185,9 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({ onNavigate
       )}
       {activeTab === 'documents' && (
         <MerchantDocumentsTab approvalStatus={currentStatus} onDocumentUploaded={loadProfile} />
+      )}
+      {activeTab === 'services' && (
+        <MerchantServicesTab />
       )}
     </DashboardLayout>
   );

@@ -18,6 +18,8 @@ import { SupportPage } from './pages/SupportPage';
 import { PartnerWithUsPage } from './pages/PartnerWithUsPage';
 import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { GiftClaimPage } from './pages/GiftClaimPage';
+import { ServicesCatalogPage } from './pages/ServicesCatalogPage';
+import { ServiceDetailPage } from './pages/ServiceDetailPage';
 import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
 
 /* ── View type ────────────────────────────────────────────── */
@@ -38,7 +40,9 @@ export type View =
   | 'support'
   | 'partner-with-us'
   | 'payment/success'
-  | 'gift/claim';
+  | 'gift/claim'
+  | 'services'
+  | 'service-detail';
 
 const DASHBOARD_VIEWS: View[] = [
   'dashboard',
@@ -71,6 +75,8 @@ function normalizeRoute(path: string): View {
   if (clean === 'partner-with-us') return 'partner-with-us';
   if (clean === 'payment/success' || clean === 'payment-success' || clean === 'payment/verify') return 'payment/success';
   if (clean === 'gift/claim' || clean === 'gift-claim' || clean === 'gift/redeem' || clean === 'claim') return 'gift/claim';
+  if (clean === 'services' || clean === 'service-catalog' || clean === 'catalog') return 'services';
+  if (clean.startsWith('services/') || clean.startsWith('service/')) return 'service-detail';
 
   if (clean === 'dashboard' || clean === 'dashboard/customer') return 'dashboard';
   if (clean === 'merchant/dashboard' || clean === 'dashboard/merchant') return 'merchant/dashboard';
@@ -86,10 +92,20 @@ const AppInner: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(() => normalizeRoute(window.location.pathname));
   // In-memory recovery email state (never stored in URL query parameters)
   const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null);
+  const [selectedServiceSlugOrId, setSelectedServiceSlugOrId] = useState<string | null>(() => {
+    const clean = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    if (clean.startsWith('services/')) return clean.replace(/^services\//, '');
+    if (clean.startsWith('service/')) return clean.replace(/^service\//, '');
+    return null;
+  });
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
+      const clean = window.location.pathname.replace(/^\/+|\/+$/g, '');
+      if (clean.startsWith('services/')) {
+        setSelectedServiceSlugOrId(clean.replace(/^services\//, ''));
+      }
       setCurrentView(normalizeRoute(window.location.pathname));
     };
     window.addEventListener('popstate', handlePopState);
@@ -130,6 +146,13 @@ const AppInner: React.FC = () => {
     const targetView = normalizeRoute(rawView);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    if (rawView.startsWith('services/')) {
+      const slug = rawView.replace(/^services\//, '');
+      setSelectedServiceSlugOrId(slug);
+    } else if (targetView !== 'service-detail') {
+      setSelectedServiceSlugOrId(null);
+    }
+
     // ── RBAC protection ────────────────────────────────────
     if (DASHBOARD_VIEWS.includes(targetView)) {
       if (!user) {
@@ -153,7 +176,12 @@ const AppInner: React.FC = () => {
     }
 
     setCurrentView(targetView);
-    const newPath = targetView === 'home' ? '/' : `/${targetView}`;
+    const newPath =
+      targetView === 'home'
+        ? '/'
+        : rawView.startsWith('services/')
+        ? `/${rawView}`
+        : `/${targetView}`;
     if (window.location.pathname !== newPath) {
       window.history.pushState(null, '', newPath);
     }
@@ -186,11 +214,13 @@ const AppInner: React.FC = () => {
   }
 
   const isHome = currentView === 'home';
+  const showHeader = isHome || currentView === 'services' || currentView === 'service-detail';
+  const showFooter = isHome || currentView === 'services' || currentView === 'service-detail';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Header — only on Home */}
-      {isHome && <Header currentView={currentView} onNavigate={handleNavigate} />}
+      {/* Header — on Home and Public Catalog pages */}
+      {showHeader && <Header currentView={currentView} onNavigate={handleNavigate} />}
 
       {/* Main content */}
       <main style={{ flex: 1 }}>
@@ -233,6 +263,21 @@ const AppInner: React.FC = () => {
         {currentView === 'gift/claim' && (
           <GiftClaimPage onNavigate={handleNavigate} />
         )}
+        {currentView === 'services' && (
+          <ServicesCatalogPage
+            onNavigate={handleNavigate}
+            onSelectService={(slugOrId) => {
+              setSelectedServiceSlugOrId(slugOrId);
+              handleNavigate(`services/${slugOrId}`);
+            }}
+          />
+        )}
+        {currentView === 'service-detail' && (
+          <ServiceDetailPage
+            serviceIdOrSlug={selectedServiceSlugOrId || window.location.pathname.replace(/^\/services\//, '')}
+            onNavigate={handleNavigate}
+          />
+        )}
 
         {/* ── Role-protected dashboards ─────────────────── */}
         {currentView === 'dashboard' && user?.role === 'customer' && (
@@ -249,8 +294,8 @@ const AppInner: React.FC = () => {
         )}
       </main>
 
-      {/* Footer — on Home and static informational pages */}
-      {(isHome) && <Footer onNavigate={handleNavigate} />}
+      {/* Footer — on Home and Public Catalog pages */}
+      {showFooter && <Footer onNavigate={handleNavigate} />}
     </div>
   );
 };

@@ -140,17 +140,17 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
   };
 
   // 9 Authoritative Categories from KPIs & Scopes Section 4 + All Services
-  const servicesMenu = [
-    { label: 'All Services', anchor: '#services', icon: <Activity size={16} /> },
-    { label: 'Hospitals', anchor: '#services', icon: <Building2 size={16} /> },
-    { label: 'Clinics', anchor: '#services', icon: <Stethoscope size={16} /> },
-    { label: 'Pharmacies', anchor: '#services', icon: <Pill size={16} /> },
-    { label: 'Laboratories', anchor: '#services', icon: <Activity size={16} /> },
-    { label: 'Wellness Centers', anchor: '#services', icon: <HeartPulse size={16} /> },
-    { label: 'Ambulance Services', anchor: '#services', icon: <Truck size={16} /> },
-    { label: 'Home Care', anchor: '#services', icon: <UserCheck size={16} /> },
-    { label: 'Specialists', anchor: '#services', icon: <Award size={16} /> },
-    { label: 'Diagnostic Centers', anchor: '#services', icon: <BarChart3 size={16} /> },
+  const servicesMenu: Array<{ label: string; anchor?: string; view?: string; icon: React.ReactNode }> = [
+    { label: 'All Services', view: 'services', icon: <Activity size={16} /> },
+    { label: 'Hospitals', view: 'services', icon: <Building2 size={16} /> },
+    { label: 'Clinics', view: 'services', icon: <Stethoscope size={16} /> },
+    { label: 'Pharmacies', view: 'services', icon: <Pill size={16} /> },
+    { label: 'Laboratories', view: 'services', icon: <Activity size={16} /> },
+    { label: 'Wellness Centers', view: 'services', icon: <HeartPulse size={16} /> },
+    { label: 'Ambulance Services', view: 'services', icon: <Truck size={16} /> },
+    { label: 'Home Care', view: 'services', icon: <UserCheck size={16} /> },
+    { label: 'Specialists', view: 'services', icon: <Award size={16} /> },
+    { label: 'Diagnostic Centers', view: 'services', icon: <BarChart3 size={16} /> },
   ];
 
   // 6 Gifting items synthesized from Scopes Section 7 & approved taxonomy
@@ -486,7 +486,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 {servicesMenu.map((item, idx) => (
                   <li key={idx}>
                     <button
-                      onClick={() => handleLinkClick(item.anchor)}
+                      onClick={() => handleItemClick(item)}
                       style={{
                         width: '100%',
                         textAlign: 'left',
@@ -1142,7 +1142,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 {servicesMenu.map((m, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleLinkClick(m.anchor)}
+                    onClick={() => handleItemClick(m)}
                     style={{
                       textAlign: 'left',
                       color: idx === 0 ? 'var(--color-gold-bright)' : 'var(--color-text-muted-dark)',

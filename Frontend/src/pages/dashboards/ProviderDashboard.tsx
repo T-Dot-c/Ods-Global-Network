@@ -17,6 +17,7 @@ import { DashboardLayout, SidebarItem, StatCardItem, QuickActionItem } from './D
 import { ProviderProfileTab } from './provider/ProviderProfileTab';
 import { ProviderDocumentsTab } from './provider/ProviderDocumentsTab';
 import { ProviderVouchersTab } from './provider/ProviderVouchersTab';
+import { ProviderServicesTab } from './provider/ProviderServicesTab';
 import { useAuth, ApprovalStatus } from '../../context/AuthContext';
 import { getProviderProfile, ProviderProfile } from '../../services/providerService';
 
@@ -80,7 +81,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
     {
       label: 'Manage Services',
       icon: <Layers size={16} color="var(--color-gold-bright)" />,
-      onClick: () => alert('Configure medical, wellness, laboratory, or home care offerings.'),
+      onClick: () => setActiveTab('services'),
     },
     {
       label: 'Duty Hours',
@@ -195,6 +196,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
       )}
       {activeTab === 'documents' && (
         <ProviderDocumentsTab approvalStatus={currentStatus} onDocumentUploaded={loadProfile} />
+      )}
+      {activeTab === 'services' && (
+        <ProviderServicesTab />
       )}
     </DashboardLayout>
   );

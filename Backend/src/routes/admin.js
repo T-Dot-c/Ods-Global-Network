@@ -409,4 +409,234 @@ router.get('/audit-logs', requireRole('super_admin'), async (req, res) => {
   }
 });
 
+/* ─────────────────────────────────────────────────────────────
+   Batch 8: Service Catalog Moderation & Taxonomy Management
+   ───────────────────────────────────────────────────────────── */
+const serviceCatalogService = require('../services/serviceCatalogService');
+
+/**
+ * GET /api/admin/services
+ * Retrieve services for administrative review (defaults to pending_review)
+ */
+router.get('/services', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const { status = 'pending_review', page, limit } = req.query;
+    const result = await serviceCatalogService.getAdminReviewQueue({ status, page, limit });
+    return res.json({ success: true, data: result.services, pagination: result.pagination });
+  } catch (err) {
+    console.error('[Admin Services Queue Error]', err.message);
+    return res.status(err.statusCode || 500).json({ success: false, message: err.message });
+  }
+});
+
+// Backward compatibility alias for /services/pending
+router.get('/services/pending', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const { page, limit } = req.query;
+    const result = await serviceCatalogService.getAdminReviewQueue({ status: 'pending_review', page, limit });
+    return res.json({ success: true, data: result.services, pagination: result.pagination });
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/services/:id/approve
+ * Approve pending service to published
+ */
+router.post('/services/:id/approve', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const updated = await serviceCatalogService.transitionServiceStatus({
+      serviceId: req.params.id,
+      toStatus: 'published',
+      actorUserId: req.user.id,
+      actorRole: req.user.role,
+      reason: req.body.reason || 'Admin approved service'
+    });
+
+    return res.json({
+      success: true,
+      message: 'Service approved and published live',
+      data: updated
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/services/:id/reject
+ * Reject service submission with mandatory reason
+ */
+router.post('/services/:id/reject', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const reason = req.body.reason || req.body.rejectionReason;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+    }
+
+    const updated = await serviceCatalogService.transitionServiceStatus({
+      serviceId: req.params.id,
+      toStatus: 'rejected',
+      actorUserId: req.user.id,
+      actorRole: req.user.role,
+      reason: reason.trim()
+    });
+
+    return res.json({
+      success: true,
+      message: 'Service rejected',
+      data: updated
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/services/:id/takedown
+ * Take down a published service with mandatory reason
+ */
+router.post('/services/:id/takedown', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const reason = req.body.reason || req.body.takedownReason;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ success: false, message: 'Takedown reason is required' });
+    }
+
+    const updated = await serviceCatalogService.transitionServiceStatus({
+      serviceId: req.params.id,
+      toStatus: 'taken_down',
+      actorUserId: req.user.id,
+      actorRole: req.user.role,
+      reason: reason.trim()
+    });
+
+    return res.json({
+      success: true,
+      message: 'Service taken down successfully',
+      data: updated
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/services/:id/restore
+ * Restore taken-down service to published or unpublished
+ */
+router.post('/services/:id/restore', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const toStatus = req.body.targetStatus === 'unpublished' ? 'unpublished' : 'published';
+    const updated = await serviceCatalogService.transitionServiceStatus({
+      serviceId: req.params.id,
+      toStatus,
+      actorUserId: req.user.id,
+      actorRole: req.user.role,
+      reason: req.body.reason || 'Admin restored service'
+    });
+
+    return res.json({
+      success: true,
+      message: `Service restored to ${toStatus}`,
+      data: updated
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/services/:id/decision (legacy compatibility)
+ */
+router.post('/services/:id/decision', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const { decision, rejectionReason } = req.body;
+    const targetStatus = decision === 'approved' ? 'published' : 'rejected';
+    const updated = await serviceCatalogService.transitionServiceStatus({
+      serviceId: req.params.id,
+      toStatus: targetStatus,
+      actorUserId: req.user.id,
+      actorRole: req.user.role,
+      reason: rejectionReason || (decision === 'approved' ? 'Admin approved service' : 'Admin rejected service')
+    });
+
+    return res.json({
+      success: true,
+      message: `Service ${decision} successfully`,
+      data: updated
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/service-categories
+ * Admin creates category or subcategory
+ */
+router.post('/service-categories', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const { name, parentId, sortOrder = 0 } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Category name is required' });
+    }
+
+    const slug = name.trim().toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
+    const { rows } = await pool.query(
+      `INSERT INTO service_categories (name, slug, parent_id, sort_order)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [name.trim(), slug, parentId || null, parseInt(sortOrder, 10) || 0]
+    );
+
+    return res.status(201).json({ success: true, data: rows[0] });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * PATCH /api/admin/service-categories/:id
+ * Admin updates, reorders, or deactivates category
+ */
+router.patch('/service-categories/:id', requireRole('admin', 'super_admin'), async (req, res) => {
+  try {
+    const { name, sortOrder, isActive } = req.body;
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    if (name !== undefined) {
+      fields.push(`name = $${idx++}`);
+      values.push(name.trim());
+    }
+    if (sortOrder !== undefined) {
+      fields.push(`sort_order = $${idx++}`);
+      values.push(parseInt(sortOrder, 10) || 0);
+    }
+    if (isActive !== undefined) {
+      fields.push(`is_active = $${idx++}`);
+      values.push(Boolean(isActive));
+    }
+
+    if (fields.length === 0) {
+      return res.json({ success: true, message: 'No changes provided' });
+    }
+
+    values.push(req.params.id);
+    const sql = `UPDATE service_categories SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`;
+    const { rows } = await pool.query(sql, values);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    return res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
+

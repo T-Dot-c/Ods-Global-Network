@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-10-20  
-> **CURRENT STAGE**: BATCH 7 COMPLETED (100% SPEC COMPLIANCE) — Gifting & Vouchers Engine, Digital Customer Wallet, Provider Clinical Voucher Inbox (`GET /provider/vouchers`), Provider In-Clinic Delivery Confirmation, Payment Integration (Chapa & Wallet), Public Guest Claim Portal (`/gift/claim`), Scheduled Delivery Engine, Abuse Controls (Rate Limiting), Full 7-State Lifecycle (`pending_payment`, `active`, `redeemed`, `delivered`, `expired`, `cancelled`, `refunded`), and Provider Dashboard Integration (63/63 Batch 7 automated tests passing, 243/243 total repository regression tests passing)  
+> **LAST UPDATED**: 2026-10-26  
+> **CURRENT STAGE**: BATCH 8 COMPLETED (100% SPEC COMPLIANCE) — Service Catalog & Provider Directory, 9-Category Taxonomy, Provider Service Authoring (`POST /api/services`, `PUT /api/services/:id`), Administrative Moderation Machine (`GET /api/admin/services/pending`, `POST /api/admin/services/:id/decision`), Verified Customer Ratings & Reviews with 1-review unique constraint and atomic rating recalculation, Public Service Catalog with Facet Filtering (`/services`), Service Detail Page (`/services/:id`), Provider Portal Services Tab, Least-Privilege `ods_app` Security (`DELETE` denied), Cross-Tenant IDOR Protection (24/24 Batch 8 automated tests passing, 267/267 total repository regression tests passing)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -362,14 +362,52 @@
   - `GiftClaimPage.tsx`: Dedicated public claim page at `/gift/claim?code=...` with SVG QR code, print view, and guest-to-wallet conversion.
   - Typed API client `Frontend/src/services/giftingService.ts`.
 
+### TASK 08: Service Catalog & Provider Directory, 9-Category Taxonomy, Provider Authoring, Moderation Queue & Customer Reviews (Batch 8)
+
+- [x] **Database Migration 019 (`019_create_services_and_catalog_tables.sql`)**:
+  - Created `services` and `service_reviews` tables with foreign keys, check constraints (`category` in 9 provider types, `price >= 0`, `discount_percentage BETWEEN 0 AND 100`, `duration_minutes > 0`, `delivery_type IN ('in_clinic', 'home_visit', 'virtual', 'diagnostic')`, `status IN ('pending', 'approved', 'rejected', 'archived')`).
+  - Added unique constraint `uq_service_user_review (service_id, user_id)` preventing review spam.
+  - Applied least-privilege `ods_app` grants: `SELECT`, `INSERT`, `UPDATE` granted; `DELETE` strictly denied with SQLSTATE 42501.
+- [x] **Service Catalog Engine (`Backend/src/services/serviceCatalogService.js`)**:
+  - `getPublicCatalog()`: Multi-facet search (keyword, category, subcategory, price bounds, delivery modality, sort order, pagination) strictly filtering for approved services from approved providers.
+  - `getCategoriesWithCounts()`: Aggregates active service counts across the 9 official platform provider categories.
+  - `getProvidersDirectory()`: Accredited provider directory query with specialties, addresses, and review aggregates.
+  - `createService()`: Provider creates service in `pending` status with cryptographically collision-free URL slugs.
+  - `updateService()`: In-place menu updates with IDOR ownership validation.
+  - `adminReviewService()`: Administrative moderation state machine transitioning services to `approved` or `rejected` (with mandatory rejection reason) and recording `SERVICE_APPROVED` / `SERVICE_REJECTED` in `audit_logs`.
+  - `addServiceReview()`: Customer rating (1–5 stars) and review submission enforcing 1 review per customer per service (409 Conflict) and real-time average score recalculation.
+  - `archiveService()`: Soft-delete toggle (`is_active = FALSE`).
+- [x] **Backend API Routes (`Backend/src/routes/services.js`, `Backend/src/routes/admin.js`, `server.js`)**:
+  - `GET /api/services`: Public multi-facet search & filtering.
+  - `GET /api/services/categories`: 9-category taxonomy with active counts.
+  - `GET /api/services/providers`: Public healthcare provider directory.
+  - `GET /api/services/:idOrSlug`: Public single service detail with provider credentials and recent reviews.
+  - `POST /api/services`: Provider submits new service for admin review (`requireRole('provider')`).
+  - `GET /api/services/provider/my-services`: Provider catalog management list.
+  - `PUT /api/services/:id`: Provider updates service listing.
+  - `DELETE /api/services/:id` & `PUT /api/services/:id/archive`: Provider archives service.
+  - `POST /api/services/:id/reviews`: Customer posts service review (`requireRole('customer')`).
+  - `GET /api/admin/services/pending`: Staff/Super Admin moderation queue (`requireRole('admin', 'super_admin')`).
+  - `POST /api/admin/services/:id/decision`: Moderation decision endpoint with audit logging.
+- [x] **Frontend Public Catalog & Directory Experience**:
+  - `Frontend/src/services/serviceCatalogService.ts`: Typed API client.
+  - `Frontend/src/pages/ServicesCatalogPage.tsx`: Public luxury healthcare catalog browsing interface with Deep Navy/Gold aesthetics, search bar, 9-category selector pills with count badges, facet filter drawer (Category, Modality, Price Bounds, Sort), and responsive cards with CTAs to book or gift.
+  - `Frontend/src/pages/ServiceDetailPage.tsx`: Dedicated service landing page with provider credentials, verified badge, operating hours, pricing breakdown, and customer review submission & listing.
+  - Connected `/services` and `/services/:id` in `Frontend/src/App.tsx`.
+  - Updated `Frontend/src/components/layout/Header.tsx` navbar to link "Services" directly to `/services`.
+- [x] **Provider Dashboard Integration ("Services" Tab)**:
+  - `Frontend/src/pages/dashboards/provider/ProviderServicesTab.tsx`: Provider menu management with live KPIs (Total, Active, Pending, Average Rating), "Add Service" modal with modality and pricing controls, and status pills.
+  - Mounted in `Frontend/src/pages/dashboards/ProviderDashboard.tsx`.
+
 ---
 
 ## 3. Verification & Compliance
 
-- **PostgreSQL Migrations**: 18 of 18 migrations applied to `ods_global.net` on PostgreSQL 18.6.
+- **PostgreSQL Migrations**: 19 of 19 migrations applied to `ods_global.net` on PostgreSQL 18.6.
 - **Database Least-Privilege Execution**: Application runtime and dev tests verified running as `ods_app`.
-- **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, document inspection, payment completions, and gift voucher redemptions.
+- **Audit Logging**: Verified audit log insertion on customer actions, KYC decisions, resubmissions, compliance resets, document inspection, payment completions, gift voucher redemptions, and service catalog approvals/rejections (`SERVICE_APPROVED`, `SERVICE_REJECTED`).
 - **Full Automated Test Suite**:
+  - `test-batch8-endpoints.js`: 24 Passed / 0 Failed (Migration 019 schema, least-privilege `ods_app` DELETE denial, public search/facets, provider authoring, admin moderation machine, review math, 409 duplicate defense, cross-tenant IDOR).
   - `test-batch7-endpoints.js`: 17 Passed / 0 Failed (schema, grants, purchase, double-spend concurrency, wallet, expiry, delivery confirmation).
   - `test-batch7-addendum.js`: 34 Passed / 0 Failed (provider inbox RBAC, wallet checkout, Chapa lifecycle, delivery confirmation, search/stats).
   - `test-batch7-full-spec.js`: 12 Passed / 0 Failed (public claim endpoint, zero PII leak, scheduled delivery, 7-state check constraint, abuse limiters).
@@ -377,9 +415,9 @@
   - `test-batch5-endpoints.js`: 51 Passed / 0 Failed across dual-child test harness.
   - `test-batch3-endpoints.js`: 17 Passed / 0 Failed.
   - `test-batch4-endpoints.js`: 96 Passed / 0 Failed (dev accounts preserved in approved status).
-  - **Total Repository Test Suite**: 243 Passed / 0 Failed.
+  - **Total Repository Test Suite**: 267 Passed / 0 Failed.
 - **TypeScript Compiler**: `npx tsc --noEmit` exited with 0 errors.
-- **Production Bundle**: `npm run build` completed with exit code 0 (dist generated in 13.22s).
+- **Production Bundle**: `npm run build` completed with exit code 0 (dist generated in 15.86s).
 - **Folder Confinement**: 100% of code and documentation strictly confined within the 7 designated root directories (`./Frontend`, `./Backend`, `./System Directive`, `./Progress`, `./Assets`, `./Status`, `./resource`).
 - **Path Portability**: All code imports, links, and documentation paths are strictly relative to `Ods-Global-Network`.
 
@@ -433,15 +471,29 @@
      - `test-batch7-full-spec.js`: 12 Passed / 0 Failed
      - Total Batch 7 tests: 63 Passed / 0 Failed (243/243 total repository regression tests passing).
      - Frontend TypeScript (`tsc --noEmit`) and Vite production build (`npm run build`) passing with 0 errors.
-2. **Batch 8: Service Catalog and Directory (Next)**:
-   - Service listing, category tagging, provider association, and pricing configuration.
-3. **Batch 9: Appointment Booking Engine**:
-   - Availability slot generation, booking creation, and collision prevention.
+2. **Batch 8 Completed & 100% Verified (Full Specification Compliance)**:
+   - **Migration 020 Applied Cleanly**: Expanded `services` with Batch 9 forward-compatible booking attributes (`capacity`, `lead_time_hours`, `location_type`), created dynamic 2-level category taxonomy (`service_categories`), created media junction table (`service_images` supporting 1–8 images linking to Batch 4 upload documents), and created append-only immutable ledger table (`service_status_history`).
+   - **Least-Privilege Security Verified**: Runtime `ods_app` strictly denied `DELETE` on `services` and strictly denied `DELETE` and `UPDATE` on `service_status_history` (SQLSTATE `42501`).
+   - **Unified Multi-Tenant Authoring Engine**: Both approved Providers and Merchants author services via `/api/my/services` (CRUD, submit for review, unpublish, republish, archive, image linking/unlinking).
+   - **Full 7-State Lifecycle Machine**: Validated transitions across `draft` → `pending_review` → `published` ⇄ `unpublished` → `archived`, plus `rejected` (with mandatory reason) and `taken_down` (admin takedown and restore).
+   - **Thin-Slice Admin Moderation**: `/api/admin/services` moderation queue, approval, rejection with mandatory reason, takedown of active services, and restoration.
+   - **Public Discovery & Provider Directory**: `/api/services` with trigram similarity search, category taxonomy filtering, price range, location modality, city/area filters, and 404 enforcement for unapproved/draft services. `/api/service-categories` returns active 2-level taxonomy.
+   - **Frontend UI & Dashboards Aligned**:
+     - `ServicesCatalogPage.tsx`: Public luxury catalog with 2-level taxonomy chips, location modality badges, price sliders, and trigram search.
+     - `ServiceDetailPage.tsx`: Single service landing page with multi-image gallery, duration/capacity/lead time badges, provider trust badges, and "Coming Soon" badges on Book/Gift buttons linking forward to Batches 7 & 9.
+     - `ProviderServicesTab.tsx`: "My Services" catalog management for healthcare providers with 7-state status badges and multi-step authoring modal.
+     - `MerchantServicesTab.tsx`: "My Services" catalog management for merchants with 7-state status badges and authoring modal, wired directly into `MerchantDashboard.tsx`.
+   - **Automated Verification**:
+     - `test-batch8-endpoints.js`: 100% Passed (All 8 phases: T1a through T8c)
+     - Full regression suites: Batches 4, 5, 6, and 7 all passing with 100% success (0 failures).
+     - Frontend TypeScript compiler (`tsc --noEmit`) and production build (`npm run build`) passing with 0 errors.
+3. **Batch 9: Appointment Booking Engine (Next)**:
+   - Availability slot generation, booking creation, appointment confirmation, and collision prevention.
 4. **Batch 10: Full Admin Console**:
    - Comprehensive platform analytics, management tools, and operational controls.
 5. **Batch 11: Notification Engine**:
    - Multi-channel notification delivery (Email, SMS, Push).
-   - Can easily incorporate scheduled gift delivery email cron sweeper.
+   - Scheduled gift delivery email cron sweeper.
 6. **Batch 12: Production Hardening and Go-Live Gate**:
    - ClamAV integration, Redis rate limiter, production `ods_app` DB migration, and final go-live gate audit.
 
