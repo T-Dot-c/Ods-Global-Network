@@ -241,7 +241,7 @@ export interface AdminServiceItem {
   category_name?: string;
   price_amount: number;
   currency: string;
-  status: 'draft' | 'pending_review' | 'published' | 'rejected' | 'suspended' | 'unpublished';
+  status: 'draft' | 'pending_review' | 'published' | 'rejected' | 'taken_down' | 'archived' | 'suspended' | 'unpublished';
   is_active: boolean;
   duration_minutes: number;
   created_at: string;
@@ -551,7 +551,24 @@ export async function fetchAdminServices(params: {
   const res = await fetch(url.toString(), { credentials: 'include' });
   const data = await res.json();
   if (!res.ok || !data.success) throw new Error(data.message || 'Failed to list services.');
-  return data.data;
+
+  let servicesList: AdminServiceItem[] = [];
+  if (Array.isArray(data.data)) {
+    servicesList = data.data;
+  } else if (Array.isArray(data.data?.services)) {
+    servicesList = data.data.services;
+  } else if (Array.isArray(data.services)) {
+    servicesList = data.services;
+  }
+
+  const paginationObj = data.pagination || data.data?.pagination || {
+    page: 1,
+    limit: 15,
+    total: servicesList.length,
+    pages: 1,
+  };
+
+  return { services: servicesList, pagination: paginationObj };
 }
 
 export async function decideAdminService(serviceId: string, decision: 'approved' | 'rejected', reason?: string): Promise<void> {

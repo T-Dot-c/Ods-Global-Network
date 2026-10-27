@@ -52,10 +52,12 @@ export const ServicesTab: React.FC = () => {
         page,
         limit: 15,
       });
-      setServices(res.services);
-      setTotalPages(res.pagination?.pages || 1);
+      const list = Array.isArray(res?.services) ? res.services : (Array.isArray(res) ? res : []);
+      setServices(list);
+      setTotalPages(res?.pagination?.pages || res?.pagination?.totalPages || 1);
     } catch (err: any) {
       setError(err.message || 'Failed to load services.');
+      setServices([]);
     } finally {
       setLoading(false);
     }
@@ -251,7 +253,7 @@ export const ServicesTab: React.FC = () => {
           { id: 'published', label: 'Published' },
           { id: 'draft', label: 'Drafts' },
           { id: 'rejected', label: 'Rejected' },
-          { id: 'suspended', label: 'Suspended / Taken Down' },
+          { id: 'taken_down', label: 'Taken Down / Suspended' },
         ].map((tab) => {
           const isActive = statusFilter === tab.id;
           return (
@@ -281,7 +283,7 @@ export const ServicesTab: React.FC = () => {
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
               <th style={{ padding: '14px 18px' }}>Service Offering</th>
-              <th style={{ padding: '14px 18px' }}>Provider</th>
+              <th style={{ padding: '14px 18px' }}>Provider / Merchant</th>
               <th style={{ padding: '14px 18px' }}>Price</th>
               <th style={{ padding: '14px 18px' }}>Duration</th>
               <th style={{ padding: '14px 18px' }}>Status</th>
@@ -289,27 +291,27 @@ export const ServicesTab: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {loading && services.length === 0 ? (
+            {loading && (!services || services.length === 0) ? (
               <tr>
                 <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                   Loading catalog items...
                 </td>
               </tr>
-            ) : services.length === 0 ? (
+            ) : !services || services.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                   No services found in this view.
                 </td>
               </tr>
             ) : (
-              services.map((s) => (
+              (services || []).map((s) => (
                 <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ fontWeight: 700, color: 'var(--color-navy-dark)' }}>{s.title}</div>
                     <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{s.category_name || 'General Health'}</div>
                   </td>
                   <td style={{ padding: '14px 18px', color: '#334155' }}>
-                    {s.provider_name || 'Provider Account'}
+                    {s.provider_name || (s as any).owner_name || 'Provider Account'}
                   </td>
                   <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--color-navy-dark)' }}>
                     {s.price_amount ? `${Number(s.price_amount).toLocaleString()} ${s.currency}` : 'Free Consultation'}
@@ -334,7 +336,7 @@ export const ServicesTab: React.FC = () => {
                           s.status === 'rejected' ? '#b91c1c' : '#475569',
                       }}
                     >
-                      {s.status.replace('_', ' ')}
+                      {(s.status || 'draft').replace('_', ' ')}
                     </span>
                   </td>
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
@@ -365,7 +367,7 @@ export const ServicesTab: React.FC = () => {
                         </button>
                       )}
 
-                      {(s.status === 'suspended' || s.status === 'unpublished') && (
+                      {(s.status === 'suspended' || s.status === 'taken_down' || s.status === 'unpublished') && (
                         <button
                           onClick={() => handleRestore(s)}
                           style={{ padding: '5px 12px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}

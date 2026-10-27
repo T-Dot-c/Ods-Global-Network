@@ -33,6 +33,53 @@ interface AdminDashboardProps {
   onNavigate: (view: string) => void;
 }
 
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  tabName: string;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class AdminTabErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error(`[AdminTabErrorBoundary] Error in tab "${this.props.tabName}":`, error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '32px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #fecaca', margin: '20px 0' }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#b91c1c', margin: '0 0 8px' }}>
+            Failed to render {this.props.tabName}
+          </h3>
+          <p style={{ fontSize: '0.88rem', color: '#64748b', margin: '0 0 16px' }}>
+            {this.state.error?.message || 'An unexpected rendering error occurred in this module.'}
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{ padding: '8px 18px', backgroundColor: 'var(--color-navy-dark)', color: '#ffffff', borderRadius: '8px', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+          >
+            Retry Tab
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('overview');
@@ -77,18 +124,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       onTabChange={(tabId) => setActiveTab(tabId)}
       onNavigate={onNavigate}
     >
-      {activeTab === 'overview' && <AdminOverviewTab onNavigateTab={(tab) => setActiveTab(tab)} />}
-      {activeTab === 'users' && <UsersTab />}
-      {activeTab === 'kyc' && <KycQueueTab />}
-      {activeTab === 'services' && <ServicesTab />}
-      {activeTab === 'bookings' && <BookingsTab />}
-      {activeTab === 'finance' && <FinanceTab />}
-      {activeTab === 'gifts' && <GiftsTab />}
-      {activeTab === 'reports' && <ReportsTab />}
-      {activeTab === 'audit' && <AuditLogsTab />}
-      {activeTab === 'staff' && <StaffAccountsTab />}
-      {activeTab === 'inbox' && <InquiriesInboxTab />}
-      {activeTab === 'settings' && <PlatformSettingsTab />}
+      <AdminTabErrorBoundary key={activeTab} tabName={activeTab}>
+        {activeTab === 'overview' && <AdminOverviewTab onNavigateTab={(tab) => setActiveTab(tab)} />}
+        {activeTab === 'users' && <UsersTab />}
+        {activeTab === 'kyc' && <KycQueueTab />}
+        {activeTab === 'services' && <ServicesTab />}
+        {activeTab === 'bookings' && <BookingsTab />}
+        {activeTab === 'finance' && <FinanceTab />}
+        {activeTab === 'gifts' && <GiftsTab />}
+        {activeTab === 'reports' && <ReportsTab />}
+        {activeTab === 'audit' && <AuditLogsTab />}
+        {activeTab === 'staff' && <StaffAccountsTab />}
+        {activeTab === 'inbox' && <InquiriesInboxTab />}
+        {activeTab === 'settings' && <PlatformSettingsTab />}
+      </AdminTabErrorBoundary>
     </DashboardLayout>
   );
 };

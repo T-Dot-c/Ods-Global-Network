@@ -493,9 +493,18 @@ const serviceCatalogService = require('../services/serviceCatalogService');
  */
 router.get('/services', requireRole('admin', 'super_admin'), async (req, res) => {
   try {
-    const { status = 'pending_review', page, limit } = req.query;
-    const result = await serviceCatalogService.getAdminReviewQueue({ status, page, limit });
-    return res.json({ success: true, data: result.services, pagination: result.pagination });
+    const { page, limit } = req.query;
+    const statusParam = (req.query.status === 'all' || req.query.status === '') ? null : (req.query.status || 'pending_review');
+    const result = await serviceCatalogService.getAdminReviewQueue({ status: statusParam, page, limit });
+    return res.json({
+      success: true,
+      data: {
+        services: result.services,
+        pagination: result.pagination,
+      },
+      services: result.services,
+      pagination: result.pagination,
+    });
   } catch (err) {
     console.error('[Admin Services Queue Error]', err.message);
     return res.status(err.statusCode || 500).json({ success: false, message: err.message });
