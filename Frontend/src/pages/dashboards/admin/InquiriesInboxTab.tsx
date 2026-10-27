@@ -35,12 +35,12 @@ export const InquiriesInboxTab: React.FC = () => {
       setError(null);
       if (subTab === 'support') {
         const data = await fetchSupportInbox();
-        setSupportTickets(data.requests);
-        setSupportTotal(data.total);
+        setSupportTickets(Array.isArray(data?.requests) ? data.requests : []);
+        setSupportTotal(data?.total || 0);
       } else {
         const data = await fetchPartnersInbox();
-        setPartnerInquiries(data.partners);
-        setPartnersTotal(data.total);
+        setPartnerInquiries(Array.isArray(data?.partners) ? data.partners : []);
+        setPartnersTotal(data?.total || 0);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load inbox data.');

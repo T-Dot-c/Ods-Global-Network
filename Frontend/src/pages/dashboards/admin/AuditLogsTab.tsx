@@ -32,11 +32,13 @@ export const AuditLogsTab: React.FC = () => {
         page,
         limit: 20,
       });
-      setLogs(data.items);
-      setTotal(data.pagination?.total || 0);
-      setTotalPages(data.pagination?.pages || 1);
+      const list = Array.isArray(data?.items) ? data.items : [];
+      setLogs(list);
+      setTotal(data?.pagination?.total || 0);
+      setTotalPages(data?.pagination?.pages || 1);
     } catch (err: any) {
       setError(err.message || 'Failed to load audit logs.');
+      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -147,10 +149,10 @@ export const AuditLogsTab: React.FC = () => {
           <tbody>
             {loading && logs.length === 0 ? (
               <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading immutable ledger entries...</td></tr>
-            ) : logs.length === 0 ? (
+            ) : !logs || logs.length === 0 ? (
               <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>No audit events found matching filters.</td></tr>
             ) : (
-              logs.map((item) => (
+              (logs || []).map((item) => (
                 <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '12px 16px', color: '#64748b', whiteSpace: 'nowrap' }}>
                     {new Date(item.created_at).toLocaleString()}

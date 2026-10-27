@@ -67,10 +67,12 @@ export const FinanceTab: React.FC = () => {
         page: txPage,
         limit: 15,
       });
-      setTransactions(res.transactions);
-      setTxTotalPages(res.pagination?.pages || 1);
+      const list = Array.isArray(res?.transactions) ? res.transactions : [];
+      setTransactions(list);
+      setTxTotalPages(res?.pagination?.pages || 1);
     } catch (err: any) {
       setError(err.message || 'Failed to load transactions.');
+      setTransactions([]);
     } finally {
       setTxLoading(false);
     }
@@ -296,10 +298,10 @@ export const FinanceTab: React.FC = () => {
               <tbody>
                 {txLoading && transactions.length === 0 ? (
                   <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading transactions...</td></tr>
-                ) : transactions.length === 0 ? (
+                ) : !transactions || transactions.length === 0 ? (
                   <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>No transaction records found.</td></tr>
                 ) : (
-                  transactions.map((t) => (
+                  (transactions || []).map((t) => (
                     <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '14px 18px' }}>
                         <div style={{ fontWeight: 800, color: 'var(--color-navy-dark)' }}>{t.tx_ref}</div>

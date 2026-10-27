@@ -30,12 +30,14 @@ export const PlatformSettingsTab: React.FC = () => {
         fetchPlatformSettings(),
         fetchEmailTemplates(),
       ]);
-      setTemplates(temps);
+      setTemplates(Array.isArray(temps) ? temps : []);
 
       const initial: Record<string, any> = {};
-      sets.forEach((s) => {
-        initial[s.key] = s.value;
-      });
+      if (Array.isArray(sets)) {
+        sets.forEach((s) => {
+          initial[s.key] = s.value;
+        });
+      }
       setFormValues(initial);
     } catch (err: any) {
       setError(err.message || 'Failed to load platform settings.');

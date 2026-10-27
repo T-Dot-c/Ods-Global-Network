@@ -61,10 +61,12 @@ export const UsersTab: React.FC = () => {
         page,
         limit: 15,
       });
-      setUsers(res.users);
-      setTotalPages(res.pagination?.pages || 1);
+      const list = Array.isArray(res?.users) ? res.users : [];
+      setUsers(list);
+      setTotalPages(res?.pagination?.pages || 1);
     } catch (err: any) {
       setError(err.message || 'Failed to load user directory.');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -306,14 +308,14 @@ export const UsersTab: React.FC = () => {
                   Loading user records...
                 </td>
               </tr>
-            ) : users.length === 0 ? (
+            ) : !users || users.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                   No users found matching query filters.
                 </td>
               </tr>
             ) : (
-              users.map((u) => (
+              (users || []).map((u) => (
                 <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ fontWeight: 700, color: 'var(--color-navy-dark)' }}>{u.full_name}</div>

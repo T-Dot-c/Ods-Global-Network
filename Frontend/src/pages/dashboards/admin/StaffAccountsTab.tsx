@@ -52,9 +52,11 @@ export const StaffAccountsTab: React.FC = () => {
       setLoading(true);
       setError(null);
       const data = await fetchAdminStaff();
-      setStaff(data);
+      const list = Array.isArray(data) ? data : [];
+      setStaff(list);
     } catch (err: any) {
       setError(err.message || 'Failed to list staff accounts.');
+      setStaff([]);
     } finally {
       setLoading(false);
     }
@@ -220,10 +222,10 @@ export const StaffAccountsTab: React.FC = () => {
           <tbody>
             {loading && staff.length === 0 ? (
               <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading staff accounts...</td></tr>
-            ) : staff.length === 0 ? (
+            ) : !staff || staff.length === 0 ? (
               <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>No administrative accounts found.</td></tr>
             ) : (
-              staff.map((s) => (
+              (staff || []).map((s) => (
                 <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ fontWeight: 700, color: 'var(--color-navy-dark)' }}>{s.full_name}</div>

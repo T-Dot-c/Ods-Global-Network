@@ -55,10 +55,12 @@ export const BookingsTab: React.FC = () => {
         page,
         limit: 15,
       });
-      setBookings(res.bookings);
-      setTotalPages(res.pagination?.pages || 1);
+      const list = Array.isArray(res?.bookings) ? res.bookings : [];
+      setBookings(list);
+      setTotalPages(res?.pagination?.pages || 1);
     } catch (err: any) {
       setError(err.message || 'Failed to load bookings ledger.');
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -243,14 +245,14 @@ export const BookingsTab: React.FC = () => {
                   Loading bookings...
                 </td>
               </tr>
-            ) : bookings.length === 0 ? (
+            ) : !bookings || bookings.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                   No bookings found matching filter criteria.
                 </td>
               </tr>
             ) : (
-              bookings.map((b) => (
+              (bookings || []).map((b) => (
                 <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ fontWeight: 800, color: 'var(--color-gold-deep)' }}>{b.reference}</div>

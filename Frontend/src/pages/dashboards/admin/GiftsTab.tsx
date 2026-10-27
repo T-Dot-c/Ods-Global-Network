@@ -55,10 +55,12 @@ export const GiftsTab: React.FC = () => {
         page,
         limit: 15,
       });
-      setGifts(res.gifts);
-      setTotalPages(res.pagination?.pages || 1);
+      const list = Array.isArray(res?.gifts) ? res.gifts : [];
+      setGifts(list);
+      setTotalPages(res?.pagination?.pages || 1);
     } catch (err: any) {
       setError(err.message || 'Failed to load gift cards.');
+      setGifts([]);
     } finally {
       setLoading(false);
     }
@@ -231,10 +233,10 @@ export const GiftsTab: React.FC = () => {
           <tbody>
             {loading && gifts.length === 0 ? (
               <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading gift cards...</td></tr>
-            ) : gifts.length === 0 ? (
+            ) : !gifts || gifts.length === 0 ? (
               <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>No gift cards found.</td></tr>
             ) : (
-              gifts.map((g) => (
+              (gifts || []).map((g) => (
                 <tr key={g.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <code style={{ fontWeight: 800, color: 'var(--color-navy-dark)', backgroundColor: '#f1f5f9', padding: '3px 8px', borderRadius: '4px' }}>
