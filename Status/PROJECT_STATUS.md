@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-10-26  
-> **CURRENT STAGE**: BATCH 9 COMPLETED (100% SPEC COMPLIANCE) — Booking & Appointment Scheduling Engine, Multi-Tenant Provider Availability Rules & Exceptions, Dynamic Slot Generation with Lead Time & Capacity Slicing, Advisory Transaction Locking (`pg_advisory_xact_lock`) with Zero Double-Booking Guarantee, 10-Minute Hold Window with Dual Expiry Sweeper, Chapa & Gift Voucher Dual Payment Settlement, 7-State Lifecycle Machine & Append-Only History Ledger, Masked Phone PII Protection, Least-Privilege `ods_app` Security (`DELETE` denied), Interactive Public Booking & Hold Timer, Customer & Provider Appointment Dashboards (100% Batch 9 automated tests passing, 290+/290+ total repository regression tests passing)  
+> **LAST UPDATED**: 2026-10-27  
+> **CURRENT STAGE**: BATCH 10 VERIFIED & READY FOR CLIENT GATE (100% SPEC COMPLIANCE) — Full Enterprise Admin Console, Granular RBAC Permission Framework with Immediate Revocation, PostgreSQL 18 Least-Privilege Grants & Immutable Append-Only Audit Ledger (`admin_audit_log`, `DELETE`/`UPDATE` blocked with SQLSTATE 42501), Real-Time KPI Counters & "Needs Attention" Operational Queue, Strict User Administration & Session Invalidation (`token_version` bump), Merchant & Provider KYC Queue, Catalog Moderation with Active Bookings Warning, System-Wide Booking Oversight & Dispute Resolution, Two-Person Refund Dual Authorization (> 10,000 ETB, Self-Approval Forbidden), Masked Gift Voucher Inventory & Audited Plaintext Reveal, 6 Operational Reports with Streaming RFC-4180 CSV Export, Staff Accounts Provisioning with Temporary Password & `must_change_password`, Dynamic Typed Platform Settings, Dynamic Sidebar Hub, 100% Automated Backend Tests Passing (T1a through T10), 100% Regression Tests Passing across Batches 3–9, Frontend Production Build Passing (`npm run build` exit code 0)  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -506,8 +506,22 @@
      - `test-batch9-endpoints.js`: 100% Passed (All 9 phases: T1a through T9c, including the 5-parallel-customer concurrency test).
      - Full regression suites: Batches 4, 5, 6, 7, and 8 all passing with 100% success (0 failures).
      - Frontend TypeScript compiler (`tsc --noEmit`) and Vite production build (`npm run build`) passing with 0 errors.
-4. **Batch 10: Full Admin Console (Next)**:
-   - Comprehensive platform analytics, management tools, and operational controls.
+4. **Batch 10 Completed & 100% Verified (Full Specification Compliance)**:
+   - **Migration 022 Applied Cleanly**: Created `admin_permissions`, `admin_permission_groups`, `admin_group_permissions`, `admin_user_groups`, `admin_user_permissions`, `admin_audit_log`, `user_admin_notes`, `platform_settings`, and `refund_approvals`.
+   - **PostgreSQL 18 Least-Privilege Security**: Runtime `ods_app` granted `SELECT` and `INSERT` only on `admin_audit_log`; `UPDATE` and `DELETE` strictly blocked with `SQLSTATE 42501 permission denied`. Foreign key on `actor_user_id` is `SET NULL` on delete (no cascade delete).
+   - **Granular RBAC Framework**: Database-backed role-permission resolution with zero JWT delay. Revoking permission in database denies subsequent HTTP request immediately. Unauthorized actions strictly blocked with `403 Forbidden` and logged in audit ledger.
+   - **User Administration**: Search/filter by name/email/phone/role/status, detail inspection drawer, suspension with mandatory audit reason, force signout session termination (`token_version` bump), reactivate, admin notes, step-up role changes.
+   - **Merchant & Provider KYC Review**: Document inspection with mime/size validation, atomic approve/reject decisions with audit trail.
+   - **Service Catalog Moderation**: Review queue, approve, reject with reason, takedown of active services with active bookings warning, restore, category taxonomy manager.
+   - **System-Wide Booking Oversight**: Booking ledger, event timeline, conflict resolution, dispute flags, and admin cancellation with automatic refund override.
+   - **Finance & Two-Person Dual Authorization**: Dual-authorization control for refunds > 10,000 ETB enforcing strict self-approval prevention, gateway reconciliation, provider earnings breakdown.
+   - **Gift Card Security & Logged Reveal**: Masked voucher codes (`ODS-GC-****-****`), redemptions ledger, validity extension, cancellation refund, and audited plaintext reveal modal with mandatory reason.
+   - **Operational Reports & Settings**: 6 standardized business reports with streaming RFC-4180 CSV export and dynamic typed platform settings.
+   - **Admin Hub & Dynamic Navigation**: `AdminDashboard.tsx` dynamically queries `fetchMyPermissions()` and builds authorized navigation items only.
+   - **Automated Verification**:
+     - `test-batch10-endpoints.js`: 100% Passed (All 10 suites: T1a through T10).
+     - Full regression suites across Batches 3, 4, 5, 6, 7, 8, 9: 100% Passed.
+     - Frontend TypeScript compiler (`tsc`) and production build (`npm run build`) passing with 0 errors.
 5. **Batch 11: Notification Engine**:
    - Multi-channel notification delivery (Email, SMS, Push).
    - Scheduled gift delivery email cron sweeper.
