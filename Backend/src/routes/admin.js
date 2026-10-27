@@ -25,10 +25,30 @@ const pool = require('../db');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { logAuditEvent } = require('../services/auditService');
 
+const { requirePermission } = require('../middleware/adminRbac');
+const { logAdminAction, queryAdminAuditLogs } = require('../services/adminAuditService');
+
 const router = express.Router();
 
 // All admin routes require authentication
 router.use(requireAuth);
+
+// ── Mount Batch 10 Modular Admin Routers ───────────────────────
+const adminUsersRouter = require('./adminUsers');
+const adminStaffRouter = require('./adminStaff');
+const adminFinanceRouter = require('./adminFinance');
+const adminBookingsRouter = require('./adminBookings');
+const adminGiftsRouter = require('./adminGifts');
+const adminReportsRouter = require('./adminReports');
+const adminDashboardRouter = require('./adminDashboard');
+
+router.use('/users', adminUsersRouter);
+router.use('/', adminStaffRouter);
+router.use('/', adminFinanceRouter);
+router.use('/bookings', adminBookingsRouter);
+router.use('/gifts', adminGiftsRouter);
+router.use('/reports', adminReportsRouter);
+router.use('/', adminDashboardRouter);
 
 /* ─────────────────────────────────────────────────────────────
    GET /api/admin/kyc/queue
@@ -233,6 +253,18 @@ router.post('/kyc/:entityType/:id/decision', requireRole('admin', 'super_admin')
       client // pass the transaction client so this is part of the same transaction
     );
 
+    // Also write to Batch 10 admin_audit_log
+    await logAdminAction(client, {
+      actorUserId: adminUser.id,
+      permissionKey: 'kyc.decide',
+      action: auditAction,
+      targetType: entityType,
+      targetId: entityId,
+      summary: { decision, entity_type: entityType },
+      reason: decision === 'rejected' ? String(reason).trim() : null,
+      req,
+    });
+
     await client.query('COMMIT');
 
     return res.json({
@@ -406,6 +438,47 @@ router.get('/audit-logs', requireRole('super_admin'), async (req, res) => {
   } catch (err) {
     console.error('[Admin Audit Logs Error]', err.message);
     return res.status(500).json({ success: false, message: 'Failed to retrieve audit logs.' });
+  }
+});
+
+/**
+ * GET /api/admin/audit-log
+ * Batch 10 Append-Only Audit Log with actor, permission used, target, diff summary, and reason.
+ * Access: super_admin OR permission 'audit.view'
+ */
+router.get('/audit-log', requirePermission('audit.view'), async (req, res) => {
+  try {
+    const { actor_user_id, action, target_type, target_id, date_from, date_to, limit = 50, page = 1 } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+    const offset = (pageNum - 1) * limitNum;
+
+    const result = await queryAdminAuditLogs({
+      actorUserId: actor_user_id,
+      action,
+      targetType: target_type,
+      targetId: target_id,
+      dateFrom: date_from,
+      dateTo: date_to,
+      limit: limitNum,
+      offset,
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        items: result.items,
+        pagination: {
+          total: result.total,
+          page: pageNum,
+          limit: limitNum,
+          pages: Math.ceil(result.total / limitNum) || 1,
+        },
+      },
+    });
+  } catch (err) {
+    console.error('[Admin Audit Log Batch 10 Error]', err.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve administrative audit logs.' });
   }
 });
 

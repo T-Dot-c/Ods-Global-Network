@@ -1,18 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Users,
-  Building2,
-  Stethoscope,
-  Settings,
   ShieldCheck,
-  Inbox,
+  Stethoscope,
+  Calendar,
+  DollarSign,
+  Gift,
+  FileText,
   ShieldAlert,
+  UserCheck,
+  Settings,
+  Inbox,
 } from 'lucide-react';
-import { DashboardLayout, SidebarItem, StatCardItem, QuickActionItem } from './DashboardLayout';
+import { DashboardLayout, SidebarItem } from './DashboardLayout';
+import { AdminOverviewTab } from './admin/AdminOverviewTab';
+import { UsersTab } from './admin/UsersTab';
 import { KycQueueTab } from './admin/KycQueueTab';
-import { InquiriesInboxTab } from './admin/InquiriesInboxTab';
+import { ServicesTab } from './admin/ServicesTab';
+import { BookingsTab } from './admin/BookingsTab';
+import { FinanceTab } from './admin/FinanceTab';
+import { GiftsTab } from './admin/GiftsTab';
 import { AuditLogsTab } from './admin/AuditLogsTab';
+import { ReportsTab } from './admin/ReportsTab';
+import { StaffAccountsTab } from './admin/StaffAccountsTab';
+import { PlatformSettingsTab } from './admin/PlatformSettingsTab';
+import { InquiriesInboxTab } from './admin/InquiriesInboxTab';
+import { fetchMyPermissions, AdminPermissionsData } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
 
 interface AdminDashboardProps {
@@ -22,61 +36,59 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [permData, setPermData] = useState<AdminPermissionsData | null>(null);
 
+  useEffect(() => {
+    fetchMyPermissions()
+      .then((data) => setPermData(data))
+      .catch((err) => console.warn('[AdminDashboard] Permissions load fallback:', err.message));
+  }, []);
+
+  const isSuper = user?.role === 'super_admin' || permData?.isSuperAdmin;
+  const perms = permData?.permissions || [];
+
+  const hasPerm = (prefix: string) => {
+    if (isSuper || perms.includes('*')) return true;
+    return perms.some(p => p.startsWith(prefix) || p === prefix);
+  };
+
+  // Dynamically constructed sidebar items based on granular RBAC
   const sidebarItems: SidebarItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={17} /> },
-    { id: 'kyc', label: 'KYC Queue', icon: <ShieldCheck size={17} /> },
-    { id: 'inbox', label: 'Inquiries Inbox', icon: <Inbox size={17} /> },
-    ...(user?.role === 'super_admin' ? [{ id: 'audit', label: 'Audit Logs', icon: <ShieldAlert size={17} /> }] : []),
-    { id: 'users', label: 'Users', icon: <Users size={17} /> },
-    { id: 'merchants', label: 'Merchants', icon: <Building2 size={17} /> },
-    { id: 'providers', label: 'Providers', icon: <Stethoscope size={17} /> },
-    { id: 'settings', label: 'Settings', icon: <Settings size={17} /> },
-  ];
-
-  const statCards: StatCardItem[] = [
-    { label: 'KYC Reviews', value: 'Active', subtext: 'Merchant & provider compliance queue', icon: <ShieldCheck size={22} /> },
-    { label: 'Intake Inbox', value: 'Active', subtext: 'Support & partner proposal stream', icon: <Inbox size={22} /> },
-    { label: 'Audit Ledger', value: user?.role === 'super_admin' ? 'Super Admin' : 'Restricted', subtext: 'Platform security logs', icon: <ShieldAlert size={22} /> },
-  ];
-
-  const quickActions: QuickActionItem[] = [
-    {
-      label: 'KYC Compliance Queue',
-      icon: <ShieldCheck size={16} color="var(--color-gold-bright)" />,
-      onClick: () => setActiveTab('kyc'),
-    },
-    {
-      label: 'Public Inquiries Inbox',
-      icon: <Inbox size={16} color="var(--color-gold-bright)" />,
-      onClick: () => setActiveTab('inbox'),
-    },
-    ...(user?.role === 'super_admin'
-      ? [
-          {
-            label: 'Security Audit Logs',
-            icon: <ShieldAlert size={16} color="var(--color-gold-bright)" />,
-            onClick: () => setActiveTab('audit'),
-          },
-        ]
-      : []),
+    ...(hasPerm('users.') ? [{ id: 'users', label: 'User Directory', icon: <Users size={17} /> }] : []),
+    ...(hasPerm('kyc.') ? [{ id: 'kyc', label: 'KYC Compliance', icon: <ShieldCheck size={17} /> }] : []),
+    ...(hasPerm('services.') || hasPerm('categories.') ? [{ id: 'services', label: 'Services Catalog', icon: <Stethoscope size={17} /> }] : []),
+    ...(hasPerm('bookings.') ? [{ id: 'bookings', label: 'Bookings Ledger', icon: <Calendar size={17} /> }] : []),
+    ...(hasPerm('payments.') || hasPerm('refunds.') ? [{ id: 'finance', label: 'Finance & Refunds', icon: <DollarSign size={17} /> }] : []),
+    ...(hasPerm('gifts.') ? [{ id: 'gifts', label: 'Digital Vouchers', icon: <Gift size={17} /> }] : []),
+    ...(hasPerm('reports.') ? [{ id: 'reports', label: 'Operational Reports', icon: <FileText size={17} /> }] : []),
+    ...(isSuper || hasPerm('audit.view') ? [{ id: 'audit', label: 'Audit Ledger', icon: <ShieldAlert size={17} /> }] : []),
+    ...(isSuper || hasPerm('admins.manage') ? [{ id: 'staff', label: 'Staff Accounts', icon: <UserCheck size={17} /> }] : []),
+    ...(hasPerm('support.') || isSuper ? [{ id: 'inbox', label: 'Inquiries Inbox', icon: <Inbox size={17} /> }] : []),
+    ...(isSuper || hasPerm('settings.manage') ? [{ id: 'settings', label: 'Platform Settings', icon: <Settings size={17} /> }] : []),
   ];
 
   return (
     <DashboardLayout
       role={user?.role || 'admin'}
-      roleTitle={user?.role === 'super_admin' ? 'Super Administrator Console' : 'Administrator Dashboard'}
+      roleTitle={isSuper ? 'Super Administrator Console' : 'Operational Administration Console'}
       sidebarItems={sidebarItems}
-      statCards={statCards}
-      quickActions={quickActions}
-      activityTitle="System Operations"
       activeTab={activeTab}
       onTabChange={(tabId) => setActiveTab(tabId)}
       onNavigate={onNavigate}
     >
+      {activeTab === 'overview' && <AdminOverviewTab onNavigateTab={(tab) => setActiveTab(tab)} />}
+      {activeTab === 'users' && <UsersTab />}
       {activeTab === 'kyc' && <KycQueueTab />}
-      {activeTab === 'inbox' && <InquiriesInboxTab />}
+      {activeTab === 'services' && <ServicesTab />}
+      {activeTab === 'bookings' && <BookingsTab />}
+      {activeTab === 'finance' && <FinanceTab />}
+      {activeTab === 'gifts' && <GiftsTab />}
+      {activeTab === 'reports' && <ReportsTab />}
       {activeTab === 'audit' && <AuditLogsTab />}
+      {activeTab === 'staff' && <StaffAccountsTab />}
+      {activeTab === 'inbox' && <InquiriesInboxTab />}
+      {activeTab === 'settings' && <PlatformSettingsTab />}
     </DashboardLayout>
   );
 };
