@@ -21,7 +21,9 @@ import {
   Award,
   BarChart3,
   Handshake,
+  Bell,
 } from 'lucide-react';
+import { fetchUnreadNotificationCount, fetchInAppNotifications, markNotificationAsRead, markAllNotificationsAsRead, InAppNotification } from '../../services/notificationService';
 
 interface HeaderProps {
   currentView: string;
@@ -36,6 +38,36 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
   // Interactive Search State
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Notification Engine State (Batch 11)
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState<boolean>(false);
+  const [recentNotifs, setRecentNotifs] = useState<InAppNotification[]>([]);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Poll for unread notification count
+  useEffect(() => {
+    let isMounted = true;
+    const poll = async () => {
+      const count = await fetchUnreadNotificationCount();
+      if (isMounted) setUnreadCount(count);
+    };
+    poll();
+    const timer = setInterval(poll, 15000); // 15 seconds smart poll
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  // Fetch recent notifications when dropdown opens
+  useEffect(() => {
+    if (notifDropdownOpen) {
+      fetchInAppNotifications(1, 5).then((res) => {
+        setRecentNotifs(res.notifications);
+      });
+    }
+  }, [notifDropdownOpen]);
 
   const navRef = useRef<HTMLElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -873,6 +905,175 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               Search
             </span>
           </button>
+
+          {/* Notification Bell (Batch 11) */}
+          <div style={{ position: 'relative' }} ref={notifDropdownRef}>
+            <button
+              onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
+              style={{
+                position: 'relative',
+                background: 'color-mix(in srgb, var(--color-white) 6%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-white) 15%, transparent)',
+                borderRadius: '8px',
+                padding: '8px 10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: notifDropdownOpen ? 'var(--color-gold-bright)' : 'var(--color-border-light)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              aria-label="View notifications"
+              title="Notifications"
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.70rem',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    minWidth: '18px',
+                    height: '18px',
+                    padding: '0 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 0 6px rgba(239, 68, 68, 0.6)',
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Bell Dropdown */}
+            {notifDropdownOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: '320px',
+                  background: 'var(--color-navy-dark, #0b1f3a)',
+                  border: '1px solid var(--color-gold-mid, #BE9B49)',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+                  zIndex: 1000,
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Notifications</span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={async () => {
+                        await markAllNotificationsAsRead();
+                        setUnreadCount(0);
+                        const res = await fetchInAppNotifications(1, 5);
+                        setRecentNotifs(res.notifications);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--color-gold-bright, #eab308)',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {recentNotifs.length === 0 ? (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                      No notifications yet
+                    </div>
+                  ) : (
+                    recentNotifs.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={async () => {
+                          if (!n.read_at) {
+                            await markNotificationAsRead(n.id);
+                            setUnreadCount(Math.max(0, unreadCount - 1));
+                          }
+                          setNotifDropdownOpen(false);
+                          if (n.action_url) {
+                            window.location.href = n.action_url;
+                          } else {
+                            onNavigate('notifications');
+                          }
+                        }}
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                          cursor: 'pointer',
+                          background: n.read_at ? 'transparent' : 'rgba(2, 132, 199, 0.08)',
+                          transition: 'background 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = n.read_at ? 'transparent' : 'rgba(2, 132, 199, 0.08)'; }}
+                      >
+                        <div style={{ fontSize: '0.85rem', fontWeight: n.read_at ? 500 : 700, color: '#ffffff', marginBottom: '4px' }}>
+                          {n.title}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {n.rendered_body}
+                        </div>
+                        <div style={{ fontSize: '0.70rem', color: '#64748b', marginTop: '6px' }}>
+                          {new Date(n.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    padding: '10px 16px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setNotifDropdownOpen(false);
+                      onNavigate('notifications');
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--color-gold-bright, #eab308)',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    View All Notifications &rarr;
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Login CTA */}
           <Button

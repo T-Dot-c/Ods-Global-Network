@@ -93,85 +93,143 @@ async function dispatchMail({ to, subject, html, text }) {
 
 /**
  * Dispatches an email verification link with URL fragment (#token=...).
+ * Powered by Batch 11 Notification Engine.
  */
 async function sendVerificationEmail({ to, token }) {
   const origin = getNormalizedOrigin();
   const verifyUrl = `${origin}/verify-email#token=${token}`;
 
-  const subject = 'Verify your ODS Global Network account';
-  const text = `Welcome to ODS Global Network.\n\nPlease verify your email by visiting:\n${verifyUrl}\n\nThis link will expire in 24 hours.`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #0b1f3a;">Verify Your Account</h2>
-      <p>Thank you for registering with ODS Global Network. Please verify your email address to activate all account features.</p>
-      <div style="margin: 30px 0;">
-        <a href="${verifyUrl}" style="background-color: #0284c7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Email</a>
+  try {
+    const { notify } = require('./notificationService');
+    const { processQueueOnce } = require('../workers/notificationWorker');
+    const res = await notify('auth.verification_requested', {
+      recipientEmail: to,
+      actionUrl: verifyUrl,
+      actionButton: { text: 'Verify Your Email', url: verifyUrl },
+    }, {
+      subjectType: 'user',
+      idempotencyKey: `verify:${to}:${token}`,
+    });
+    // Trigger queue processing for immediate delivery in test/dev
+    await processQueueOnce().catch(() => {});
+    return { success: true, eventId: res.eventId };
+  } catch (err) {
+    // Graceful fallback to direct SMTP if engine queue fails
+    const subject = 'Verify your ODS Global Network account';
+    const text = `Welcome to ODS Global Network.\n\nPlease verify your email by visiting:\n${verifyUrl}\n\nThis link will expire in 24 hours.`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #0b1f3a;">Verify Your Account</h2>
+        <p>Thank you for registering with ODS Global Network. Please verify your email address to activate all account features.</p>
+        <div style="margin: 30px 0;">
+          <a href="${verifyUrl}" style="background-color: #0284c7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Email</a>
+        </div>
+        <p style="color: #64748b; font-size: 14px;">This link will expire in 24 hours. If you did not create this account, please disregard this email.</p>
       </div>
-      <p style="color: #64748b; font-size: 14px;">This link will expire in 24 hours. If you did not create this account, please disregard this email.</p>
-    </div>
-  `;
-
-  return dispatchMail({ to, subject, html, text });
+    `;
+    return dispatchMail({ to, subject, html, text });
+  }
 }
 
 /**
  * Dispatches a password reset link with URL fragment (#token=...).
+ * Powered by Batch 11 Notification Engine.
  */
 async function sendPasswordResetEmail({ to, token }) {
   const origin = getNormalizedOrigin();
   const resetUrl = `${origin}/reset-password#token=${token}`;
 
-  const subject = 'Reset your ODS Global Network password';
-  const text = `A password reset request was received for your ODS Global Network account.\n\nReset your password here:\n${resetUrl}\n\nThis link will expire in 15 minutes. If you did not request a password reset, please ignore this email.`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #0b1f3a;">Password Reset Request</h2>
-      <p>We received a request to reset your password. Click the button below to set a new password:</p>
-      <div style="margin: 30px 0;">
-        <a href="${resetUrl}" style="background-color: #0284c7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
+  try {
+    const { notify } = require('./notificationService');
+    const { processQueueOnce } = require('../workers/notificationWorker');
+    const res = await notify('auth.password_reset_requested', {
+      recipientEmail: to,
+      actionUrl: resetUrl,
+      actionButton: { text: 'Reset Password', url: resetUrl },
+    }, {
+      subjectType: 'user',
+      idempotencyKey: `reset:${to}:${token}`,
+    });
+    await processQueueOnce().catch(() => {});
+    return { success: true, eventId: res.eventId };
+  } catch (err) {
+    const subject = 'Reset your ODS Global Network password';
+    const text = `A password reset request was received for your ODS Global Network account.\n\nReset your password here:\n${resetUrl}\n\nThis link will expire in 15 minutes. If you did not request a password reset, please ignore this email.`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #0b1f3a;">Password Reset Request</h2>
+        <p>We received a request to reset your password. Click the button below to set a new password:</p>
+        <div style="margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #0284c7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
+        </div>
+        <p style="color: #64748b; font-size: 14px;">This link will expire in 15 minutes. If you did not request this change, you can safely ignore this message.</p>
       </div>
-      <p style="color: #64748b; font-size: 14px;">This link will expire in 15 minutes. If you did not request this change, you can safely ignore this message.</p>
-    </div>
-  `;
-
-  return dispatchMail({ to, subject, html, text });
+    `;
+    return dispatchMail({ to, subject, html, text });
+  }
 }
 
 /**
  * Dispatches a security notice confirming password was updated.
+ * Powered by Batch 11 Notification Engine.
  */
 async function sendPasswordChangedAlert({ to, email }) {
   const recipient = to || email;
-  const subject = 'Your ODS Global Network password was changed';
-  const text = `Your ODS Global Network password was recently changed.\n\nAll other active sessions have been invalidated.\n\nIf you did not perform this change, please contact security immediately.`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #0b1f3a;">Security Alert: Password Changed</h2>
-      <p>Your password was recently changed successfully. As a security precaution, all existing sessions on other devices have been invalidated.</p>
-      <p style="color: #b91c1c; font-weight: bold;">If you did not make this change, please contact ODS support immediately.</p>
-    </div>
-  `;
-
-  return dispatchMail({ to: recipient, subject, html, text });
+  try {
+    const { notify } = require('./notificationService');
+    const { processQueueOnce } = require('../workers/notificationWorker');
+    const res = await notify('auth.password_changed', {
+      recipientEmail: recipient,
+    }, {
+      subjectType: 'user',
+      idempotencyKey: `pw_changed:${recipient}:${Date.now()}:${Math.random()}`,
+    });
+    await processQueueOnce().catch(() => {});
+    return { success: true, eventId: res.eventId };
+  } catch (err) {
+    const subject = 'Your ODS Global Network password was changed';
+    const text = `Your ODS Global Network password was recently changed.\n\nAll other active sessions have been invalidated.\n\nIf you did not perform this change, please contact security immediately.`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #0b1f3a;">Security Alert: Password Changed</h2>
+        <p>Your password was recently changed successfully. As a security precaution, all existing sessions on other devices have been invalidated.</p>
+        <p style="color: #b91c1c; font-weight: bold;">If you did not make this change, please contact ODS support immediately.</p>
+      </div>
+    `;
+    return dispatchMail({ to: recipient, subject, html, text });
+  }
 }
 
 /**
  * Dispatches a security alert on duplicate registration attempt.
+ * Powered by Batch 11 Notification Engine.
  */
 async function sendDuplicateRegistrationAlert({ to, email }) {
   const recipient = to || email;
-  const subject = 'Registration attempt for existing account';
-  const text = `A new registration was attempted using your email address.\n\nIf this was you, you can log in or reset your password. If you did not attempt this, no action is needed as your existing account remains secure.`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #0b1f3a;">Registration Attempt Notice</h2>
-      <p>A registration was recently attempted with your email address on ODS Global Network.</p>
-      <p>Since you already have an account, no new account was created. If you forgot your password, you can use the account recovery option.</p>
-      <p style="color: #64748b; font-size: 14px;">If this was not you, someone may have mistakenly entered your email address. Your account remains secure.</p>
-    </div>
-  `;
-
-  return dispatchMail({ to: recipient, subject, html, text });
+  try {
+    const { notify } = require('./notificationService');
+    const { processQueueOnce } = require('../workers/notificationWorker');
+    const res = await notify('auth.duplicate_registration_alert', {
+      recipientEmail: recipient,
+    }, {
+      subjectType: 'user',
+      idempotencyKey: `dup_reg:${recipient}:${Date.now()}:${Math.random()}`,
+    });
+    await processQueueOnce().catch(() => {});
+    return { success: true, eventId: res.eventId };
+  } catch (err) {
+    const subject = 'Registration attempt for existing account';
+    const text = `A new registration was attempted using your email address.\n\nIf this was you, you can log in or reset your password. If you did not attempt this, no action is needed as your existing account remains secure.`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #0b1f3a;">Registration Attempt Notice</h2>
+        <p>A registration was recently attempted with your email address on ODS Global Network.</p>
+        <p>Since you already have an account, no new account was created. If you forgot your password, you can use the account recovery option.</p>
+        <p style="color: #64748b; font-size: 14px;">If this was not you, someone may have mistakenly entered your email address. Your account remains secure.</p>
+      </div>
+    `;
+    return dispatchMail({ to: recipient, subject, html, text });
+  }
 }
 
 /**

@@ -17,7 +17,7 @@ const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 const { requireAuth, requireVerifiedEmail } = require('../middleware/auth');
 const chapaService = require('../services/chapaService');
-const { sendPaymentReceiptEmail } = require('../services/emailService');
+const { notify } = require('../services/notificationService');
 const giftCardService = require('../services/giftCardService');
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
@@ -192,20 +192,17 @@ router.post('/webhook/chapa', async (req, res) => {
 
       const user = userRes.rows[0];
       if (user && user.email) {
-        // Dispatch receipt email non-blocking in background
-        setImmediate(async () => {
-          try {
-            await sendPaymentReceiptEmail({
-              to: user.email,
-              fullName: user.full_name,
-              txRef: tx.tx_ref,
-              amount: tx.amount,
-              currency: tx.currency,
-              purpose: tx.purpose,
-              date: tx.completed_at || tx.created_at,
-            });
-          } catch (_) {}
-        });
+        // Dispatch receipt notification transactionally via Notification Engine
+        await notify('payment.receipt', {
+          customerName: user.full_name || 'Customer',
+          transactionRef: tx.tx_ref,
+          amount: tx.amount,
+          itemDescription: tx.purpose || 'Payment',
+          paymentMethod: 'Chapa / Telebirr',
+        }, {
+          subjectType: 'user',
+          subjectId: tx.user_id,
+        }).catch(e => console.warn('[Payment Notification Warning]', e.message));
       }
 
       // Record audit log entry
@@ -291,19 +288,16 @@ router.get('/verify/:txRef', requireAuth, async (req, res) => {
             tx = updateRes.rows[0];
 
             if (req.user && req.user.email) {
-              setImmediate(async () => {
-                try {
-                  await sendPaymentReceiptEmail({
-                    to: req.user.email,
-                    fullName: req.user.full_name || 'Customer',
-                    txRef: tx.tx_ref,
-                    amount: tx.amount,
-                    currency: tx.currency,
-                    purpose: tx.purpose,
-                    date: tx.completed_at || new Date(),
-                  });
-                } catch (_) {}
-              });
+              await notify('payment.receipt', {
+                customerName: req.user.full_name || 'Customer',
+                transactionRef: tx.tx_ref,
+                amount: tx.amount,
+                itemDescription: tx.purpose || 'Payment',
+                paymentMethod: 'Chapa / Telebirr',
+              }, {
+                subjectType: 'user',
+                subjectId: tx.user_id,
+              }).catch(e => console.warn('[Payment Notification Warning]', e.message));
             }
 
             await recordAuditLog(tx.user_id, 'PAYMENT_COMPLETED', req, {
@@ -395,19 +389,16 @@ router.get('/receipt/:txRef', requireAuth, async (req, res) => {
             const userEmail = tx.user_email || req.user.email;
             const userName = tx.user_name || req.user.full_name;
             if (userEmail) {
-              setImmediate(async () => {
-                try {
-                  await sendPaymentReceiptEmail({
-                    to: userEmail,
-                    fullName: userName,
-                    txRef: tx.tx_ref,
-                    amount: tx.amount,
-                    currency: tx.currency,
-                    purpose: tx.purpose,
-                    date: tx.completed_at || new Date(),
-                  });
-                } catch (_) {}
-              });
+              await notify('payment.receipt', {
+                customerName: userName || 'Customer',
+                transactionRef: tx.tx_ref,
+                amount: tx.amount,
+                itemDescription: tx.purpose || 'Payment',
+                paymentMethod: 'Chapa / Telebirr',
+              }, {
+                subjectType: 'user',
+                subjectId: tx.user_id,
+              }).catch(e => console.warn('[Payment Notification Warning]', e.message));
             }
 
             await recordAuditLog(tx.user_id, 'PAYMENT_COMPLETED', req, {

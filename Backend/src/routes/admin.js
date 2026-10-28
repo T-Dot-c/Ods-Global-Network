@@ -27,6 +27,7 @@ const { logAuditEvent } = require('../services/auditService');
 
 const { requirePermission } = require('../middleware/adminRbac');
 const { logAdminAction, queryAdminAuditLogs } = require('../services/adminAuditService');
+const { notify } = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -265,6 +266,28 @@ router.post('/kyc/:entityType/:id/decision', requireRole('admin', 'super_admin')
       req,
     });
 
+    // ── Step 3c: Dispatch KYC decision notification (Batch 11 Notification Engine) ──
+    try {
+      const entityInfoQuery = entityType === 'merchant'
+        ? 'SELECT business_name as org_name, user_id FROM merchants WHERE id = $1'
+        : 'SELECT organization_name as org_name, user_id FROM providers WHERE id = $1';
+      const entityInfo = await client.query(entityInfoQuery, [entityId]);
+      if (entityInfo.rows.length > 0) {
+        const org = entityInfo.rows[0];
+        const eventType = decision === 'approved' ? 'onboarding.approved' : 'onboarding.rejected';
+        await notify(eventType, {
+          organizationName: org.org_name || 'Organization',
+          reason: decision === 'rejected' ? String(reason).trim() : undefined,
+        }, {
+          subjectType: 'user',
+          subjectId: org.user_id,
+          actorUserId: adminUser.id,
+        }, client);
+      }
+    } catch (notifErr) {
+      console.warn('[Admin KYC Decision] Non-blocking notification dispatch warning:', notifErr.message);
+    }
+
     await client.query('COMMIT');
 
     return res.json({
@@ -498,10 +521,7 @@ router.get('/services', requireRole('admin', 'super_admin'), async (req, res) =>
     const result = await serviceCatalogService.getAdminReviewQueue({ status: statusParam, page, limit });
     return res.json({
       success: true,
-      data: {
-        services: result.services,
-        pagination: result.pagination,
-      },
+      data: result.services,
       services: result.services,
       pagination: result.pagination,
     });

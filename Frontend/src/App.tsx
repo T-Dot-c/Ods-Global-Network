@@ -20,6 +20,7 @@ import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { GiftClaimPage } from './pages/GiftClaimPage';
 import { ServicesCatalogPage } from './pages/ServicesCatalogPage';
 import { ServiceDetailPage } from './pages/ServiceDetailPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
 
 /* ── View type ────────────────────────────────────────────── */
@@ -42,7 +43,8 @@ export type View =
   | 'payment/success'
   | 'gift/claim'
   | 'services'
-  | 'service-detail';
+  | 'service-detail'
+  | 'notifications';
 
 const DASHBOARD_VIEWS: View[] = [
   'dashboard',
@@ -277,6 +279,9 @@ const AppInner: React.FC = () => {
             serviceIdOrSlug={selectedServiceSlugOrId || window.location.pathname.replace(/^\/services\//, '')}
             onNavigate={handleNavigate}
           />
+        )}
+        {currentView === 'notifications' && (
+          <NotificationsPage onNavigate={handleNavigate} />
         )}
 
         {/* ── Role-protected dashboards ─────────────────── */}

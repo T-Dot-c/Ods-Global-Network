@@ -11,6 +11,7 @@ const pool = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/adminRbac');
 const { logAdminAction } = require('../services/adminAuditService');
+const { notify } = require('../services/notificationService');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -357,6 +358,21 @@ router.post('/refunds', requirePermission('refunds.initiate'), async (req, res) 
         req,
       });
 
+      // Dispatch alert to finance approvers (Batch 11 Notification Engine)
+      try {
+        await notify('payment.admin_refund_approval_pending', {
+          refundAmount,
+          initiatorEmail: req.user.email,
+          reason: String(reason).trim(),
+        }, {
+          subjectType: 'system',
+          adminPermission: 'refunds.approve',
+          actorUserId: req.user.id,
+        }, client);
+      } catch (notifErr) {
+        console.warn('[adminFinance] Finance alert warning:', notifErr.message);
+      }
+
       await client.query('COMMIT');
 
       return res.status(202).json({
@@ -408,6 +424,25 @@ router.post('/refunds', requirePermission('refunds.initiate'), async (req, res) 
       reason: String(reason).trim(),
       req,
     });
+
+    // Dispatch refund issued notification (Batch 11 Notification Engine)
+    try {
+      const userRes = await client.query('SELECT full_name, email FROM users WHERE id = $1', [tx.user_id]);
+      const customerName = userRes.rows[0]?.full_name || 'Customer';
+
+      await notify('payment.refund_issued', {
+        customerName,
+        refundAmount,
+        transactionRef: tx.tx_ref,
+        refundReason: String(reason).trim(),
+      }, {
+        subjectType: 'user',
+        subjectId: tx.user_id,
+        actorUserId: req.user.id,
+      }, client);
+    } catch (notifErr) {
+      console.warn('[adminFinance] Refund notification warning:', notifErr.message);
+    }
 
     await client.query('COMMIT');
 
@@ -523,6 +558,25 @@ router.post('/refunds/:id/approve', requirePermission('refunds.approve'), async 
       reason: String(reason).trim(),
       req,
     });
+
+    // Dispatch refund issued notification (Batch 11 Notification Engine)
+    try {
+      const userRes = await client.query('SELECT full_name, email FROM users WHERE id = $1', [approval.customer_user_id]);
+      const customerName = userRes.rows[0]?.full_name || 'Customer';
+
+      await notify('payment.refund_issued', {
+        customerName,
+        refundAmount: approval.amount,
+        transactionRef: approval.tx_ref,
+        refundReason: String(reason).trim(),
+      }, {
+        subjectType: 'user',
+        subjectId: approval.customer_user_id,
+        actorUserId: req.user.id,
+      }, client);
+    } catch (notifErr) {
+      console.warn('[adminFinance] Secondary refund notification warning:', notifErr.message);
+    }
 
     await client.query('COMMIT');
 

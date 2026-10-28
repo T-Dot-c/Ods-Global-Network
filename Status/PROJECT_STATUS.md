@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
-> **LAST UPDATED**: 2026-10-27  
-> **CURRENT STAGE**: BATCH 10 COMPLETED & SIGNED OFF (100% SPEC COMPLIANCE) — Full Enterprise Admin Console, Granular RBAC Permission Framework with Immediate Revocation, PostgreSQL 18 Least-Privilege Grants & Immutable Append-Only Audit Ledger (`admin_audit_log`, `DELETE`/`UPDATE` blocked with SQLSTATE 42501), Real-Time KPI Counters & "Needs Attention" Operational Queue, Strict User Administration & Session Invalidation (`token_version` bump), Merchant & Provider KYC Queue, Catalog Moderation with Active Bookings Warning, System-Wide Booking Oversight & Dispute Resolution, Two-Person Refund Dual Authorization (> 10,000 ETB, Self-Approval Forbidden), Masked Gift Voucher Inventory & Audited Plaintext Reveal, 6 Operational Reports with Streaming RFC-4180 CSV Export, Staff Accounts Provisioning with Temporary Password & `must_change_password`, Dynamic Typed Platform Settings, Dynamic Sidebar Hub, 100% Automated Backend Tests Passing (T1a through T10), 100% Regression Tests Passing across Batches 3–9, Frontend Production Build Passing (`npm run build` exit code 0), All Manual Walkthrough & Resilience Verifications Passed  
+> **LAST UPDATED**: 2026-10-28  
+> **CURRENT STAGE**: BATCH 11 COMPLETED & VERIFIED (100% SPEC COMPLIANCE) — Unified Transactional Notification Engine, Outbox & Event Ledger (`notification_events`, `notifications`), Concurrent Queue Worker (`FOR UPDATE SKIP LOCKED`, exponential backoff `1m`/`5m`/`30m`/`2h`), Dead-Letter Queue & Admin Triage, Master Template Studio with 35 Seeded System Templates, Ethiopian Timezone & ETB Localization, Advance Reminder Scheduler (24h/1h reminders with automatic cancellation on reschedule/cancel), User Preferences & Category Opt-Outs, HMAC-Signed One-Click Unsubscribe, Suppression Blacklist, In-App Header Bell & Notification Center at `/notifications`, Admin Notifications Hub with Health Stats & Test Send, 100% Zero Direct-Send Compliance, 14/14 Automated Batch 11 Tests Passing, 159/159 Full Regression Tests Passing Across Batches 5–11, Clean Production Build.  
 > **OVERALL HEALTH**: ON TRACK 🟢  
 
 ---
@@ -522,10 +522,24 @@
      - `test-batch10-endpoints.js`: 100% Passed (All 10 suites: T1a through T10).
      - Full regression suites across Batches 3, 4, 5, 6, 7, 8, 9: 100% Passed.
      - Frontend TypeScript compiler (`tsc`) and production build (`npm run build`) passing with 0 errors.
-5. **Batch 11: Notification Engine**:
-   - Multi-channel notification delivery (Email, SMS, Push).
-   - Scheduled gift delivery email cron sweeper.
-6. **Batch 12: Production Hardening and Go-Live Gate**:
-   - ClamAV integration, Redis rate limiter, production `ods_app` DB migration, and final go-live gate audit.
+5. **Batch 11 Completed & 100% Verified (Full Specification Compliance)**:
+   - **Migration 023 Applied Cleanly**: Created `notification_events`, `notifications`, `notification_templates`, `notification_template_versions`, `notification_preferences`, `notification_suppressions`, and `notification_attempts`.
+   - **PostgreSQL 18 Least-Privilege Security**: Runtime `ods_app` granted `SELECT` and `INSERT` on immutable event and attempt ledgers (`notification_events`, `notification_attempts`); `SELECT, INSERT, UPDATE` on queue table (`notifications`); `DELETE` strictly revoked with `SQLSTATE 42501 permission denied`.
+   - **Transactional Outbox & Zero Ghost Dispatches**: Business logic invokes single unified `notify(eventType, payload, options, client)` taking database transaction client; rolled-back business actions cleanly abort event recording with zero orphan notifications.
+   - **Concurrent High-Throughput Worker**: Worker queue implemented via `SELECT ... FOR UPDATE SKIP LOCKED` without external daemons; exponential backoff retries (`1m`, `5m`, `30m`, `2h`) with 4-attempt dead-letter queue (`dead_letter`) transitions and admin triage (`requeue` / `discard`).
+   - **Master Template Engine & Seeder**: Master catalog of 35 system templates across 8 categories seeded from code into DB; variables strictly HTML-escaped (`&lt;script&gt;`) preventing stored XSS; styled with ODS brand tokens (`#0b1f3a`, `#0284c7`, `#BE9B49`); formatted with Ethiopian timezone (`Africa/Addis_Ababa`) and ETB currency.
+   - **Advance Reminder Scheduler**: Resilient background sweepers for 24-hour and 1-hour appointment reminders and 7-day gift voucher expiration notices; pending reminders automatically cancelled upon appointment reschedule or cancellation.
+   - **User Preferences & Suppression Matrix**: Category and channel preference toggles with mandatory bypass for essential security and transactional events; HMAC-SHA256 signed one-click unsubscription links requiring no login; bounce/complaint suppression blacklist.
+   - **Zero Direct-Send Compliance**: All direct `nodemailer` / `sendMail` calls eliminated across all 12 backend domain modules (`auth`, `adminUsers`, `adminStaff`, `adminFinance`, `payments`, `gifting`, `documents`, `partners`, `bookingService`, `serviceCatalogService`), routing 100% of emails through the unified outbox.
+   - **In-App Notification Center & Header Bell**: Real-time header bell with unread badge counter and preview dropdown in `Header.tsx`; dedicated user `/notifications` center with inbox, category filters, "Mark All as Read", and granular preference toggles.
+   - **Admin Notifications Hub**: Operational console integrated in `AdminDashboard.tsx` with live queue depth health metrics, delivery audit ledger, dead-letter triage, and Template Studio with live preview and audited test sends.
+   - **Automated Verification**:
+     - `test-batch11-endpoints.js`: 100% Passed (14 / 14 automated tests).
+     - Full regression suites across Batches 3–10: 100% Passed (159 / 159 platform regression tests).
+     - Frontend TypeScript compiler (`tsc`) and Vite production build (`npm run build`) passing with 0 errors.
+6. **Batch 12: Production Hardening, Deliverability and Go-Live Gate**:
+   - Production mail provider integration (SES/SendGrid/Resend) with SPF, DKIM, and DMARC alignment.
+   - Redis-backed distributed rate limiting, ClamAV antivirus file upload scanner, and production database role migration.
+   - Final end-to-end security audit and go-live deployment gate sign-off.
 
 

@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const pool = require('../db');
 const { logAuditEvent } = require('./auditService');
+const { notify } = require('./notificationService');
 
 // ── Lifecycle States & Transition Map ─────────────────────────────
 const SERVICE_STATES = [
@@ -165,6 +166,45 @@ async function transitionServiceStatus({
      VALUES ($1, $2, $3, $4, $5)`,
     [serviceId, fromStatus, toStatus, actorUserId, reason ? reason.trim() : null]
   );
+
+  // Dispatch catalog notifications (Batch 11 Notification Engine)
+  try {
+    const ownerQuery = `
+      SELECT s.title, COALESCE(p.organization_name, m.business_name, 'Provider') as provider_name,
+             COALESCE(p.user_id, m.user_id) as owner_user_id
+      FROM services s
+      LEFT JOIN providers p ON p.id = s.provider_id
+      LEFT JOIN merchants m ON m.id = s.merchant_id
+      WHERE s.id = $1;
+    `;
+    const ownerRes = await client.query(ownerQuery, [serviceId]);
+    if (ownerRes.rows.length > 0 && ownerRes.rows[0].owner_user_id) {
+      const owner = ownerRes.rows[0];
+      const payload = {
+        serviceTitle: owner.title,
+        providerName: owner.provider_name,
+        feedback: reason || undefined,
+        reason: reason || undefined,
+      };
+      const options = {
+        subjectType: 'user',
+        subjectId: owner.owner_user_id,
+        actorUserId,
+      };
+
+      if (toStatus === 'pending_review') {
+        await notify('catalog.service_submitted', payload, options, client);
+      } else if (toStatus === 'published' && fromStatus === 'pending_review') {
+        await notify('catalog.service_approved', payload, options, client);
+      } else if (toStatus === 'rejected') {
+        await notify('catalog.service_rejected', payload, options, client);
+      } else if (toStatus === 'taken_down') {
+        await notify('catalog.service_taken_down', payload, options, client);
+      }
+    }
+  } catch (notifErr) {
+    console.warn('[Catalog Moderation] Notification dispatch warning:', notifErr.message);
+  }
 
   return updatedService;
 }

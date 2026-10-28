@@ -10,6 +10,7 @@
 const express = require('express');
 const pool    = require('../db');
 const { verifyStagingToken } = require('../services/uploadService');
+const { notify } = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -207,6 +208,20 @@ router.post('/', async (req, res) => {
       }
 
       await client.query('COMMIT');
+
+      // Dispatch partner acknowledgment notification (Batch 11 Notification Engine)
+      try {
+        await notify('partner.inquiry_received', {
+          contactPerson: trimmedName || 'Partner',
+          companyName: trimmedCompany || 'Organization',
+          recipientEmail: trimmedEmail,
+        }, {
+          subjectType: 'system',
+          subjectId: partnerId,
+        });
+      } catch (notifErr) {
+        console.warn('[PARTNERS] Notification warning:', notifErr.message);
+      }
 
       // ── 5. Non-production console logging (type only, no tokens) ───
       if (process.env.NODE_ENV !== 'production') {

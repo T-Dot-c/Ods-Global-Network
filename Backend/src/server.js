@@ -197,6 +197,19 @@ app.get('/api/service-categories', async (_req, res) => {
 const bookingRoutes = require('./routes/bookings');
 app.use('/api', bookingRoutes);
 
+/* ── Notification Engine Routes & Worker (Batch 11) ────────── */
+const notificationRoutes = require('./routes/notifications');
+const adminNotificationRoutes = require('./routes/adminNotifications');
+const { startWorker } = require('./workers/notificationWorker');
+const { startScheduler } = require('./services/notificationScheduler');
+
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin/notifications', adminNotificationRoutes);
+
+// Start notification queue worker and reminder scheduler
+startWorker();
+startScheduler();
+
 /* ── Start unattached document sweeper ────────────────────── */
 const { startSweeper } = require('./services/sweeperService');
 startSweeper();

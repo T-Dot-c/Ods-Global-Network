@@ -16,6 +16,7 @@ const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 const { requireAuth, isVerifiedOrExempt } = require('../middleware/auth');
 const { logAuditEvent } = require('../services/auditService');
+const { notify } = require('../services/notificationService');
 const {
   authUpload,
   anonUpload,
@@ -269,6 +270,32 @@ function uploadMiddleware(req, res, next, isAuthMode) {
             entity_type: entityType,
           },
         });
+      }
+
+      // Dispatch onboarding application notifications (Batch 11 Notification Engine)
+      if (isAuthenticated && ['provider', 'merchant'].includes(authUser.role)) {
+        try {
+          await notify('onboarding.application_received', {
+            organizationName: authUser.full_name || 'Healthcare Partner',
+            referenceNumber: doc.id.slice(0, 8).toUpperCase(),
+          }, {
+            subjectType: 'user',
+            subjectId: authUser.id,
+            actorUserId: authUser.id,
+          }, client);
+
+          await notify('onboarding.admin_new_application', {
+            organizationName: authUser.full_name || 'Healthcare Partner',
+            category: authUser.role,
+            licenseNumber: doc.file_name,
+          }, {
+            subjectType: 'system',
+            adminPermission: 'kyc.view',
+            actorUserId: authUser.id,
+          }, client);
+        } catch (notifErr) {
+          console.warn('[KYC Documents] Notification dispatch warning:', notifErr.message);
+        }
       }
 
       await client.query('COMMIT');

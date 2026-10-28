@@ -17,6 +17,7 @@ const { requireAuth } = require('../middleware/auth');
 const { requirePermission, verifyStepUpPassword } = require('../middleware/adminRbac');
 const { logAdminAction } = require('../services/adminAuditService');
 const { revokeUserSessions } = require('../services/sessionService');
+const { notify } = require('../services/notificationService');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -292,6 +293,21 @@ router.post('/:id/suspend', requirePermission('users.suspend'), async (req, res)
       req,
     });
 
+    // Dispatch suspension notification (Batch 11 Notification Engine)
+    try {
+      await notify('admin.account_suspended', {
+        firstName: targetUser.full_name ? targetUser.full_name.split(' ')[0] : 'Member',
+        recipientEmail: targetUser.email,
+        reason: String(reason).trim(),
+      }, {
+        subjectType: 'user',
+        subjectId: targetUserId,
+        actorUserId: req.user.id,
+      }, client);
+    } catch (notifErr) {
+      console.warn('[adminUsers] Suspension notification dispatch warning:', notifErr.message);
+    }
+
     await client.query('COMMIT');
 
     return res.json({
@@ -348,6 +364,20 @@ router.post('/:id/reactivate', requirePermission('users.suspend'), async (req, r
       reason: reason ? String(reason).trim() : 'Administrative reactivation',
       req,
     });
+
+    // Dispatch reactivation notification (Batch 11 Notification Engine)
+    try {
+      await notify('admin.account_reactivated', {
+        firstName: targetUser.full_name ? targetUser.full_name.split(' ')[0] : 'Member',
+        recipientEmail: targetUser.email,
+      }, {
+        subjectType: 'user',
+        subjectId: targetUserId,
+        actorUserId: req.user.id,
+      }, client);
+    } catch (notifErr) {
+      console.warn('[adminUsers] Reactivation notification dispatch warning:', notifErr.message);
+    }
 
     await client.query('COMMIT');
 

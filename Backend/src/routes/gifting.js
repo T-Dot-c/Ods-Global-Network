@@ -18,7 +18,7 @@ const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 const { requireAuth, requireRole, requireVerifiedEmail } = require('../middleware/auth');
 const giftCardService = require('../services/giftCardService');
-const emailService = require('../services/emailService');
+const { notify } = require('../services/notificationService');
 const chapaService = require('../services/chapaService');
 const { logAuditEvent } = require('../services/auditService');
 
@@ -185,24 +185,23 @@ router.post('/purchase', giftPurchaseLimiter, requireAuth, requireVerifiedEmail,
 
       if (recipient_email) {
         const isScheduled = scheduled_delivery_date && new Date(scheduled_delivery_date) > new Date();
-        if (!isScheduled) {
-          emailService.sendGiftCardPresentationEmail({
-            to: recipient_email,
-            recipientName: recipient_name,
-            senderName: req.user.fullName || req.user.email,
-            code: giftCard.code,
-            amount: giftCard.initialAmount,
-            currency: giftCard.currency,
-            giftType: giftCard.giftType,
-            packageType: giftCard.packageType,
-            occasion: giftCard.occasion,
-            serviceTitle: giftCard.serviceTitle,
-            personalMessage: personal_message,
-            expiryDate: giftCard.expiryDate,
-          }).catch((mailErr) => {
-            console.error('[gifting/purchase:wallet] Email dispatch warning:', mailErr.message);
-          });
-        }
+        const origin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+        const claimUrl = `${origin}/gift/claim?code=${encodeURIComponent(giftCard.code)}`;
+
+        await notify('gift.delivered', {
+          recipientName: recipient_name,
+          recipientEmail: recipient_email,
+          senderName: req.user.fullName || req.user.email,
+          amount: giftCard.initialAmount,
+          personalMessage: personal_message || 'A gift for your healthcare and wellness.',
+          actionUrl: claimUrl,
+          actionButton: { text: 'Claim Your Gift Card', url: claimUrl },
+        }, {
+          subjectType: 'gift',
+          subjectId: giftCard.id,
+          actorUserId: req.user.id,
+          runAt: isScheduled ? new Date(scheduled_delivery_date) : new Date(),
+        }).catch(err => console.warn('[gifting/purchase:wallet] Notification warning:', err.message));
       }
 
       try {
@@ -343,27 +342,25 @@ router.post('/purchase', giftPurchaseLimiter, requireAuth, requireVerifiedEmail,
       metadata,
     });
 
-    // Asynchronously dispatch gift card presentation email if recipient email provided
     if (recipient_email) {
       const isScheduled = scheduled_delivery_date && new Date(scheduled_delivery_date) > new Date();
-      if (!isScheduled) {
-        emailService.sendGiftCardPresentationEmail({
-          to: recipient_email,
-          recipientName: recipient_name,
-          senderName: req.user.fullName || req.user.email,
-          code: giftCard.code,
-          amount: giftCard.initialAmount,
-          currency: giftCard.currency,
-          giftType: giftCard.giftType,
-          packageType: giftCard.packageType,
-          occasion: giftCard.occasion,
-          serviceTitle: giftCard.serviceTitle,
-          personalMessage: personal_message,
-          expiryDate: giftCard.expiryDate,
-        }).catch((mailErr) => {
-          console.error('[gifting/purchase] Email dispatch warning:', mailErr.message);
-        });
-      }
+      const origin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+      const claimUrl = `${origin}/gift/claim?code=${encodeURIComponent(giftCard.code)}`;
+
+      await notify('gift.delivered', {
+        recipientName: recipient_name,
+        recipientEmail: recipient_email,
+        senderName: req.user.fullName || req.user.email,
+        amount: giftCard.initialAmount,
+        personalMessage: personal_message || 'A gift for your healthcare and wellness.',
+        actionUrl: claimUrl,
+        actionButton: { text: 'Claim Your Gift Card', url: claimUrl },
+      }, {
+        subjectType: 'gift',
+        subjectId: giftCard.id,
+        actorUserId: req.user.id,
+        runAt: isScheduled ? new Date(scheduled_delivery_date) : new Date(),
+      }).catch(err => console.warn('[gifting/purchase] Notification warning:', err.message));
     }
 
     try {
@@ -410,24 +407,24 @@ router.post('/redeem', giftCheckLimiter, requireAuth, requireVerifiedEmail, asyn
       userId: req.user.id,
     });
 
-    // Notify sender if sender email exists
+    // Notify sender if sender email exists via Notification Engine
     if (result.giftCard.sender_id) {
       pool.query(`SELECT email, full_name FROM users WHERE id = $1`, [result.giftCard.sender_id])
-        .then((senderRes) => {
+        .then(async (senderRes) => {
           if (senderRes.rows.length > 0) {
             const sender = senderRes.rows[0];
-            emailService.sendGiftCardRedemptionNoticeEmail({
-              to: sender.email,
-              senderName: sender.full_name,
+            await notify('gift.redeemed_notice', {
+              senderName: sender.full_name || 'Valued Customer',
               recipientName: req.user.fullName || req.user.email,
               amount: result.redeemedAmount,
-              currency: result.currency,
-              occasion: result.giftCard.occasion,
-              code: result.giftCard.code || code,
-            }).catch(() => {});
+            }, {
+              subjectType: 'user',
+              subjectId: result.giftCard.sender_id,
+              actorUserId: req.user.id,
+            });
           }
         })
-        .catch(() => {});
+        .catch(err => console.warn('[Gift Redemption Notification Warning]', err.message));
     }
 
     try {

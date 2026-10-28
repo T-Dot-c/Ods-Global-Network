@@ -12,6 +12,7 @@ import {
   UserCheck,
   Settings,
   Inbox,
+  Bell,
 } from 'lucide-react';
 import { DashboardLayout, SidebarItem } from './DashboardLayout';
 import { AdminOverviewTab } from './admin/AdminOverviewTab';
@@ -26,6 +27,7 @@ import { ReportsTab } from './admin/ReportsTab';
 import { StaffAccountsTab } from './admin/StaffAccountsTab';
 import { PlatformSettingsTab } from './admin/PlatformSettingsTab';
 import { InquiriesInboxTab } from './admin/InquiriesInboxTab';
+import { NotificationsHubTab } from './admin/NotificationsHubTab';
 import { fetchMyPermissions, AdminPermissionsData } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
 
@@ -109,6 +111,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     ...(hasPerm('payments.') || hasPerm('refunds.') ? [{ id: 'finance', label: 'Finance & Refunds', icon: <DollarSign size={17} /> }] : []),
     ...(hasPerm('gifts.') ? [{ id: 'gifts', label: 'Digital Vouchers', icon: <Gift size={17} /> }] : []),
     ...(hasPerm('reports.') ? [{ id: 'reports', label: 'Operational Reports', icon: <FileText size={17} /> }] : []),
+    ...(hasPerm('notifications.') || isSuper ? [{ id: 'notifications', label: 'Notifications Hub', icon: <Bell size={17} /> }] : []),
     ...(isSuper || hasPerm('audit.view') ? [{ id: 'audit', label: 'Audit Ledger', icon: <ShieldAlert size={17} /> }] : []),
     ...(isSuper || hasPerm('admins.manage') ? [{ id: 'staff', label: 'Staff Accounts', icon: <UserCheck size={17} /> }] : []),
     ...(hasPerm('support.') || isSuper ? [{ id: 'inbox', label: 'Inquiries Inbox', icon: <Inbox size={17} /> }] : []),
@@ -133,6 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         {activeTab === 'finance' && <FinanceTab />}
         {activeTab === 'gifts' && <GiftsTab />}
         {activeTab === 'reports' && <ReportsTab />}
+        {activeTab === 'notifications' && <NotificationsHubTab />}
         {activeTab === 'audit' && <AuditLogsTab />}
         {activeTab === 'staff' && <StaffAccountsTab />}
         {activeTab === 'inbox' && <InquiriesInboxTab />}

@@ -14,6 +14,9 @@
 
 const crypto = require('crypto');
 const pool = require('../db');
+const { notify } = require('./notificationService');
+const { cancelPendingBookingReminders } = require('./notificationScheduler');
+const { formatEthiopianDate } = require('./notificationTemplateService');
 
 const BOOKING_HOLD_MINUTES = parseInt(process.env.BOOKING_HOLD_MINUTES || '10', 10);
 const DEFAULT_TIMEZONE = 'Africa/Addis_Ababa';
@@ -610,6 +613,84 @@ async function transitionBookingStatus(bookingId, newStatus, actorUserId, reason
       [bookingId, `booking.${newStatus}`, JSON.stringify({ reference: booking.reference, from: currentStatus, to: newStatus, reason })]
     );
 
+    // ── Dispatch Notification Engine events (Batch 11) ─────────────────────────
+    try {
+      const detailsQuery = `
+        SELECT b.id, b.reference, b.start_at, s.title as service_title,
+               COALESCE(p.organization_name, 'Healthcare Provider') as provider_name,
+               u_c.first_name as customer_name, u_c.email as customer_email,
+               a.street, a.city
+        FROM bookings b
+        JOIN services s ON s.id = b.service_id
+        LEFT JOIN providers p ON p.id = b.provider_id
+        LEFT JOIN users u_c ON u_c.id = b.customer_id
+        LEFT JOIN addresses a ON a.id = b.address_id
+        WHERE b.id = $1;
+      `;
+      const detRes = await client.query(detailsQuery, [bookingId]);
+      if (detRes.rows.length > 0) {
+        const det = detRes.rows[0];
+        const appointmentTimeStr = formatEthiopianDate(det.start_at);
+        const facilityAddress = [det.street, det.city].filter(Boolean).join(', ') || 'Provider Facility';
+
+        if (newStatus === 'awaiting_provider') {
+          await notify('booking.created_awaiting_provider', {
+            customerName: det.customer_name || 'Customer',
+            serviceTitle: det.service_title,
+            providerName: det.provider_name,
+            appointmentTime: appointmentTimeStr,
+            reference: det.reference,
+          }, { subjectType: 'booking', subjectId: bookingId, actorUserId }, client);
+
+          await notify('booking.provider_new_request', {
+            providerName: det.provider_name,
+            customerName: det.customer_name || 'Customer',
+            serviceTitle: det.service_title,
+            appointmentTime: appointmentTimeStr,
+            targetRole: 'provider',
+          }, { subjectType: 'booking', subjectId: bookingId, actorUserId }, client);
+        } else if (newStatus === 'confirmed') {
+          await notify('booking.confirmed', {
+            customerName: det.customer_name || 'Customer',
+            providerName: det.provider_name,
+            serviceTitle: det.service_title,
+            appointmentTime: appointmentTimeStr,
+            facilityAddress,
+            reference: det.reference,
+          }, { subjectType: 'booking', subjectId: bookingId, actorUserId }, client);
+        } else if (newStatus === 'declined') {
+          await notify('booking.declined', {
+            customerName: det.customer_name || 'Customer',
+            providerName: det.provider_name,
+            serviceTitle: det.service_title,
+            declineReason: reason || 'Provider unavailable',
+            reference: det.reference,
+            targetRole: 'customer',
+          }, { subjectType: 'booking', subjectId: bookingId, actorUserId }, client);
+        } else if (newStatus.startsWith('cancelled')) {
+          await cancelPendingBookingReminders(bookingId, client);
+          await notify('booking.cancelled', {
+            recipientName: 'Valued Member',
+            serviceTitle: det.service_title,
+            appointmentTime: appointmentTimeStr,
+            cancelledBy: newStatus.replace('cancelled_by_', ''),
+            cancelReason: reason || 'Booking cancelled',
+            reference: det.reference,
+          }, { subjectType: 'booking', subjectId: bookingId, actorUserId }, client);
+        } else if (newStatus === 'completed') {
+          await notify('booking.completed', {
+            customerName: det.customer_name || 'Customer',
+            providerName: det.provider_name,
+            serviceTitle: det.service_title,
+            appointmentTime: appointmentTimeStr,
+            targetRole: 'customer',
+          }, { subjectType: 'booking', subjectId: bookingId, actorUserId }, client);
+        }
+      }
+    } catch (notifErr) {
+      console.warn('[Booking Service] Notification dispatch warning:', notifErr.message);
+    }
+
     if (shouldManageTx) await client.query('COMMIT');
     return updatedBooking;
   } catch (err) {
@@ -1101,6 +1182,28 @@ async function rescheduleBooking({ bookingId, newStartAt, customerUserId }) {
        VALUES ($1, 'confirmed', 'confirmed', $2, $3)`,
       [booking.id, customerUserId, `Rescheduled from ${prevStart} to ${newStartDate.toISOString()} (Count: ${newCount})`]
     );
+
+    // 7. Cancel pending reminders and dispatch rescheduled notification (Batch 11)
+    try {
+      await cancelPendingBookingReminders(booking.id, client);
+      const svcRes = await client.query('SELECT title FROM services WHERE id = $1', [booking.service_id]);
+      const title = svcRes.rows[0]?.title || 'Healthcare Service';
+
+      await notify('booking.rescheduled', {
+        recipientName: 'Valued Customer',
+        serviceTitle: title,
+        newAppointmentTime: formatEthiopianDate(newStartDate),
+        oldAppointmentTime: formatEthiopianDate(prevStart),
+        reference: booking.reference,
+        facilityAddress: 'Provider Facility',
+      }, {
+        subjectType: 'booking',
+        subjectId: booking.id,
+        actorUserId: customerUserId,
+      }, client);
+    } catch (notifErr) {
+      console.warn('[Booking Reschedule] Notification warning:', notifErr.message);
+    }
 
     await client.query('COMMIT');
     return updRes.rows[0];

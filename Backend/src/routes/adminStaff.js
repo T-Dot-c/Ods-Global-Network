@@ -13,6 +13,7 @@ const { requireAuth } = require('../middleware/auth');
 const { requirePermission, verifyStepUpPassword, resolveAdminPermissions } = require('../middleware/adminRbac');
 const { logAdminAction } = require('../services/adminAuditService');
 const { revokeUserSessions } = require('../services/sessionService');
+const { notify } = require('../services/notificationService');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -180,6 +181,25 @@ router.post('/staff', requirePermission('admins.manage'), async (req, res) => {
       reason: 'Staff administrator account provisioned',
       req,
     });
+
+    // 5. Dispatch staff provisioning notification (Batch 11 Notification Engine)
+    try {
+      const origin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+      const actionUrl = `${origin}/login`;
+      await notify('admin.staff_provisioned', {
+        firstName: full_name ? full_name.split(' ')[0] : 'Colleague',
+        recipientEmail: cleanEmail,
+        assignedRole: admin_level === 'super' ? 'Super Administrator' : 'Staff Member',
+        actionUrl,
+        actionButton: { text: 'Log In to Admin Console', url: actionUrl },
+      }, {
+        subjectType: 'user',
+        subjectId: newStaffUser.id,
+        actorUserId: req.user.id,
+      }, client);
+    } catch (notifErr) {
+      console.warn('[adminStaff] Provisioning notification dispatch warning:', notifErr.message);
+    }
 
     await client.query('COMMIT');
 
