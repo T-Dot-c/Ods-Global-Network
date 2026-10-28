@@ -44,3 +44,8 @@ server/pdfs/*
 !server/pdfs/.gitkeep
 resource/server/pdfs/*
 !resource/server/pdfs/.gitkeep
+
+# Database backups
+Backend/backups/*
+!Backend/backups/.gitkeep
+*.sql.bak

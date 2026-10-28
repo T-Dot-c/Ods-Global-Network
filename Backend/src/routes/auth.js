@@ -42,58 +42,40 @@ const COOKIE_SECURE   = process.env.COOKIE_SECURE === 'true';
 const MAX_FAILURES    = 5;
 const LOCKOUT_MINUTES = 15;
 
-/* ── Batch 5 Rate Limiters ───────────────────────────────────── */
-// Forgot-password IP limiter (default: 5 / 15m in strict, 1000 in generous)
-const forgotPasswordIpLimiter = rateLimit({
+const { createRateLimiter, isKeyLimitExceeded } = require('../services/rateLimiterService');
+
+/* ── Batch 5 & Batch 12 Persistent Rate Limiters ────────────────── */
+const forgotPasswordIpLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_FORGOT_IP_MAX || '1000', 10),
-  standardHeaders: true,
-  legacyHeaders: false,
+  prefix: 'forgot_ip',
   message: { success: false, message: 'Too many recovery requests from this IP. Please try again later.' },
 });
 
-// Reset-password IP limiter (default: 5 / 15m in strict, 1000 in generous)
-const resetPasswordIpLimiter = rateLimit({
+const resetPasswordIpLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_RESET_IP_MAX || '1000', 10),
-  standardHeaders: true,
-  legacyHeaders: false,
+  prefix: 'reset_ip',
   message: { success: false, message: 'Too many reset attempts from this IP. Please try again later.' },
 });
 
-// Register IP limiter (default: 5 / 1h in strict, 1000 in generous)
-const registerIpLimiter = rateLimit({
+const registerIpLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_REGISTER_IP_MAX || '1000', 10),
-  standardHeaders: true,
-  legacyHeaders: false,
+  prefix: 'register_ip',
   message: { success: false, message: 'Too many registrations from this IP. Please try again later.' },
 });
 
-// Resend verification IP limiter (default: 5 / 15m in strict, 1000 in generous)
-const resendVerificationIpLimiter = rateLimit({
+const resendVerificationIpLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_RESEND_IP_MAX || '1000', 10),
-  standardHeaders: true,
-  legacyHeaders: false,
+  prefix: 'resend_ip',
   message: { success: false, message: 'Too many verification resend requests from this IP. Please try again later.' },
 });
 
-// In-memory sliding window store for per-email silent skips
-// Limitation noted per Step 0(g): In-memory store is ephemeral and per-process.
-// Multiple worker nodes would each maintain independent counters, which is standard for secondary abuse mitigations.
-const emailRateLimitStore = new Map(); // key -> timestamps[]
-
-function isEmailLimitExceeded(key, maxRequests, windowMs) {
-  const now = Date.now();
-  const timestamps = (emailRateLimitStore.get(key) || []).filter(t => now - t < windowMs);
-  if (timestamps.length >= maxRequests) {
-    emailRateLimitStore.set(key, timestamps);
-    return true; // Exceeded
-  }
-  timestamps.push(now);
-  emailRateLimitStore.set(key, timestamps);
-  return false;
+// Helper for per-email abuse limits using persistent PostgreSQL bucket store
+async function isEmailLimitExceeded(key, maxRequests, windowMs) {
+  return await isKeyLimitExceeded(key, maxRequests, windowMs);
 }
 
 /* ── RFC 5322 Compliant Email Validation Regex ────────────── */
@@ -224,7 +206,7 @@ router.post('/register', registerIpLimiter, async (req, res) => {
   // Check per-email rate limit (default: 3 / 1h in strict, 1000 in generous)
   const regEmailMax = parseInt(process.env.RATE_LIMIT_REGISTER_EMAIL_MAX || '1000', 10);
   const regEmailKey = `reg:${trimmedEmail}`;
-  const isEmailCapExceeded = isEmailLimitExceeded(regEmailKey, regEmailMax, 60 * 60 * 1000);
+  const isEmailCapExceeded = await isEmailLimitExceeded(regEmailKey, regEmailMax, 60 * 60 * 1000);
 
   // If email limit exceeded, anti-enumeration requires silent skip:
   // Match bcrypt work, return identical 201 response, skip DB insert & email
@@ -628,7 +610,7 @@ router.post('/forgot-password', forgotPasswordIpLimiter, (req, res) => {
       // Check per-email rate limit (default 3 / 15m in Child #2 strict, 1000 in Child #1 generous)
       const emailMax = parseInt(process.env.RATE_LIMIT_FORGOT_EMAIL_MAX || '1000', 10);
       const emailKey = `forgot:${trimmedEmail}`;
-      if (isEmailLimitExceeded(emailKey, emailMax, 15 * 60 * 1000)) {
+      if (await isEmailLimitExceeded(emailKey, emailMax, 15 * 60 * 1000)) {
         // Silently skip email dispatch per anti-enumeration requirements
         return;
       }
@@ -810,10 +792,9 @@ router.post('/resend-verification', resendVerificationIpLimiter, (req, res) => {
   // 2. Execute background processing
   setImmediate(async () => {
     try {
-      // Cooldown check (2 minutes per email)
-      const now = Date.now();
-      const lastSent = resendCooldownStore.get(trimmedEmail);
-      if (lastSent && (now - lastSent < RESEND_COOLDOWN_MS)) {
+      // Cooldown check (2 minutes per email) via persistent DB store
+      const isCooldown = await isKeyLimitExceeded(`cooldown:${trimmedEmail}`, 1, RESEND_COOLDOWN_MS);
+      if (isCooldown) {
         // Silently skip if within cooldown
         return;
       }

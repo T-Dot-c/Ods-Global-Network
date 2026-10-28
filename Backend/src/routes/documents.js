@@ -28,17 +28,18 @@ const {
 
 const router = express.Router();
 
-/* ── Rate Limiters ───────────────────────────────────────────── */
-const anonUploadLimiter = rateLimit({
+const { createRateLimiter } = require('../services/rateLimiterService');
+
+/* ── Rate Limiters (Persistent Shared DB Store) ───────────────── */
+const anonUploadLimiter = createRateLimiter({
   windowMs: process.env.RATE_LIMIT_ANON_WINDOW_MS
     ? parseInt(process.env.RATE_LIMIT_ANON_WINDOW_MS, 10)
     : 15 * 60 * 1000,
   max: process.env.RATE_LIMIT_ANON_MAX
     ? parseInt(process.env.RATE_LIMIT_ANON_MAX, 10)
     : 10,
+  prefix: 'anon_upload',
   message: { success: false, message: 'Too many upload attempts from this IP. Please try again after 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
 /* ── Helper: Optional Auth Extractor for Upload ──────────────── */
@@ -146,8 +147,12 @@ function uploadMiddleware(req, res, next, isAuthMode) {
     let writtenFilePath = null;
 
     try {
+      await client.query('BEGIN');
+
       // 4. Anonymous Storage Cap Check (100 MB max staged storage)
+      // Enforce atomic serialization via transactional advisory lock to prevent race conditions
       if (!isAuthenticated) {
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('anon_upload_quota'))");
         const quotaRes = await client.query(`
           SELECT COALESCE(SUM(file_size), 0) AS total_staged
           FROM documents
@@ -155,6 +160,7 @@ function uploadMiddleware(req, res, next, isAuthMode) {
         `);
         const totalStaged = parseInt(quotaRes.rows[0].total_staged, 10);
         if (totalStaged + req.file.size > MAX_ANON_STAGING_BYTES) {
+          await client.query('ROLLBACK');
           return res.status(503).json({
             success: false,
             message: 'Anonymous staging storage capacity temporarily full; please retry later.',

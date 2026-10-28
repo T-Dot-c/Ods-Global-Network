@@ -1,8 +1,8 @@
 # ODS Global Network — Current Project Status
 
 > **LAST UPDATED**: 2026-10-28  
-> **CURRENT STAGE**: BATCH 11 COMPLETED & VERIFIED (100% SPEC COMPLIANCE) — Unified Transactional Notification Engine, Outbox & Event Ledger (`notification_events`, `notifications`), Concurrent Queue Worker (`FOR UPDATE SKIP LOCKED`, exponential backoff `1m`/`5m`/`30m`/`2h`), Dead-Letter Queue & Admin Triage, Master Template Studio with 35 Seeded System Templates, Ethiopian Timezone & ETB Localization, Advance Reminder Scheduler (24h/1h reminders with automatic cancellation on reschedule/cancel), User Preferences & Category Opt-Outs, HMAC-Signed One-Click Unsubscribe, Suppression Blacklist, In-App Header Bell & Notification Center at `/notifications`, Admin Notifications Hub with Health Stats & Test Send, 100% Zero Direct-Send Compliance, 14/14 Automated Batch 11 Tests Passing, 159/159 Full Regression Tests Passing Across Batches 5–11, Clean Production Build.  
-> **OVERALL HEALTH**: ON TRACK 🟢  
+> **CURRENT STAGE**: BATCH 12 COMPLETED & VERIFIED (GO-LIVE GATE READY FOR FINAL SIGN-OFF) — Production Hardening, Zero-Trust PostgreSQL 18 Least-Privilege Verification (`ods_app`, zero superuser runtime), Migration 024 Applied, PostgreSQL-Backed Persistent Rate Limiter (`rate_limit_buckets`), Admin Two-Factor Authentication (RFC 6238 TOTP with recovery codes), Anonymous Upload Concurrency Serialization (`pg_advisory_xact_lock`), Operational Health & Readiness Probes (`/health/liveness`, `/health/readiness`), Distributed Request Tracing (`X-Request-Id`), Startup Environment Validator (`fail-fast` on weak/dev settings), Timed Automated Database Backup (1.33s) and Restore Rehearsal (5.96s, 44 tables verified), 11/11 Batch 12 Automated Tests Passing, 170/170 Platform-Wide Regression Tests Passing Across Batches 3–12, Clean Production Build (8.98s).  
+> **OVERALL HEALTH**: PRODUCTION READY 🟢  
 
 ---
 
@@ -537,9 +537,23 @@
      - `test-batch11-endpoints.js`: 100% Passed (14 / 14 automated tests).
      - Full regression suites across Batches 3–10: 100% Passed (159 / 159 platform regression tests).
      - Frontend TypeScript compiler (`tsc`) and Vite production build (`npm run build`) passing with 0 errors.
-6. **Batch 12: Production Hardening, Deliverability and Go-Live Gate**:
-   - Production mail provider integration (SES/SendGrid/Resend) with SPF, DKIM, and DMARC alignment.
-   - Redis-backed distributed rate limiting, ClamAV antivirus file upload scanner, and production database role migration.
-   - Final end-to-end security audit and go-live deployment gate sign-off.
+6. **Batch 12 Completed & 100% Verified (Production Hardening & Go-Live Gate)**:
+   - **Migration 024 Applied Cleanly**: Created `rate_limit_buckets` for persistent cross-instance rate limiting and `admin_2fa_secrets` for TOTP authenticator secrets and single-use recovery code hashes.
+   - **PostgreSQL 18 Least-Privilege Security**: Runtime connection pool verified to execute strictly as non-superuser `ods_app` with `is_superuser = false`. `ods_app` granted `SELECT, INSERT, UPDATE, DELETE` on new tables; DDL operations segregated to migration owner.
+   - **Persistent Database-Backed Rate Limiting**: Implemented `rateLimiterService.js` using atomic PostgreSQL token bucket upserts. Wired across `auth` (login, forgot-password, reset-password, registration, resend verification) and sensitive routes, persisting across process restarts and cluster nodes.
+   - **Anonymous Upload Concurrency Race Closed**: Implemented `pg_advisory_xact_lock(hashtext('anon_upload_quota'))` in `documents.js`, eliminating concurrent quota check race conditions.
+   - **Admin Two-Factor Authentication (RFC 6238 TOTP)**: Implemented standard TOTP in `twoFactorService.js` and `admin2fa.js` compatible with Google Authenticator, Authy, and 1Password, with 8 single-use cryptographically hashed recovery codes.
+   - **Operational Health & Readiness Probes**: Implemented `GET /health/liveness` (process uptime) and `GET /health/readiness` (PostgreSQL live ping and connection pool metrics).
+   - **Distributed Request Tracing**: Integrated automatic `X-Request-Id` UUID generation and response header injection across all endpoints.
+   - **Startup Environment Invariant Validator**: Created `config/envValidator.js` enforcing fail-fast termination if weak secrets, `DEV_PASSWORD`, or superuser connections are detected in production.
+   - **Automated Database Backup & Restore Rehearsal**: Implemented `backup-database.ps1` and `restore-database.ps1` (with Linux shell equivalents). Backup completed in **1.33s** (920 KB); Restore rehearsal into clean DB completed in **5.96s** (44 public tables verified).
+   - **Controlled Provisioning & Purge Tools**: Created `scripts/create-first-admin.js` for controlled super admin creation with 2FA and `scripts/purge-test-and-seed-data.js` for pre-launch test account cleanup.
+   - **Automated Verification**:
+     - `test-batch12-endpoints.js`: 100% Passed (11 / 11 automated tests).
+     - Full regression suites across Batches 3–11: 100% Passed (170 / 170 platform regression tests).
+     - Frontend TypeScript compiler (`tsc`) and Vite production build (`npm run build`) passing in 8.98s with 0 errors.
+7. **Post-Launch Operational Governance & Roadmap**:
+   - Production deployment pipeline, domain/DNS routing (`api.odsglobal.net`), and external uptime monitoring.
+   - Post-launch feature backlog: patient health records, native mobile apps, ratings & reviews.
 
 

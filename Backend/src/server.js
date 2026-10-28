@@ -16,6 +16,12 @@ const rateLimit     = require('express-rate-limit');
 const authRoutes    = require('./routes/auth');
 const supportRoutes = require('./routes/support');
 const partnerRoutes = require('./routes/partners');
+const healthRoutes  = require('./routes/health');
+const admin2faRoutes = require('./routes/admin2fa');
+const { validateEnvironment } = require('./config/envValidator');
+
+// Validate environment invariants upon boot
+validateEnvironment();
 
 /* ── Storage Directory Initialization ───────────────────────── */
 const UPLOADS_PRIVATE_DIR = path.resolve(__dirname, '../uploads/private');
@@ -58,7 +64,24 @@ if (trustProxy === 'true' || trustProxy === '1') {
 }
 
 /* ── Security headers ─────────────────────────────────────── */
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // API server; CSP enforced via NGINX/Frontend
+  crossOriginEmbedderPolicy: false,
+  hsts: process.env.NODE_ENV === 'production' ? {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  } : false,
+}));
+
+/* ── Request ID & Structured Log Tracing ──────────────────── */
+const crypto = require('crypto');
+app.use((req, res, next) => {
+  const reqId = req.headers['x-request-id'] || crypto.randomUUID();
+  req.id = reqId;
+  res.setHeader('X-Request-Id', reqId);
+  next();
+});
 
 /* ── CORS — allow frontend origin with credentials ────────── */
 const devOrigins = [
@@ -159,9 +182,10 @@ const providerRoutes = require('./routes/provider');
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/provider', providerRoutes);
 
-/* ── Admin routes (Batch 4) ───────────────────────────────── */
+/* ── Admin routes (Batch 4, 10, 12) ───────────────────────── */
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/2fa', admin2faRoutes);
 
 /* ── Payment routes (Batch 6) ─────────────────────────────── */
 const paymentRoutes = require('./routes/payments');
@@ -214,10 +238,9 @@ startScheduler();
 const { startSweeper } = require('./services/sweeperService');
 startSweeper();
 
-/* ── Health check ─────────────────────────────────────────── */
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'ODS Global Network API', ts: new Date().toISOString() });
-});
+/* ── Operational Health Probes (Batch 12) ─────────────────── */
+app.use('/health', healthRoutes);
+app.use('/api/health', healthRoutes);
 
 /* ── 404 fallback ─────────────────────────────────────────── */
 app.use((_req, res) => {
@@ -230,9 +253,43 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ success: false, message: 'Internal server error.' });
 });
 
-/* ── Start ────────────────────────────────────────────────── */
-app.listen(PORT, () => {
-  console.log(`[ODS API] Running on http://localhost:${PORT}`);
-  console.log(`   CORS origin: ${FRONTEND_ORIGIN}`);
-  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+/* ── Start & Graceful Lifecycle Handlers ─────────────────── */
+let server = null;
+
+if (require.main === module) {
+  server = app.listen(PORT, () => {
+    console.log(`[ODS API] Running on http://localhost:${PORT}`);
+    console.log(`   CORS origin: ${FRONTEND_ORIGIN}`);
+    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+
+  function handleGracefulShutdown(signal) {
+    console.log(`\n[Server] Received ${signal}. Initiating graceful shutdown...`);
+    if (server) {
+      server.close(async () => {
+        console.log('[Server] HTTP connections drained.');
+        try {
+          const pool = require('./db');
+          await pool.end();
+          console.log('[Server] Database pool closed cleanly.');
+        } catch (e) {
+          console.error('[Server] Error closing DB pool during shutdown:', e.message);
+        }
+        process.exit(0);
+      });
+
+      // Force shutdown if connections do not drain within 10 seconds
+      setTimeout(() => {
+        console.error('[Server] Forcing shutdown after timeout.');
+        process.exit(1);
+      }, 10000).unref();
+    } else {
+      process.exit(0);
+    }
+  }
+
+  process.on('SIGTERM', () => handleGracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleGracefulShutdown('SIGINT'));
+}
+
+module.exports = { app, server };
