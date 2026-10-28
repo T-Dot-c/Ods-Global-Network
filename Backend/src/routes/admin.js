@@ -270,7 +270,7 @@ router.post('/kyc/:entityType/:id/decision', requireRole('admin', 'super_admin')
     try {
       const entityInfoQuery = entityType === 'merchant'
         ? 'SELECT business_name as org_name, user_id FROM merchants WHERE id = $1'
-        : 'SELECT organization_name as org_name, user_id FROM providers WHERE id = $1';
+        : 'SELECT provider_name as org_name, user_id FROM providers WHERE id = $1';
       const entityInfo = await client.query(entityInfoQuery, [entityId]);
       if (entityInfo.rows.length > 0) {
         const org = entityInfo.rows[0];

@@ -27,7 +27,7 @@ const cleanupPool = new Pool({
   ssl:      false,
 });
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = process.env.TEST_API_BASE || 'http://127.0.0.1:3001';
 
 async function runTests() {
   console.log('\n======================================================');

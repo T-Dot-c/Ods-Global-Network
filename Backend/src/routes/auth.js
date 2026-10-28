@@ -815,7 +815,7 @@ router.post('/resend-verification', resendVerificationIpLimiter, (req, res) => {
       }
 
       // Record new cooldown timestamp
-      resendCooldownStore.set(trimmedEmail, now);
+      resendCooldownStore.set(trimmedEmail, Date.now());
 
       // Generate new 32-byte verification token and SHA-256 hash
       const rawToken = crypto.randomBytes(32).toString('hex');

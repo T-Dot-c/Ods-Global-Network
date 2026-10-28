@@ -170,7 +170,7 @@ async function transitionServiceStatus({
   // Dispatch catalog notifications (Batch 11 Notification Engine)
   try {
     const ownerQuery = `
-      SELECT s.title, COALESCE(p.organization_name, m.business_name, 'Provider') as provider_name,
+      SELECT s.title, COALESCE(p.provider_name, m.business_name, 'Provider') as provider_name,
              COALESCE(p.user_id, m.user_id) as owner_user_id
       FROM services s
       LEFT JOIN providers p ON p.id = s.provider_id

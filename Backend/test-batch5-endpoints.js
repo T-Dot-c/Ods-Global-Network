@@ -1177,6 +1177,9 @@ async function runChild2Suite() {
     createdUserIds.push(r.rows[0].id);
   }
 
+  // Truncate persistent DB rate limit buckets before Child #2 strict suite
+  await adminPool.query('TRUNCATE rate_limit_buckets');
+
   // Spawn Child #2 (Port 3005, Strict Batch 5 limiters)
   console.log('\n[Harness] Spawning Child #2 on port 3005 (Strict Batch 5 limiters)...');
   const child2 = new ChildServer('Child-2', 3005, {
@@ -1265,6 +1268,7 @@ async function runChild2Suite() {
     assert('T3m: Forgot-password per-IP rate limit blocks 6th request with 429', res5.status === 200 && res6.status === 429);
 
     // 4. T3n: Reset-password per-IP rate limit (attempts 1-5 return 400, 6th returns 429)
+    await adminPool.query("DELETE FROM rate_limit_buckets WHERE key LIKE 'reset_ip%'");
     let reset400s = 0;
     let reset6Status = 0;
     for (let i = 1; i <= 6; i++) {
@@ -1279,6 +1283,7 @@ async function runChild2Suite() {
     assert('T3n: Reset-password per-IP rate limit blocks 6th attempt with 429', reset400s === 5 && reset6Status === 429);
 
     // 5. T4l: Registration per-email silent skip (requests 1-3 send mail, 4th returns uniform 201 without mail)
+    await adminPool.query("DELETE FROM rate_limit_buckets WHERE key LIKE 'register_ip%' OR key LIKE 'reg:%'");
     const regEmail = `b5_${runId}_exhaust_reg@${TEST_DOMAIN}`;
     for (let i = 1; i <= 4; i++) {
       await fetch(`${baseUrl}/api/auth/register`, {
@@ -1306,6 +1311,7 @@ async function runChild2Suite() {
     assert('T4k: Registration per-IP rate limit blocks 6th request with 429', reg5.status === 201 && reg6.status === 429);
 
     // 7. T4m: Resend-verification per-email cooldown silent skip (1st sends mail, 2nd within cooldown skips mail)
+    await adminPool.query("DELETE FROM rate_limit_buckets WHERE key LIKE 'resend_ip%' OR key LIKE 'cooldown:%'");
     await fetch(`${baseUrl}/api/auth/resend-verification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

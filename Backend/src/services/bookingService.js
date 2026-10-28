@@ -617,7 +617,7 @@ async function transitionBookingStatus(bookingId, newStatus, actorUserId, reason
     try {
       const detailsQuery = `
         SELECT b.id, b.reference, b.start_at, s.title as service_title,
-               COALESCE(p.organization_name, 'Healthcare Provider') as provider_name,
+               COALESCE(p.provider_name, 'Healthcare Provider') as provider_name,
                u_c.first_name as customer_name, u_c.email as customer_email,
                a.street, a.city
         FROM bookings b

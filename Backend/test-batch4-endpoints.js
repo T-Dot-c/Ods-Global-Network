@@ -27,7 +27,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 
-const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3001';
+const API_BASE = process.env.TEST_API_BASE || 'http://127.0.0.1:3001';
 
 // ── Owner-level pool (Fix #3: teardown only; never used in app runtime) ───────
 const adminPool = new Pool({
