@@ -1,7 +1,7 @@
 # ODS Global Network — Current Project Status
 
 > **LAST UPDATED**: 2026-10-28  
-> **CURRENT STAGE**: BATCH 12 COMPLETED & VERIFIED (GO-LIVE GATE READY FOR FINAL SIGN-OFF) — Production Hardening, Zero-Trust PostgreSQL 18 Least-Privilege Verification (`ods_app`, zero superuser runtime), Migration 024 Applied, PostgreSQL-Backed Persistent Rate Limiter (`rate_limit_buckets`), Admin Two-Factor Authentication (RFC 6238 TOTP with recovery codes), Anonymous Upload Concurrency Serialization (`pg_advisory_xact_lock`), Operational Health & Readiness Probes (`/health/liveness`, `/health/readiness`), Distributed Request Tracing (`X-Request-Id`), Startup Environment Validator (`fail-fast` on weak/dev settings), Timed Automated Database Backup (1.33s) and Restore Rehearsal (5.96s, 44 tables verified), 11/11 Batch 12 Automated Tests Passing, 170/170 Platform-Wide Regression Tests Passing Across Batches 3–12, Clean Production Build (8.98s).  
+> **CURRENT STAGE**: BATCH 12 COMPLETED & VERIFIED (GO-LIVE GATE READY FOR FINAL SIGN-OFF) + HUMAN VERIFICATION CHECKLIST SUITE COMPLETED (16 Modular Role-Based Manual Checklists in `Status/HumanVerification/` covering all 47 frontend views, 144 backend endpoints, 35 notification events, 9 state machines, and 8 end-to-end multi-role browser journeys with zero code modifications).  
 > **OVERALL HEALTH**: PRODUCTION READY 🟢  
 
 ---
@@ -552,7 +552,27 @@
      - `test-batch12-endpoints.js`: 100% Passed (11 / 11 automated tests).
      - Full regression suites across Batches 3–11: 100% Passed (170 / 170 platform regression tests).
      - Frontend TypeScript compiler (`tsc`) and Vite production build (`npm run build`) passing in 8.98s with 0 errors.
-7. **Post-Launch Operational Governance & Roadmap**:
+7. **Human Verification Checklist Suite (Batches 1–12 Complete)**:
+   - **Strict Documentation-Only Execution**: Zero application code, migration, or test alterations. Designed specifically for non-technical human testers and business stakeholders to uncover issues visible in a browser.
+   - **16 Standardized Documents Delivered in `Status/HumanVerification/`**:
+     1. `README.md`: Master user guide, reporting workflow, severity classifications, and browser pass rules.
+     2. `00-setup-and-accounts.md`: Environment setup, test credentials sourcing (`DEV_PASSWORD`), Mailpit at `127.0.0.1:8025`, Chapa Sandbox card `4084084084084081`, viewports (1920x1080, 768x1024, 375x667), keyboard rules, and database reset procedures.
+     3. `01-visitor.md`: Public visitor checklist (18 items: navigation, catalog search, voucher validity check, enterprise inquiries, auth guards, rate limiters, mobile/keyboard).
+     4. `02-customer.md`: Customer checklist (20 items: auth, email verification, profile, password change with session bump, appointment booking, 10-min hold countdown, Chapa payment, gift vouchers, wallet credit, rescheduling/cancellation, RBAC bounds).
+     5. `03-merchant.md`: Merchant checklist (14 items: auth, badge states, document KYC upload with magic byte check, automatic compliance reset on edit/replacement, draft authoring, RBAC bounds).
+     6. `04-provider.md`: Provider checklist (17 items: auth, medical accreditation badge, rejection with mandatory reason, weekly schedule matrix, blackout exceptions, appointment controls, in-clinic voucher claims, catalog moderation, RBAC bounds).
+     7. `05-suspended-user.md`: Suspended account checklist (7 items: sign-in blocking, suspension notice with appeal link, live session invalidation, password recovery suppression, reactivation workflow).
+     8. `06-admin-support.md`: Support & catalog moderation admin checklist (13 items: user search, internal notes, inquiries inbox, document inspection, service listing approval/rejection/takedown, RBAC bounds).
+     9. `07-admin-finance.md`: Finance admin checklist (10 items: transaction ledger, standard refunds <10k ETB, 2-person refund authorization >10k ETB with self-approval block, RFC 4180 CSV export and audit tracking).
+     10. `08-admin-compliance.md`: Compliance admin checklist (8 items: KYC onboarding queue, document viewing with `nosniff`/`no-store` headers, zero-document approval guard, approve/reject workflow with mandatory reason, RBAC bounds).
+     11. `09-super-admin.md`: Super admin checklist (10 items: staff provisioning, RBAC group assignments & dynamic permission overrides, force sign-out, RFC 6238 TOTP 2FA setup, platform settings, immutable audit logs, 2-person refund rule enforcement).
+     12. `10-cross-role-and-permissions.md`: Cross-role boundary & IDOR defenses (12 items: cross-tenant isolation, direct URL tampering, unauthorized role dashboards, malformed UUID injection).
+     13. `11-emails-and-notifications.md`: Complete catalog of all 35 notification event triggers, Mailpit checks at `127.0.0.1:8025`, email headers (`List-Unsubscribe`, `X-ODS-Notification-Id`), plain text + HTML formatting, dynamic variable checks.
+     14. `12-end-to-end-journeys.md`: 8 integrated multi-role workflows connecting visitors, customers, providers, merchants, and admins.
+     15. `13-visible-error-catalogue.md`: Human-visible error field guide covering 11 bug patterns (blank page, endless spinner, raw leaks, redirect loops, unhandled 404/403, double-submit, calculation/currency flaws, timezone bugs, broken images, layout breakage, silent failures).
+     16. `14-coverage-matrix.md`: Master inventory providing 100% traceability across all 47 frontend views/tabs, 144 backend API routes, 35 notification events, and 9 entity state machines.
+     17. `15-defect-log-template.md`: Standardized defect tracking template with severity definitions, active table, and copy-paste defect report schema.
+8. **Post-Launch Operational Governance & Roadmap**:
    - Production deployment pipeline, domain/DNS routing (`api.odsglobal.net`), and external uptime monitoring.
    - Post-launch feature backlog: patient health records, native mobile apps, ratings & reviews.
 
