@@ -622,10 +622,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             )}
           </div>
 
-          {children ? (
-            children
-          ) : (
+          {currentTab === 'overview' && (statCards.length > 0 || quickActions.length > 0) ? (
             <>
+              {children}
+
               {/* ─────────────────────────────────────────────────────────
                   STAT CARDS GRID
                  ───────────────────────────────────────────────────────── */}
@@ -633,7 +633,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: `repeat(${statCards.length > 3 ? 3 : statCards.length}, 1fr)`,
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                     gap: '18px',
                     marginBottom: '28px',
                   }}
@@ -840,6 +840,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 )}
               </div>
             </>
+          ) : (
+            children
           )}
         </main>
       </div>
