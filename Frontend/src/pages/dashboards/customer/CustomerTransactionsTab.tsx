@@ -1,21 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Loader2, RefreshCw, CheckCircle2, Clock, XCircle, Printer, PlusCircle } from 'lucide-react';
+import { CreditCard, Loader2, RefreshCw, CheckCircle2, Clock, XCircle, Printer } from 'lucide-react';
 import { Button } from '../../../components/common/Button';
-import { Input } from '../../../components/common/Input';
-import { getPaymentHistory, initializePayment, getReceipt, Transaction, PaymentReceipt } from '../../../services/paymentService';
+import { getPaymentHistory, getReceipt, Transaction, PaymentReceipt } from '../../../services/paymentService';
 
 export const CustomerTransactionsTab: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-
-  // New Payment Modal state
-  const [showPayModal, setShowPayModal] = useState<boolean>(false);
-  const [payAmount, setPayAmount] = useState<string>('250');
-  const [payPurpose, setPayPurpose] = useState<string>('Consultation Service');
-  const [payLoading, setPayLoading] = useState<boolean>(false);
-  const [payError, setPayError] = useState<string>('');
 
   // View Receipt Modal state
   const [selectedReceipt, setSelectedReceipt] = useState<PaymentReceipt | null>(null);
@@ -39,38 +31,6 @@ export const CustomerTransactionsTab: React.FC = () => {
   useEffect(() => {
     fetchTransactions();
   }, []);
-
-  const handleStartPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPayError('');
-    setPayLoading(true);
-
-    const amountNum = parseFloat(payAmount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setPayError('Please enter a valid amount greater than 0.');
-      setPayLoading(false);
-      return;
-    }
-
-    const res = await initializePayment({
-      amount: amountNum,
-      currency: 'ETB',
-      purpose: payPurpose || 'ODS Service Payment',
-      paymentMethod: 'chapa',
-    });
-
-    setPayLoading(false);
-
-    if (res.success && res.checkout_url) {
-      if (res.tx_ref) {
-        sessionStorage.setItem('ods_last_payment_tx_ref', res.tx_ref);
-      }
-      // Redirect to Chapa checkout / simulator
-      window.location.href = res.checkout_url;
-    } else {
-      setPayError(res.message || 'Failed to initialize payment.');
-    }
-  };
 
   const handleViewReceipt = async (txRef: string) => {
     const res = await getReceipt(txRef);
@@ -167,15 +127,6 @@ export const CustomerTransactionsTab: React.FC = () => {
             <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
             Refresh
           </Button>
-
-          <Button
-            variant="gold"
-            onClick={() => setShowPayModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', padding: '8px 16px' }}
-          >
-            <PlusCircle size={15} />
-            New Payment
-          </Button>
         </div>
       </div>
 
@@ -193,12 +144,9 @@ export const CustomerTransactionsTab: React.FC = () => {
         <div style={{ textAlign: 'center', padding: '48px 16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
           <CreditCard size={40} style={{ color: '#94a3b8', margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#334155', margin: '0 0 6px 0' }}>No Transactions Yet</h3>
-          <p style={{ color: '#64748b', fontSize: '13px', maxWidth: '360px', margin: '0 auto 18px' }}>
-            You haven't made any payments yet. You can test a payment using our free Chapa sandbox.
+          <p style={{ color: '#64748b', fontSize: '13px', maxWidth: '380px', margin: '0 auto' }}>
+            Completed payment receipts for your booked appointments and gift vouchers will appear here itemized.
           </p>
-          <Button variant="gold" onClick={() => setShowPayModal(true)}>
-            Make a Payment
-          </Button>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -244,87 +192,6 @@ export const CustomerTransactionsTab: React.FC = () => {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* New Payment Modal */}
-      {showPayModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '16px',
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            maxWidth: '460px',
-            width: '100%',
-            padding: '28px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-          }}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#0F285B', fontWeight: 700 }}>
-              Initiate Chapa Payment
-            </h3>
-            <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 20px 0' }}>
-              Test payment processing using the 100% free Chapa sandbox mode.
-            </p>
-
-            <form onSubmit={handleStartPayment}>
-              {payError && (
-                <div style={{ padding: '10px 14px', backgroundColor: '#fef2f2', color: '#b91c1c', borderRadius: '8px', fontSize: '13px', marginBottom: '14px' }}>
-                  {payError}
-                </div>
-              )}
-
-              <div style={{ marginBottom: '14px' }}>
-                <Input
-                  label="Amount (ETB)"
-                  type="number"
-                  value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
-                  placeholder="250"
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: '22px' }}>
-                <Input
-                  label="Purpose / Service"
-                  type="text"
-                  value={payPurpose}
-                  onChange={(e) => setPayPurpose(e.target.value)}
-                  placeholder="e.g. Medical Consultation"
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Button
-                  type="button"
-                  variant="outline-gold"
-                  onClick={() => setShowPayModal(false)}
-                  disabled={payLoading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="gold"
-                  disabled={payLoading}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  {payLoading && <Loader2 size={14} className="animate-spin" />}
-                  Proceed to Chapa
-                </Button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
 

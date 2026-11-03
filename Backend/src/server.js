@@ -114,7 +114,7 @@ app.use(cors({
     return callback(new Error(`CORS policy rejection: origin ${origin} is not allowed.`));
   },
   credentials: true,               // required for HttpOnly cookie round-trips
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-chapa-signature', 'chapa-signature'],
 }));
 

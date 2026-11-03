@@ -618,20 +618,20 @@ async function transitionBookingStatus(bookingId, newStatus, actorUserId, reason
       const detailsQuery = `
         SELECT b.id, b.reference, b.start_at, s.title as service_title,
                COALESCE(p.provider_name, 'Healthcare Provider') as provider_name,
-               u_c.first_name as customer_name, u_c.email as customer_email,
-               a.street, a.city
+               u_c.full_name as customer_name, u_c.email as customer_email,
+               a.address_line, a.city
         FROM bookings b
         JOIN services s ON s.id = b.service_id
-        LEFT JOIN providers p ON p.id = b.provider_id
-        LEFT JOIN users u_c ON u_c.id = b.customer_id
-        LEFT JOIN addresses a ON a.id = b.address_id
+        LEFT JOIN providers p ON p.user_id = b.provider_user_id
+        LEFT JOIN users u_c ON u_c.id = b.customer_user_id
+        LEFT JOIN addresses a ON a.entity_id = p.id AND a.entity_type = 'provider'
         WHERE b.id = $1;
       `;
       const detRes = await client.query(detailsQuery, [bookingId]);
       if (detRes.rows.length > 0) {
         const det = detRes.rows[0];
         const appointmentTimeStr = formatEthiopianDate(det.start_at);
-        const facilityAddress = [det.street, det.city].filter(Boolean).join(', ') || 'Provider Facility';
+        const facilityAddress = [det.address_line, det.city].filter(Boolean).join(', ') || 'Provider Facility';
 
         if (newStatus === 'awaiting_provider') {
           await notify('booking.created_awaiting_provider', {
@@ -737,42 +737,26 @@ async function confirmPaidBooking(transaction) {
     }
 
     const now = new Date();
-    const isHoldExpired = booking.hold_expires_at && new Date(booking.hold_expires_at) < now;
+    const isHoldExpired = (booking.hold_expires_at && new Date(booking.hold_expires_at) < now) || booking.status === 'expired';
 
     if (isHoldExpired) {
-      // Check if slot was taken while hold was lapsed
-      const countRes = await client.query(
-        `SELECT COUNT(*) as active_count
-         FROM bookings
-         WHERE provider_user_id = $1
-           AND start_at = $2
-           AND id != $3
-           AND status IN ('confirmed', 'awaiting_provider')`,
-        [booking.provider_user_id, booking.start_at, booking.id]
+      // Late payment detected: flag as payment conflict and queue for administrative refund review (no auto-refunds)
+      await transitionBookingStatus(
+        booking.id,
+        'payment_conflict',
+        transaction.user_id,
+        'Payment arrived after hold expired. Flagged as payment conflict and queued for administrative refund review.',
+        client
       );
-
-      const capacity = booking.service_snapshot?.capacity || 1;
-      const occupied = parseInt(countRes.rows[0].active_count, 10);
-
-      if (occupied >= capacity) {
-        // Slot taken! Mark payment conflict and trigger refund record
-        await transitionBookingStatus(
-          booking.id,
-          'payment_conflict',
-          null,
-          'Payment arrived after hold expired and slot was already claimed by another customer. Full refund pending.',
-          client
-        );
-        await client.query(
-          `UPDATE bookings SET payment_transaction_id = $1, refund_amount = price_amount WHERE id = $2`,
-          [transaction.id, booking.id]
-        );
-        await client.query('COMMIT');
-        return booking;
-      }
+      await client.query(
+        `UPDATE bookings SET payment_transaction_id = $1, refund_amount = price_amount, updated_at = NOW() WHERE id = $2`,
+        [transaction.id, booking.id]
+      );
+      await client.query('COMMIT');
+      return booking;
     }
 
-    // Slot is free (or hold was still valid): Confirm booking
+    // Slot is free and hold valid: Confirm booking
     await client.query(
       `UPDATE bookings
        SET payment_transaction_id = $1, status = 'confirmed', updated_at = NOW()
@@ -1324,7 +1308,14 @@ async function cleanExpiredHolds() {
     const res = await pool.query(
       `UPDATE bookings
        SET status = 'expired', updated_at = NOW()
-       WHERE status = 'pending_payment' AND hold_expires_at < NOW()
+       WHERE status = 'pending_payment'
+         AND hold_expires_at < NOW()
+         AND NOT EXISTS (
+           SELECT 1 FROM transactions t
+           WHERE (t.metadata->>'booking_id')::uuid = bookings.id
+             AND t.status = 'pending'
+             AND t.created_at >= NOW() - INTERVAL '15 minutes'
+         )
        RETURNING id, reference`
     );
 

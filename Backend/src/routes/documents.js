@@ -107,18 +107,30 @@ function uploadMiddleware(req, res, next, isAuthMode) {
 
     // 1. Validate Purpose
     const VALID_KYC_PURPOSES = ['kyc_license', 'kyc_registration', 'kyc_accreditation'];
+    const VALID_ANON_PURPOSES = [
+      'partner_proposal',
+      'registration_document',
+      'kyc_license',
+      'kyc_registration',
+      'kyc_accreditation',
+      'business_license',
+      'trade_license',
+      'tax_id',
+      'tin_certificate',
+      'board_certification',
+    ];
     if (isAuthenticated) {
-      if (!VALID_KYC_PURPOSES.includes(purpose)) {
+      if (!VALID_KYC_PURPOSES.includes(purpose) && !VALID_ANON_PURPOSES.includes(purpose)) {
         return res.status(400).json({
           success: false,
           message: `Invalid purpose for authenticated upload. Allowed: ${VALID_KYC_PURPOSES.join(', ')}`,
         });
       }
     } else {
-      if (purpose !== 'partner_proposal') {
+      if (!VALID_ANON_PURPOSES.includes(purpose)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid purpose for anonymous upload. Allowed: "partner_proposal".',
+          message: `Invalid purpose for anonymous upload. Allowed: ${VALID_ANON_PURPOSES.join(', ')}.`,
         });
       }
     }
@@ -308,10 +320,12 @@ function uploadMiddleware(req, res, next, isAuthMode) {
 
       // 9. Response formatting
       if (!isAuthenticated) {
-        const stagingToken = issueStagingToken(doc.id);
+        const stagingToken = issueStagingToken(doc.id, purpose);
         return res.status(201).json({
           success: true,
-          message: 'Document staged successfully for partner proposal.',
+          message: purpose === 'partner_proposal'
+            ? 'Document staged successfully for partner proposal.'
+            : 'Document staged successfully for registration.',
           document_id: doc.id,
           original_name: doc.file_name,
           staging_token: stagingToken,

@@ -1,17 +1,17 @@
 /**
- * ODS Global Network — Admin Operational Dashboard & Metrics API (Batch 10)
+ * ODS Global Network — Unified Admin Dashboard & Analytics (Batch 10)
  *
- * Provides permission-aware key performance indicator counters and a prioritized
- * "Needs Attention" operational queue.
+ * Implements:
+ * 1. GET /api/admin/dashboard (Aggregate KPI metrics & operational queue)
  */
 'use strict';
 
 const express = require('express');
+const router = express.Router();
 const pool = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/adminRbac');
 
-const router = express.Router();
 router.use(requireAuth);
 
 /**
@@ -32,22 +32,22 @@ router.get('/dashboard', requirePermission('users.view'), async (req, res) => {
     const canSeeGifts = isSuper || permissions.includes('gifts.view');
 
     const counters = {
-      new_users_7d: 0,
-      pending_kyc: 0,
-      pending_services: 0,
-      today_bookings: 0,
+      new_users_30d: 0,
+      pending_kyc_count: 0,
+      pending_services_count: 0,
+      today_confirmed_bookings: 0,
       today_revenue_etb: 0,
-      payment_conflicts: 0,
+      payment_conflicts_count: 0,
       pending_refund_approvals: 0,
       expiring_gifts_30d: 0,
     };
 
     const needsAttention = [];
 
-    // 1. Users KPI
+    // 1. Users KPI (Registered users in 30 days)
     if (canSeeUsers) {
-      const uRes = await pool.query(`SELECT COUNT(*) AS total FROM users WHERE created_at >= NOW() - INTERVAL '7 days'`);
-      counters.new_users_7d = parseInt(uRes.rows[0].total, 10);
+      const uRes = await pool.query(`SELECT COUNT(*) AS total FROM users WHERE created_at >= NOW() - INTERVAL '30 days'`);
+      counters.new_users_30d = parseInt(uRes.rows[0].total, 10);
     }
 
     // 2. KYC Queue KPI & Attention items
@@ -57,16 +57,16 @@ router.get('/dashboard', requirePermission('users.view'), async (req, res) => {
           (SELECT COUNT(*) FROM merchants WHERE approval_status = 'pending') +
           (SELECT COUNT(*) FROM providers WHERE approval_status = 'pending') AS total_pending
       `);
-      counters.pending_kyc = parseInt(kycRes.rows[0].total_pending, 10);
+      counters.pending_kyc_count = parseInt(kycRes.rows[0].total_pending, 10);
 
       // Add attention item if pending KYC exists
-      if (counters.pending_kyc > 0) {
+      if (counters.pending_kyc_count > 0) {
         needsAttention.push({
           type: 'kyc_pending',
-          title: `${counters.pending_kyc} KYC Submissions Awaiting Compliance Review`,
+          label: 'KYC Submissions Awaiting Compliance Review',
           priority: 'high',
-          action_url: '/admin/kyc',
-          count: counters.pending_kyc,
+          tab: 'kyc',
+          count: counters.pending_kyc_count,
         });
       }
     }
@@ -74,47 +74,54 @@ router.get('/dashboard', requirePermission('users.view'), async (req, res) => {
     // 3. Service Moderation KPI & Attention items
     if (canSeeServices) {
       const sRes = await pool.query(`SELECT COUNT(*) AS total FROM services WHERE status = 'pending_review'`);
-      counters.pending_services = parseInt(sRes.rows[0].total, 10);
+      counters.pending_services_count = parseInt(sRes.rows[0].total, 10);
 
-      if (counters.pending_services > 0) {
+      if (counters.pending_services_count > 0) {
         needsAttention.push({
           type: 'services_pending',
-          title: `${counters.pending_services} Services Pending Catalog Moderation`,
+          label: 'Services Pending Catalog Moderation',
           priority: 'medium',
-          action_url: '/admin/services',
-          count: counters.pending_services,
+          tab: 'services',
+          count: counters.pending_services_count,
         });
       }
     }
 
-    // 4. Bookings KPI & Payment Conflicts
+    // 4. Bookings KPI & Payment Conflicts (Africa/Addis_Ababa day boundaries)
     if (canSeeBookings) {
       const bRes = await pool.query(`
         SELECT 
-          COUNT(*) FILTER (WHERE start_at::date = CURRENT_DATE) AS today_count,
+          COUNT(*) FILTER (
+            WHERE status = 'confirmed'
+              AND start_at >= (NOW() AT TIME ZONE 'Africa/Addis_Ababa')::date AT TIME ZONE 'Africa/Addis_Ababa'
+              AND start_at < ((NOW() AT TIME ZONE 'Africa/Addis_Ababa')::date + INTERVAL '1 day') AT TIME ZONE 'Africa/Addis_Ababa'
+          ) AS today_count,
           COUNT(*) FILTER (WHERE status = 'payment_conflict') AS conflict_count
         FROM bookings;
       `);
-      counters.today_bookings = parseInt(bRes.rows[0].today_count, 10) || 0;
-      counters.payment_conflicts = parseInt(bRes.rows[0].conflict_count, 10) || 0;
+      counters.today_confirmed_bookings = parseInt(bRes.rows[0].today_count, 10) || 0;
+      counters.payment_conflicts_count = parseInt(bRes.rows[0].conflict_count, 10) || 0;
 
-      if (counters.payment_conflicts > 0) {
+      if (counters.payment_conflicts_count > 0) {
         needsAttention.push({
           type: 'booking_conflicts',
-          title: `${counters.payment_conflicts} Late-Payment Booking Conflicts Requiring Resolution`,
+          label: 'Late-Payment Booking Conflicts Requiring Resolution',
           priority: 'critical',
-          action_url: '/admin/bookings',
-          count: counters.payment_conflicts,
+          tab: 'bookings',
+          count: counters.payment_conflicts_count,
         });
       }
     }
 
-    // 5. Finance & Revenue KPI
+    // 5. Finance & Revenue KPI (Africa/Addis_Ababa day boundaries)
     if (canSeeFinance) {
       const fRes = await pool.query(`
         SELECT 
-          COALESCE(SUM(amount) FILTER (WHERE status = 'completed' AND created_at::date = CURRENT_DATE), 0) AS revenue_today
-        FROM transactions;
+          COALESCE(SUM(b.price_amount), 0) AS revenue_today
+        FROM bookings b
+        WHERE b.status = 'confirmed'
+          AND b.start_at >= (NOW() AT TIME ZONE 'Africa/Addis_Ababa')::date AT TIME ZONE 'Africa/Addis_Ababa'
+          AND b.start_at < ((NOW() AT TIME ZONE 'Africa/Addis_Ababa')::date + INTERVAL '1 day') AT TIME ZONE 'Africa/Addis_Ababa';
       `);
       counters.today_revenue_etb = parseFloat(fRes.rows[0].revenue_today) || 0;
 
@@ -124,9 +131,9 @@ router.get('/dashboard', requirePermission('users.view'), async (req, res) => {
       if (counters.pending_refund_approvals > 0) {
         needsAttention.push({
           type: 'refund_approvals',
-          title: `${counters.pending_refund_approvals} Large Refunds Awaiting Two-Person Authorization`,
+          label: 'Large Refunds Awaiting Two-Person Authorization',
           priority: 'high',
-          action_url: '/admin/finance',
+          tab: 'finance',
           count: counters.pending_refund_approvals,
         });
       }

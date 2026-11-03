@@ -17,6 +17,7 @@ import { MerchantProfileTab } from './merchant/MerchantProfileTab';
 import { MerchantDocumentsTab } from './merchant/MerchantDocumentsTab';
 import { MerchantServicesTab } from './merchant/MerchantServicesTab';
 import { ProviderBookingsTab } from './provider/ProviderBookingsTab';
+import { DashboardSettingsView } from './common/DashboardSettingsView';
 import { useAuth, ApprovalStatus } from '../../context/AuthContext';
 import { getMerchantProfile, MerchantProfile } from '../../services/merchantService';
 
@@ -188,10 +189,13 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({ onNavigate
         <MerchantDocumentsTab approvalStatus={currentStatus} onDocumentUploaded={loadProfile} />
       )}
       {activeTab === 'services' && (
-        <MerchantServicesTab />
+        <MerchantServicesTab approvalStatus={currentStatus} />
       )}
       {activeTab === 'bookings' && (
         <ProviderBookingsTab />
+      )}
+      {activeTab === 'settings' && (
+        <DashboardSettingsView onNavigateToProfile={() => setActiveTab('business')} />
       )}
     </DashboardLayout>
   );

@@ -50,6 +50,35 @@ async function recordAuditLog(userId, action, req, details = {}) {
 }
 
 /**
+ * Shared idempotent transaction fulfillment handler
+ * Triggers booking confirmation or gift card generation
+ */
+async function fulfillCompletedTransaction(tx) {
+  if (!tx || tx.status !== 'completed') return;
+
+  // 1. Gift Card Fulfillment
+  if (tx.purpose === 'gift_card_purchase' && tx.metadata?.giftCardDetails) {
+    try {
+      await giftCardService.finalizePaidGiftCard(tx);
+    } catch (gcErr) {
+      console.error('[fulfillCompletedTransaction] finalizePaidGiftCard error:', gcErr.message);
+    }
+  }
+
+  // 2. Booking Fulfillment
+  if (tx.purpose === 'booking_payment' && tx.metadata?.booking_id) {
+    try {
+      const bookingService = require('../services/bookingService');
+      await bookingService.confirmPaidBooking(tx);
+    } catch (bErr) {
+      console.error('[fulfillCompletedTransaction] confirmPaidBooking error:', bErr.message);
+    }
+  }
+}
+
+
+
+/**
  * 1. POST /api/payments/initialize
  * Requires authenticated user with verified email
  */
@@ -213,28 +242,8 @@ router.post('/webhook/chapa', async (req, res) => {
         reference: chapaReference,
       });
 
-      // If this transaction was for a gift card purchase, finalize and issue the card
-      if (tx.purpose === 'gift_card_purchase' && tx.metadata?.giftCardDetails) {
-        setImmediate(async () => {
-          try {
-            await giftCardService.finalizePaidGiftCard(tx);
-          } catch (gcErr) {
-            console.error('[webhook/chapa] finalizePaidGiftCard error:', gcErr.message);
-          }
-        });
-      }
-
-      // If this transaction was for a booking payment, confirm the booking
-      if (tx.purpose === 'booking_payment' && tx.metadata?.booking_id) {
-        setImmediate(async () => {
-          try {
-            const bookingService = require('../services/bookingService');
-            await bookingService.confirmPaidBooking(tx);
-          } catch (bErr) {
-            console.error('[webhook/chapa] confirmPaidBooking error:', bErr.message);
-          }
-        });
-      }
+      // Shared fulfillment (gifts & bookings)
+      await fulfillCompletedTransaction(tx);
     }
 
     // Always return HTTP 200 to acknowledge webhook
@@ -308,24 +317,8 @@ router.get('/verify/:txRef', requireAuth, async (req, res) => {
               verified_via: 'gateway_lookup',
             });
 
-            // If this transaction was for a gift card purchase, finalize and issue the card
-            if (tx.purpose === 'gift_card_purchase' && tx.metadata?.giftCardDetails) {
-              try {
-                await giftCardService.finalizePaidGiftCard(tx);
-              } catch (gcErr) {
-                console.error('[payments/verify] finalizePaidGiftCard error:', gcErr.message);
-              }
-            }
-
-            // If this transaction was for a booking payment, confirm the booking
-            if (tx.purpose === 'booking_payment' && tx.metadata?.booking_id) {
-              try {
-                const bookingService = require('../services/bookingService');
-                await bookingService.confirmPaidBooking(tx);
-              } catch (bErr) {
-                console.error('[payments/verify] confirmPaidBooking error:', bErr.message);
-              }
-            }
+            // Shared fulfillment (gifts & bookings)
+            await fulfillCompletedTransaction(tx);
           }
         }
       } catch (_) {}
@@ -408,6 +401,9 @@ router.get('/receipt/:txRef', requireAuth, async (req, res) => {
               reference: chapaRef,
               verified_via: 'gateway_lookup',
             });
+
+            // Shared fulfillment on fallback verification
+            await fulfillCompletedTransaction(tx);
           }
         }
       } catch (_) {}

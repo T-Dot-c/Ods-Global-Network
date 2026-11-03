@@ -94,7 +94,6 @@ function detectMimeFromBytes(buffer) {
 function verifyStagingToken(token) {
   try {
     const decoded = jwt.verify(token, getStagingSecret(), {
-      audience: 'ods:partner_staging',
       issuer: 'ods_global_network',
     });
     return decoded;
@@ -106,13 +105,12 @@ function verifyStagingToken(token) {
 /**
  * Generates staging token for anonymous uploads
  */
-function issueStagingToken(docId) {
+function issueStagingToken(docId, purpose = 'registration_document') {
   return jwt.sign(
-    { docId, purpose: 'partner_proposal' },
+    { docId, purpose },
     getStagingSecret(),
     {
       expiresIn: '2h',
-      audience: 'ods:partner_staging',
       issuer: 'ods_global_network',
     }
   );

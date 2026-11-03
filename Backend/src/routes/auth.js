@@ -25,6 +25,8 @@ const pool       = require('../db');
 const { logAuditEvent } = require('../services/auditService');
 const { requireAuth } = require('../middleware/auth');
 const { revokeUserSessions } = require('../services/sessionService');
+const { validatePhoneNumber, normalizePhoneNumber } = require('../utils/phoneValidator');
+const { verifyStagingToken } = require('../services/uploadService');
 const {
   sendPasswordResetEmail,
   sendVerificationEmail,
@@ -175,6 +177,8 @@ router.post('/register', registerIpLimiter, async (req, res) => {
     country, region_state, city, postal_code, address_line,
     // Contact person fields
     contact_person_name, contact_person_role, contact_person_email, contact_person_phone,
+    // Staged registration documents: [{ doc_type, staging_token }]
+    documents,
   } = req.body;
 
   const validRoles = ['customer', 'merchant', 'provider'];
@@ -199,8 +203,23 @@ router.post('/register', registerIpLimiter, async (req, res) => {
     return res.status(400).json({ success: false, message: 'Password must be between 8 and 72 bytes.' });
   }
 
-  if (phone && (typeof phone !== 'string' || phone.trim().length > 32)) {
-    return res.status(400).json({ success: false, message: 'Phone number cannot exceed 32 characters.' });
+  if (phone && phone.trim()) {
+    const pCheck = validatePhoneNumber(phone);
+    if (!pCheck.isValid) {
+      return res.status(400).json({ success: false, message: pCheck.error });
+    }
+  }
+  if (business_phone && business_phone.trim()) {
+    const bpCheck = validatePhoneNumber(business_phone);
+    if (!bpCheck.isValid) {
+      return res.status(400).json({ success: false, message: bpCheck.error });
+    }
+  }
+  if (official_phone && official_phone.trim()) {
+    const opCheck = validatePhoneNumber(official_phone);
+    if (!opCheck.isValid) {
+      return res.status(400).json({ success: false, message: opCheck.error });
+    }
   }
 
   // Check per-email rate limit (default: 3 / 1h in strict, 1000 in generous)
@@ -291,6 +310,9 @@ router.post('/register', registerIpLimiter, async (req, res) => {
     );
     const user = userResult.rows[0];
 
+    let merchantId = null;
+    let providerId = null;
+
     // Insert role-extension row & related addresses/contact_persons
     if (role === 'merchant') {
       const merchResult = await client.query(
@@ -308,7 +330,7 @@ router.post('/register', registerIpLimiter, async (req, res) => {
           description ? description.trim() : null,
         ]
       );
-      const merchantId = merchResult.rows[0].id;
+      merchantId = merchResult.rows[0].id;
 
       // Address record
       if (city || country || address_line) {
@@ -349,7 +371,7 @@ router.post('/register', registerIpLimiter, async (req, res) => {
           license_no || null,
         ]
       );
-      const providerId = provResult.rows[0].id;
+      providerId = provResult.rows[0].id;
 
       // Address record
       if (city || country || address_line) {
@@ -375,6 +397,46 @@ router.post('/register', registerIpLimiter, async (req, res) => {
           `INSERT INTO addresses (entity_type, entity_id, country, region_state, city, postal_code, address_line)
            VALUES ('customer', $1, $2, $3, $4, $5, $6)`,
           [user.id, country || 'Ethiopia', region_state || null, city || null, postal_code || null, address_line || null]
+        );
+      }
+    }
+
+    // Claim staged registration documents inside transaction
+    if (Array.isArray(documents) && documents.length > 0) {
+      for (const docItem of documents) {
+        const { doc_type, staging_token } = docItem || {};
+        if (!staging_token) continue;
+        const decoded = verifyStagingToken(staging_token);
+        if (!decoded || !decoded.docId) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ success: false, message: 'Invalid or expired document staging token.' });
+        }
+        const docCheck = await client.query(
+          'SELECT id, is_attached FROM documents WHERE id = $1 FOR UPDATE',
+          [decoded.docId]
+        );
+        if (docCheck.rows.length === 0 || docCheck.rows[0].is_attached) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ success: false, message: 'Staging document already attached or expired.' });
+        }
+        const targetEntityType = role === 'merchant' ? 'merchant' : (role === 'provider' ? 'provider' : 'merchant');
+        const targetEntityId = role === 'merchant' ? merchantId : (role === 'provider' ? providerId : merchantId);
+        await client.query(
+          `UPDATE documents
+           SET entity_type = $1,
+               entity_id = $2,
+               document_type = $3,
+               purpose = $3,
+               is_attached = TRUE,
+               expires_at = NULL,
+               status = 'pending'
+           WHERE id = $4`,
+          [
+            targetEntityType,
+            targetEntityId,
+            doc_type || decoded.purpose || 'kyc_license',
+            decoded.docId,
+          ]
         );
       }
     }
@@ -517,6 +579,15 @@ router.post('/login', async (req, res) => {
       }
     }
 
+    let business_name = null;
+    if (user.role === 'merchant') {
+      const mRow = await pool.query('SELECT business_name FROM merchants WHERE user_id = $1', [user.id]);
+      business_name = mRow.rows[0]?.business_name || null;
+    } else if (user.role === 'provider') {
+      const pRow = await pool.query('SELECT provider_name FROM providers WHERE user_id = $1', [user.id]);
+      business_name = pRow.rows[0]?.provider_name || null;
+    }
+
     // Per Batch 5 spec: Session JWT contains ONLY minimal claims: { id, token_version }
     const sessionJwtPayload = {
       id: user.id,
@@ -530,6 +601,7 @@ router.post('/login', async (req, res) => {
       email:           user.email,
       role:            effectiveRole,
       full_name:       user.full_name,
+      business_name,
       approval_status,
       is_email_verified: Boolean(user.is_email_verified),
     };
@@ -556,6 +628,7 @@ router.get('/me', requireAuth, async (req, res) => {
         id: user.id,
         email: user.email,
         full_name: user.full_name,
+        business_name: user.business_name || null,
         phone: user.phone || null,
         role: user.role,
         last_login_at: user.last_login_at || null,
@@ -579,6 +652,25 @@ router.post('/logout', (_req, res) => {
     secure:   COOKIE_SECURE,
   });
   return res.json({ success: true, message: 'Logged out successfully.' });
+});
+
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/sign-out-all
+   Invalidates all active JWT sessions across devices by bumping token_version.
+   ───────────────────────────────────────────────────────────── */
+router.post('/sign-out-all', requireAuth, async (req, res) => {
+  try {
+    await revokeUserSessions(req.user.id);
+    res.clearCookie('ods_session', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure:   COOKIE_SECURE,
+    });
+    return res.json({ success: true, message: 'All active sessions have been signed out.' });
+  } catch (err) {
+    console.error('[sign-out-all]', err.message);
+    return res.status(500).json({ success: false, message: 'Could not sign out all sessions.' });
+  }
 });
 
 /* ─────────────────────────────────────────────────────────────
@@ -727,8 +819,6 @@ router.post('/reset-password', resetPasswordIpLimiter, async (req, res) => {
        WHERE id = $2`,
       [newHash, user.id]
     );
-
-    await client.query('COMMIT');
 
     // Audit log & session revocation
     await logAuditEvent({

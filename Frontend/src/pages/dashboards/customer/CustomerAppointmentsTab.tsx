@@ -15,16 +15,18 @@ import {
   cancelBookingByCustomer,
   rescheduleBooking,
   getAvailableSlots,
+  payBookingWithChapa,
   BookingItem,
   TimeSlot
 } from '../../../services/bookingService';
 
 export const CustomerAppointmentsTab: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'all'>('upcoming');
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'pending' | 'past' | 'all'>('upcoming');
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
 
   // Modals state
   const [cancelModalBooking, setCancelModalBooking] = useState<BookingItem | null>(null);
@@ -42,12 +44,26 @@ export const CustomerAppointmentsTab: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getCustomerBookings({ status: activeTab });
+      const statusParam = activeTab === 'pending' ? 'pending_payment' : activeTab;
+      const data = await getCustomerBookings({ status: statusParam });
       setBookings(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load your appointments.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePayBooking = async (bookingId: string) => {
+    try {
+      setPayingBookingId(bookingId);
+      const res = await payBookingWithChapa(bookingId);
+      if (res.success && res.checkout_url) {
+        window.location.href = res.checkout_url;
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to initialize payment.');
+      setPayingBookingId(null);
     }
   };
 
@@ -134,6 +150,18 @@ export const CustomerAppointmentsTab: React.FC = () => {
             <XCircle size={13} /> Cancelled
           </span>
         );
+      case 'payment_conflict':
+        return (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 700, backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+            <AlertCircle size={13} /> Payment Conflict
+          </span>
+        );
+      case 'disputed':
+        return (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 700, backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+            <AlertCircle size={13} /> Disputed
+          </span>
+        );
       case 'no_show':
         return (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 700, backgroundColor: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.3)' }}>
@@ -164,7 +192,7 @@ export const CustomerAppointmentsTab: React.FC = () => {
 
         {/* Tab switcher */}
         <div style={{ display: 'flex', gap: '6px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
-          {(['upcoming', 'past', 'all'] as const).map((tab) => (
+          {(['upcoming', 'pending', 'past', 'all'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -182,7 +210,7 @@ export const CustomerAppointmentsTab: React.FC = () => {
                 transition: 'all 0.15s ease',
               }}
             >
-              {tab}
+              {tab === 'pending' ? 'Pending Payment' : tab}
             </button>
           ))}
         </div>
@@ -298,8 +326,57 @@ export const CustomerAppointmentsTab: React.FC = () => {
                   </div>
                 )}
 
+                {/* Pending Payment Hold Notice */}
+                {b.status === 'pending_payment' && (
+                  b.hold_expires_at && new Date(b.hold_expires_at) > new Date() ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#92400e', fontSize: '0.84rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Clock size={16} color="#b45309" />
+                        <span>
+                          <strong>10-Minute Hold Active:</strong> Slot reserved until {new Date(b.hold_expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}. Complete payment now to confirm.
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', color: '#991b1b', fontSize: '0.84rem' }}>
+                      Reservation hold expired. The slot has been released back to public availability.
+                    </div>
+                  )
+                )}
+
                 {/* Footer action bar */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #f1f5f9', paddingTop: '14px' }}>
+                  {b.status === 'pending_payment' && b.hold_expires_at && new Date(b.hold_expires_at) > new Date() && (
+                    <button
+                      type="button"
+                      onClick={() => handlePayBooking(b.id)}
+                      disabled={payingBookingId === b.id}
+                      style={{
+                        padding: '8px 18px',
+                        borderRadius: '8px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        backgroundColor: 'var(--color-gold-deep, #BE9B49)',
+                        border: 'none',
+                        color: '#ffffff',
+                        cursor: payingBookingId === b.id ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 8px rgba(190, 155, 73, 0.3)',
+                      }}
+                    >
+                      {payingBookingId === b.id ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" />
+                          <span>Connecting to Chapa...</span>
+                        </>
+                      ) : (
+                        <span>Pay {parseFloat(String(b.price_amount)).toLocaleString()} {b.currency || 'ETB'} with Chapa</span>
+                      )}
+                    </button>
+                  )}
+
                   {canReschedule && (
                     <button
                       onClick={() => {

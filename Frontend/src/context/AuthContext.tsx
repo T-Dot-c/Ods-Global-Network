@@ -18,6 +18,7 @@ export interface AuthUser {
   id: string | number;
   email: string;
   full_name: string;
+  business_name?: string | null;
   role: UserRole;
   approval_status: ApprovalStatus;
   is_email_verified: boolean;
@@ -30,6 +31,7 @@ interface AuthContextValue {
   updateUser: (fields: Partial<AuthUser>) => void;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
+  signOutAll: () => Promise<void>;
 }
 
 /* ── Context ───────────────────────────────────────────────── */
@@ -107,8 +109,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   }, []);
 
+  const signOutAll = useCallback(async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/sign-out-all`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Best-effort
+    }
+    setUser(null);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, updateUser, refreshUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, updateUser, refreshUser, logout, signOutAll }}>
       {children}
     </AuthContext.Provider>
   );

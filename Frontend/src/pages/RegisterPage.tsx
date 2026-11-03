@@ -6,7 +6,6 @@ import {
   User,
   UserCheck,
   Mail,
-  Phone,
   Lock,
   Eye,
   EyeOff,
@@ -18,11 +17,12 @@ import {
   Briefcase,
   Globe,
   MapPin,
-  Upload,
   Stethoscope,
   Building,
   AlertTriangle,
 } from 'lucide-react';
+import { PhoneInput } from '../components/common/PhoneInput';
+import { RegistrationFileUpload } from '../components/common/RegistrationFileUpload';
 
 const API_BASE = 'http://localhost:3001';
 
@@ -70,13 +70,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const [merchContactPhone, setMerchContactPhone] = useState('');
   const [merchPassword, setMerchPassword] = useState('');
   const [merchConfirmPassword, setMerchConfirmPassword] = useState('');
-  const [merchDocsUploaded, setMerchDocsUploaded] = useState<Record<string, boolean>>({
-    regCert: false,
-    tradeLicense: false,
-    tinDoc: false,
-    charterDoc: false,
-    operatingDoc: false,
-  });
+  const [stagedDocs, setStagedDocs] = useState<Record<string, { doc_type: string; staging_token: string; file_name: string } | null>>({});
 
   const isOrgType = merchType === 'Organization / Institution';
 
@@ -108,10 +102,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const [provContactPhone, setProvContactPhone] = useState('');
   const [provPassword, setProvPassword] = useState('');
   const [provConfirmPassword, setProvConfirmPassword] = useState('');
-  const [provDocsUploaded, setProvDocsUploaded] = useState<Record<string, boolean>>({
-    license: false,
-    boardCert: false,
-  });
 
   // UI / Validation State
   const [showPassword, setShowPassword] = useState(false);
@@ -263,6 +253,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           contact_person_phone: provContactPhone.trim() || null,
         };
       }
+
+      // Collect optional staged KYC / registration documents
+      const documentsList = Object.values(stagedDocs)
+        .filter((d): d is { doc_type: string; staging_token: string; file_name: string } => !!d)
+        .map((d) => ({ doc_type: d.doc_type, staging_token: d.staging_token }));
+
+      payload.documents = documentsList;
 
       try {
         const res = await fetch(`${API_BASE}/api/auth/register`, {
@@ -686,15 +683,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         error={errors.custEmail}
                         leftIcon={<Mail size={14} />}
                       />
-                      <Input
-                        compact
+                      <PhoneInput
                         label="Phone Number"
-                        type="tel"
-                        placeholder="+251-91..."
                         value={custPhone}
-                        onChange={(e) => setCustPhone(e.target.value)}
+                        onChange={(e164Val) => setCustPhone(e164Val)}
                         error={errors.custPhone}
-                        leftIcon={<Phone size={14} />}
+                        required
                       />
                       <div>
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: '4px' }}>Country</label>
@@ -860,15 +854,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                           )}
                         </select>
                       </div>
-                      <Input
-                        compact
+                      <PhoneInput
                         label={isOrgType ? 'Official Phone' : 'Business Phone'}
-                        type="tel"
-                        placeholder="+251-11-..."
                         value={merchPhone}
-                        onChange={(e) => setMerchPhone(e.target.value)}
+                        onChange={(e164Val) => setMerchPhone(e164Val)}
                         error={errors.merchPhone}
-                        leftIcon={<Phone size={14} />}
+                        required
                       />
                       <Input
                         compact
@@ -951,50 +942,31 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       />
                     </div>
 
-                    {renderSectionHeader(isOrgType ? 'Institutional Documents' : 'Business Documents')}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    {renderSectionHeader(
+                      isOrgType ? 'Institutional Documents (Optional at sign-up)' : 'Business Documents (Optional at sign-up)',
+                      'You can upload registration and trade licenses now or later in your KYC Documents tab.'
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
                       {(isOrgType
                         ? [
-                            { key: 'charterDoc', label: 'Institutional Charter / Legal Registration' },
-                            { key: 'operatingDoc', label: 'Delegation / Operating License' },
+                            { key: 'charterDoc', docType: 'kyc_accreditation', label: 'Institutional Charter / Legal Registration' },
+                            { key: 'operatingDoc', docType: 'kyc_license', label: 'Delegation / Operating License' },
                           ]
                         : [
-                            { key: 'regCert', label: 'Registration Certificate' },
-                            { key: 'tradeLicense', label: 'Valid Trade License' },
-                            { key: 'tinDoc', label: 'TIN Document' },
+                            { key: 'regCert', docType: 'kyc_registration', label: 'Registration Certificate' },
+                            { key: 'tradeLicense', docType: 'kyc_license', label: 'Valid Trade License' },
+                            { key: 'tinDoc', docType: 'tax_id', label: 'TIN / Tax Document' },
                           ]
                       ).map((doc) => (
-                        <div
+                        <RegistrationFileUpload
                           key={doc.key}
-                          onClick={() => setMerchDocsUploaded((prev) => ({ ...prev, [doc.key]: !prev[doc.key] }))}
-                          style={{
-                            border: '1.5px dashed #cbd5e1',
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            gap: '8px',
-                            cursor: 'pointer',
-                            backgroundColor: merchDocsUploaded[doc.key] ? 'rgba(16, 185, 129, 0.08)' : '#f8fafc',
-                            transition: 'all var(--transition-fast)',
+                          docType={doc.docType}
+                          label={doc.label}
+                          apiBase={API_BASE}
+                          onTokenReceived={(tokenData) => {
+                            setStagedDocs((prev) => ({ ...prev, [doc.key]: tokenData }));
                           }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Upload size={15} color="var(--color-gold-deep)" />
-                            <span style={{ fontSize: '0.82rem', color: 'var(--color-navy-dark)', fontWeight: 600, lineHeight: 1.3 }}>{doc.label}</span>
-                          </div>
-                          <span style={{ fontSize: '0.78rem', color: merchDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            {merchDocsUploaded[doc.key] ? (
-                              <>
-                                <CheckCircle2 size={13} color="#10b981" />
-                                <span>Uploaded</span>
-                              </>
-                            ) : (
-                              'Upload'
-                            )}
-                          </span>
-                        </div>
+                        />
                       ))}
                     </div>
 
@@ -1017,14 +989,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         onChange={(e) => setMerchContactEmail(e.target.value)}
                         leftIcon={<Mail size={14} />}
                       />
-                      <Input
-                        compact
+                      <PhoneInput
                         label={isOrgType ? 'Representative Phone' : 'Account Phone'}
-                        type="tel"
-                        placeholder="+251-911-..."
                         value={merchContactPhone}
-                        onChange={(e) => setMerchContactPhone(e.target.value)}
-                        leftIcon={<Phone size={14} />}
+                        onChange={(e164Val) => setMerchContactPhone(e164Val)}
                       />
                       <div>
                         <Input
@@ -1101,15 +1069,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                           <option value="Therapeutic Wellness">Therapeutic Wellness</option>
                         </select>
                       </div>
-                      <Input
-                        compact
+                      <PhoneInput
                         label="Official Phone"
-                        type="tel"
-                        placeholder="+251-11-..."
                         value={provPhone}
-                        onChange={(e) => setProvPhone(e.target.value)}
+                        onChange={(e164Val) => setProvPhone(e164Val)}
                         error={errors.provPhone}
-                        leftIcon={<Phone size={14} />}
+                        required
                       />
                       <Input
                         compact
@@ -1194,43 +1159,24 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                       </div>
                     </div>
 
-                    {renderSectionHeader('Documents')}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    {renderSectionHeader(
+                      'Accreditation Documents (Optional at sign-up)',
+                      'You can upload health facility licenses now or later in your KYC Documents tab.'
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
                       {[
-                        { key: 'license', label: 'Accreditation / Operating License' },
-                        { key: 'boardCert', label: 'Medical Board Certification' },
+                        { key: 'license', docType: 'kyc_license', label: 'Accreditation / Operating License' },
+                        { key: 'boardCert', docType: 'kyc_accreditation', label: 'Medical Board Certification' },
                       ].map((doc) => (
-                        <div
+                        <RegistrationFileUpload
                           key={doc.key}
-                          onClick={() => setProvDocsUploaded((prev) => ({ ...prev, [doc.key]: !prev[doc.key] }))}
-                          style={{
-                            border: '1.5px dashed #cbd5e1',
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            gap: '8px',
-                            cursor: 'pointer',
-                            backgroundColor: provDocsUploaded[doc.key] ? 'rgba(16, 185, 129, 0.08)' : '#f8fafc',
-                            transition: 'all var(--transition-fast)',
+                          docType={doc.docType}
+                          label={doc.label}
+                          apiBase={API_BASE}
+                          onTokenReceived={(tokenData) => {
+                            setStagedDocs((prev) => ({ ...prev, [doc.key]: tokenData }));
                           }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Upload size={15} color="var(--color-gold-deep)" />
-                            <span style={{ fontSize: '0.82rem', color: 'var(--color-navy-dark)', fontWeight: 600, lineHeight: 1.3 }}>{doc.label}</span>
-                          </div>
-                          <span style={{ fontSize: '0.78rem', color: provDocsUploaded[doc.key] ? '#10b981' : 'var(--color-gold-deep)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            {provDocsUploaded[doc.key] ? (
-                              <>
-                                <CheckCircle2 size={13} color="#10b981" />
-                                <span>Uploaded</span>
-                              </>
-                            ) : (
-                              'Upload'
-                            )}
-                          </span>
-                        </div>
+                        />
                       ))}
                     </div>
 
@@ -1253,14 +1199,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                         onChange={(e) => setProvContactEmail(e.target.value)}
                         leftIcon={<Mail size={14} />}
                       />
-                      <Input
-                        compact
+                      <PhoneInput
                         label="Account Phone"
-                        type="tel"
-                        placeholder="+251-911-..."
                         value={provContactPhone}
-                        onChange={(e) => setProvContactPhone(e.target.value)}
-                        leftIcon={<Phone size={14} />}
+                        onChange={(e164Val) => setProvContactPhone(e164Val)}
                       />
                       <div>
                         <Input

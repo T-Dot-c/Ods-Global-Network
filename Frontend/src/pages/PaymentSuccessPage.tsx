@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle2, AlertCircle, Loader2, Printer, ArrowRight } from 'lucide-react';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { getReceipt, PaymentReceipt } from '../services/paymentService';
+import { getReceipt, verifyPayment, PaymentReceipt } from '../services/paymentService';
 
 interface PaymentSuccessPageProps {
   onNavigate?: (view: string) => void;
@@ -33,6 +33,11 @@ export const PaymentSuccessPage: React.FC<PaymentSuccessPageProps> = ({ onNaviga
 
     let isMounted = true;
     async function loadReceipt() {
+      try {
+        await verifyPayment(txRef!);
+      } catch (_) {
+        // Fallback to getReceipt if gateway already verified
+      }
       const res = await getReceipt(txRef!);
       if (!isMounted) return;
 

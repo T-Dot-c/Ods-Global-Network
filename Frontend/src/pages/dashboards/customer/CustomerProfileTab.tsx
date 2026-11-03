@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Globe, Bell, MapPin, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { User, Mail, Globe, Bell, MapPin, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { getCustomerProfile, updateCustomerProfile, CustomerProfile } from '../../../services/customerService';
 import { useAuth } from '../../../context/AuthContext';
+import { PhoneInput } from '../../../components/common/PhoneInput';
 
 export const CustomerProfileTab: React.FC = () => {
   const { updateUser } = useAuth();
@@ -238,23 +239,7 @@ export const CustomerProfileTab: React.FC = () => {
             <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-navy-dark)' }}>
               Phone Number
             </label>
-            <div style={{ position: 'relative' }}>
-              <Phone size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '14px' }} />
-              <input
-                type="tel"
-                placeholder="+251 900 000 000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px 10px 38px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                }}
-              />
-            </div>
+            <PhoneInput value={phone} onChange={setPhone} />
           </div>
 
           {/* Preferred Language */}

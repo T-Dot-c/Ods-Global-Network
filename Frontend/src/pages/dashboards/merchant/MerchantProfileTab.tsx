@@ -13,6 +13,7 @@ import {
   MerchantProfile,
   UpdateMerchantPayload,
 } from '../../../services/merchantService';
+import { PhoneInput } from '../../../components/common/PhoneInput';
 
 interface MerchantProfileTabProps {
   onProfileUpdated?: (updated: MerchantProfile) => void;
@@ -232,12 +233,7 @@ export const MerchantProfileTab: React.FC<MerchantProfileTabProps> = ({ onProfil
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
               Business Phone
             </label>
-            <input
-              type="text"
-              value={businessPhone}
-              onChange={(e) => setBusinessPhone(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none' }}
-            />
+            <PhoneInput value={businessPhone} onChange={setBusinessPhone} />
           </div>
 
           <div>

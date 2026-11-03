@@ -13,6 +13,7 @@ import {
   ProviderProfile,
   UpdateProviderPayload,
 } from '../../../services/providerService';
+import { PhoneInput } from '../../../components/common/PhoneInput';
 
 interface ProviderProfileTabProps {
   onProfileUpdated?: (updated: ProviderProfile) => void;
@@ -248,12 +249,7 @@ export const ProviderProfileTab: React.FC<ProviderProfileTabProps> = ({ onProfil
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
               Official Phone
             </label>
-            <input
-              type="text"
-              value={officialPhone}
-              onChange={(e) => setOfficialPhone(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none' }}
-            />
+            <PhoneInput value={officialPhone} onChange={setOfficialPhone} />
           </div>
         </div>
       </div>

@@ -105,8 +105,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     onNavigate('login');
   };
 
-  const displayName = user?.full_name || 'User';
-  const firstName = displayName.split(' ')[0] || displayName;
+  const displayName = user?.business_name || user?.full_name || 'User';
+  const pillName = user?.business_name || user?.full_name?.split(' ')[0] || displayName;
   const statusConfig = (user?.approval_status && STATUS_CONFIG[user.approval_status]) || STATUS_CONFIG.pending;
 
   return (
@@ -260,10 +260,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   justifyContent: 'center',
                 }}
               >
-                {firstName.charAt(0).toUpperCase()}
+                {pillName.charAt(0).toUpperCase()}
               </div>
               <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
-                {firstName}
+                {pillName}
               </span>
               <span
                 style={{

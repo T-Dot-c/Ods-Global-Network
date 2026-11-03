@@ -110,6 +110,11 @@ async function transitionServiceStatus({
     }
   }
 
+  // Enforce KYC accreditation guard when transitioning to pending_review or published
+  if (toStatus === 'pending_review' || toStatus === 'published') {
+    await resolveApprovedOwner(current.owner_user_id);
+  }
+
   if (toStatus === 'rejected') {
     if (actorRole && !['admin', 'super_admin'].includes(actorRole)) {
       const err = new Error('Unauthorized: Only administrators can reject service submissions');
@@ -171,10 +176,10 @@ async function transitionServiceStatus({
   try {
     const ownerQuery = `
       SELECT s.title, COALESCE(p.provider_name, m.business_name, 'Provider') as provider_name,
-             COALESCE(p.user_id, m.user_id) as owner_user_id
+             COALESCE(p.user_id, m.user_id, s.owner_user_id) as owner_user_id
       FROM services s
-      LEFT JOIN providers p ON p.id = s.provider_id
-      LEFT JOIN merchants m ON m.id = s.merchant_id
+      LEFT JOIN providers p ON (s.owner_type = 'provider' AND (p.id = s.provider_id OR p.user_id = s.owner_user_id))
+      LEFT JOIN merchants m ON (s.owner_type = 'merchant' AND m.user_id = s.owner_user_id)
       WHERE s.id = $1;
     `;
     const ownerRes = await client.query(ownerQuery, [serviceId]);
@@ -210,9 +215,9 @@ async function transitionServiceStatus({
 }
 
 /**
- * Resolve KYC approval status and entity details for an owner user
+ * Resolve entity details and owner type for an owner user (without checking KYC approval)
  */
-async function resolveApprovedOwner(userId) {
+async function resolveOwnerEntity(userId) {
   // Check provider profile
   const provRes = await pool.query(
     `SELECT id, provider_name AS entity_name, 'provider' AS owner_type, approval_status, official_phone
@@ -220,13 +225,7 @@ async function resolveApprovedOwner(userId) {
     [userId]
   );
   if (provRes.rows.length > 0) {
-    const p = provRes.rows[0];
-    if (p.approval_status !== 'approved') {
-      const err = new Error('Your healthcare provider account KYC is currently pending review. Only approved providers can publish services.');
-      err.statusCode = 403;
-      throw err;
-    }
-    return p;
+    return provRes.rows[0];
   }
 
   // Check merchant profile
@@ -236,18 +235,29 @@ async function resolveApprovedOwner(userId) {
     [userId]
   );
   if (merchRes.rows.length > 0) {
-    const m = merchRes.rows[0];
-    if (m.approval_status !== 'approved') {
-      const err = new Error('Your merchant business account KYC is currently pending review. Only approved merchants can publish services.');
-      err.statusCode = 403;
-      throw err;
-    }
-    return m;
+    return merchRes.rows[0];
   }
 
   const err = new Error('No registered provider or merchant entity found for this account');
   err.statusCode = 404;
   throw err;
+}
+
+/**
+ * Resolve KYC approval status and entity details for an owner user.
+ * Throws 403 if KYC is not approved.
+ */
+async function resolveApprovedOwner(userId) {
+  const entity = await resolveOwnerEntity(userId);
+  if (entity.approval_status !== 'approved') {
+    const roleMsg = entity.owner_type === 'provider'
+      ? 'Your healthcare provider account KYC is currently pending review. Only approved providers can publish services.'
+      : 'Your merchant business account KYC is currently pending review. Only approved merchants can publish services.';
+    const err = new Error(roleMsg);
+    err.statusCode = 403;
+    throw err;
+  }
+  return entity;
 }
 
 /**
@@ -311,8 +321,8 @@ async function createService({
     throw err;
   }
 
-  // Ensure owner is verified & approved
-  const owner = await resolveApprovedOwner(ownerUserId);
+  // Ensure owner is a registered provider or merchant entity (drafts allowed while KYC is pending)
+  const owner = await resolveOwnerEntity(ownerUserId);
 
   // Validate category if provided
   let catId = categoryId;
@@ -1102,6 +1112,7 @@ module.exports = {
   generateSlug,
   normalizeTags,
   transitionServiceStatus,
+  resolveOwnerEntity,
   resolveApprovedOwner,
   createService,
   updateService,

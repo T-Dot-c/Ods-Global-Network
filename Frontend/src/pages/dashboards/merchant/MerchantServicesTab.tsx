@@ -21,6 +21,7 @@ import {
   LocationType,
   ServiceStatus
 } from '../../../services/serviceCatalogService';
+import { ApprovalStatus } from '../../../context/AuthContext';
 
 const STATUS_CONFIG: Record<
   ServiceStatus,
@@ -37,7 +38,11 @@ const STATUS_CONFIG: Record<
   approved: { label: 'Published', bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
 };
 
-export const MerchantServicesTab: React.FC = () => {
+interface MerchantServicesTabProps {
+  approvalStatus?: ApprovalStatus;
+}
+
+export const MerchantServicesTab: React.FC<MerchantServicesTabProps> = ({ approvalStatus }) => {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [categories, setCategories] = useState<ServiceCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +108,7 @@ export const MerchantServicesTab: React.FC = () => {
     setTitle('');
     setShortDescription('');
     setDescription('');
-    setCategoryId(categories[0]?.id || '');
+    setCategoryId('');
     setPriceAmount('');
     setDurationMinutes('60');
     setCapacity('1');
@@ -123,7 +128,7 @@ export const MerchantServicesTab: React.FC = () => {
     setTitle(svc.title);
     setShortDescription(svc.short_description || '');
     setDescription(svc.description || '');
-    setCategoryId(svc.category_id || categories[0]?.id || '');
+    setCategoryId(svc.category_id || '');
     setPriceAmount(String(svc.price_amount !== undefined ? svc.price_amount : svc.price || ''));
     setDurationMinutes(String(svc.duration_minutes || 60));
     setCapacity(String(svc.capacity || 1));
@@ -143,6 +148,12 @@ export const MerchantServicesTab: React.FC = () => {
     setSaving(true);
     setModalError(null);
     setModalSuccess(null);
+
+    if (!categoryId) {
+      setModalError('Please select a category taxonomy.');
+      setSaving(false);
+      return;
+    }
 
     const numPrice = Number(priceAmount);
     if (isNaN(numPrice) || numPrice <= 0) {
@@ -194,7 +205,12 @@ export const MerchantServicesTab: React.FC = () => {
         setIsModalOpen(false);
       }, 1200);
     } catch (err: any) {
-      setModalError(err.message || 'Failed to save offering');
+      const msg = err.message || '';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.toLowerCase().includes('network')) {
+        setModalError("We couldn't reach the server. Please check your connection and try again.");
+      } else {
+        setModalError(msg || 'Failed to save offering');
+      }
     } finally {
       setSaving(false);
     }
@@ -417,6 +433,29 @@ export const MerchantServicesTab: React.FC = () => {
         </button>
       </div>
 
+      {/* ── KYC Notice for Pending Review ────────────────────────── */}
+      {approvalStatus && approvalStatus !== 'approved' && (
+        <div
+          style={{
+            padding: '14px 18px',
+            borderRadius: '10px',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #cbd5e1',
+            color: '#475569',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '0.88rem',
+            lineHeight: 1.5,
+          }}
+        >
+          <AlertCircle size={20} color="#64748b" style={{ flexShrink: 0 }} />
+          <div>
+            <strong>KYC Notice:</strong> You can create and save draft offerings right now. Submitting offerings for public catalog review will be enabled once your account accreditation is approved by compliance officers.
+          </div>
+        </div>
+      )}
+
       {/* ── Services Table ───────────────────────────────────────── */}
       <div
         style={{
@@ -579,17 +618,35 @@ export const MerchantServicesTab: React.FC = () => {
                           {/* Publish / Submit for review button */}
                           {(svc.status === 'draft' || svc.status === 'unpublished' || svc.status === 'rejected') && (
                             <button
-                              onClick={() => handlePublish(svc.id)}
-                              title={svc.status === 'unpublished' ? 'Republish' : 'Submit for Review'}
+                              onClick={() => {
+                                if (approvalStatus && approvalStatus !== 'approved') {
+                                  alert(
+                                    approvalStatus === 'pending'
+                                      ? 'Your merchant business account KYC is currently pending review. Only approved merchants can publish services.'
+                                      : 'Your account accreditation was rejected. Please re-upload KYC documents before submitting services.'
+                                  );
+                                  return;
+                                }
+                                handlePublish(svc.id);
+                              }}
+                              disabled={approvalStatus !== undefined && approvalStatus !== 'approved'}
+                              title={
+                                approvalStatus && approvalStatus !== 'approved'
+                                  ? 'Account accreditation required before submitting offerings for public review'
+                                  : svc.status === 'unpublished'
+                                  ? 'Republish'
+                                  : 'Submit for Review'
+                              }
                               style={{
                                 padding: '6px 10px',
                                 borderRadius: '6px',
-                                backgroundColor: '#d1fae5',
-                                color: '#065f46',
-                                border: '1px solid #6ee7b7',
-                                cursor: 'pointer',
+                                backgroundColor: approvalStatus && approvalStatus !== 'approved' ? '#f1f5f9' : '#d1fae5',
+                                color: approvalStatus && approvalStatus !== 'approved' ? '#94a3b8' : '#065f46',
+                                border: `1px solid ${approvalStatus && approvalStatus !== 'approved' ? '#e2e8f0' : '#6ee7b7'}`,
+                                cursor: approvalStatus && approvalStatus !== 'approved' ? 'not-allowed' : 'pointer',
                                 fontSize: '0.78rem',
                                 fontWeight: 700,
+                                opacity: approvalStatus && approvalStatus !== 'approved' ? 0.7 : 1,
                               }}
                             >
                               {svc.status === 'unpublished' ? 'Republish' : 'Submit'}
@@ -777,6 +834,9 @@ export const MerchantServicesTab: React.FC = () => {
                       fontSize: '0.92rem',
                     }}
                   >
+                    <option value="" disabled>
+                      Select a category...
+                    </option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -944,6 +1004,34 @@ export const MerchantServicesTab: React.FC = () => {
                     fontSize: '0.92rem',
                   }}
                 />
+                {imageUrl && (
+                  <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img
+                      src={imageUrl}
+                      alt="Cover Preview"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        const fb = (e.target as HTMLElement).nextElementSibling as HTMLElement;
+                        if (fb) fb.style.display = 'inline-block';
+                      }}
+                      onLoad={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'block';
+                        const fb = (e.target as HTMLElement).nextElementSibling as HTMLElement;
+                        if (fb) fb.style.display = 'none';
+                      }}
+                      style={{
+                        width: '80px',
+                        height: '56px',
+                        borderRadius: '6px',
+                        objectFit: 'cover',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    />
+                    <span style={{ fontSize: '0.8rem', color: '#dc2626', display: 'none' }}>
+                      Unable to preview image from URL (image will still be saved).
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>

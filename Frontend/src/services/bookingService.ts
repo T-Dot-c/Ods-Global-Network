@@ -222,6 +222,24 @@ export async function payBookingWithGiftCard(
 }
 
 /**
+ * 5b. Initiate Chapa payment for pending booking
+ */
+export async function payBookingWithChapa(
+  bookingId: string
+): Promise<{ success: boolean; checkout_url: string; tx_ref: string }> {
+  const res = await fetch(`${API_BASE}/api/bookings/${bookingId}/pay-chapa`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Failed to initiate Chapa payment.');
+  }
+  return data;
+}
+
+/**
  * 6. Customer cancel booking
  */
 export async function cancelBookingByCustomer(

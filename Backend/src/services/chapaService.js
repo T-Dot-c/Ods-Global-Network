@@ -79,7 +79,7 @@ async function initializePayment({
 
   // In sandbox/dev environments, ensure email sent to Chapa has a valid public domain so Chapa's strict validator accepts it
   let chapaEmail = String(email).trim().toLowerCase();
-  if (chapaEmail.endsWith('.local') || chapaEmail.endsWith('@ods.net') || chapaEmail.endsWith('@123.com')) {
+  if (chapaEmail.endsWith('.local') || chapaEmail.endsWith('@ods.net') || chapaEmail.endsWith('@123.com') || chapaEmail.endsWith('@example.com') || chapaEmail.endsWith('.example.com')) {
     chapaEmail = `${chapaEmail.split('@')[0]}@gmail.com`;
   }
 

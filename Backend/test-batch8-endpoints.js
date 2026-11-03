@@ -404,7 +404,7 @@ async function runSuite() {
     }
     pass(`T3b: Approved Merchant authored draft service '${serviceB.title}'`);
 
-    // T3c: Unapproved Provider rejected with 403
+    // T3c: KYC-Pending Provider can create draft (201), but submit for review is rejected with 403
     const unapprovedRes = await fetch(`${BASE_URL}/api/my/services`, {
       method: 'POST',
       headers: {
@@ -412,14 +412,36 @@ async function runSuite() {
         'Cookie': pendingCookie
       },
       body: JSON.stringify({
-        title: `Unapproved Service ${runId}`,
+        title: `Draft Unapproved Service ${runId}`,
         price_amount: 500
       })
     });
-    if (unapprovedRes.status !== 403) {
-      fail('T3c', `Expected 403 for unapproved provider, got ${unapprovedRes.status}`);
+    const unapprovedData = await unapprovedRes.json();
+    if (unapprovedRes.status !== 201 || !unapprovedData.success) {
+      fail('T3c', `Expected 201 for unapproved provider draft creation, got ${unapprovedRes.status}: ${JSON.stringify(unapprovedData)}`);
     }
-    pass('T3c: Unapproved provider cannot create service (403 Forbidden verified)');
+    const draftSvc = unapprovedData.data;
+    trackedServiceIds.push(draftSvc.id);
+    if (draftSvc.status !== 'draft') {
+      fail('T3c', `Expected draft service status 'draft', got '${draftSvc.status}'`);
+    }
+
+    // Submit for review must be rejected with 403 while KYC is pending
+    const publishRes = await fetch(`${BASE_URL}/api/my/services/${draftSvc.id}/publish`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': pendingCookie
+      }
+    });
+    const publishData = await publishRes.json();
+    if (publishRes.status !== 403) {
+      fail('T3c', `Expected 403 for submitting service while KYC pending, got ${publishRes.status}: ${JSON.stringify(publishData)}`);
+    }
+    if (!publishData.message || !publishData.message.includes('pending review')) {
+      fail('T3c', `Expected KYC pending message in 403 rejection, got: ${publishData.message}`);
+    }
+    pass('T3c: KYC-pending provider can create drafts (201) but publishing is rejected with 403 (KYC pending review guard verified)');
 
     // T3d: Forward booking fields validated
     if (

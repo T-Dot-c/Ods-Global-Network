@@ -20,6 +20,7 @@ import { ProviderVouchersTab } from './provider/ProviderVouchersTab';
 import { ProviderServicesTab } from './provider/ProviderServicesTab';
 import { ProviderBookingsTab } from './provider/ProviderBookingsTab';
 import { ProviderAvailabilityTab } from './provider/ProviderAvailabilityTab';
+import { DashboardSettingsView } from './common/DashboardSettingsView';
 import { useAuth, ApprovalStatus } from '../../context/AuthContext';
 import { getProviderProfile, ProviderProfile } from '../../services/providerService';
 
@@ -200,13 +201,16 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onNavigate
         <ProviderDocumentsTab approvalStatus={currentStatus} onDocumentUploaded={loadProfile} />
       )}
       {activeTab === 'services' && (
-        <ProviderServicesTab />
+        <ProviderServicesTab approvalStatus={currentStatus} />
       )}
       {activeTab === 'appointments' && (
         <ProviderBookingsTab />
       )}
       {activeTab === 'availability' && (
         <ProviderAvailabilityTab />
+      )}
+      {activeTab === 'settings' && (
+        <DashboardSettingsView onNavigateToProfile={() => setActiveTab('profile')} />
       )}
     </DashboardLayout>
   );

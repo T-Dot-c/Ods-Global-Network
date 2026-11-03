@@ -52,7 +52,9 @@ async function resolveSession(token, poolInstance = pool) {
         u.last_login_at,
         a.admin_level,
         m.approval_status AS merchant_approval_status,
-        p.approval_status AS provider_approval_status
+        m.business_name AS merchant_business_name,
+        p.approval_status AS provider_approval_status,
+        p.provider_name AS provider_business_name
       FROM users u
       LEFT JOIN admins a ON a.user_id = u.id AND u.role = 'admin'
       LEFT JOIN merchants m ON m.user_id = u.id AND u.role = 'merchant'
@@ -89,10 +91,17 @@ async function resolveSession(token, poolInstance = pool) {
         ? (row.provider_approval_status || 'pending')
         : 'approved';
 
+    const businessName = (row.role === 'merchant')
+      ? (row.merchant_business_name || null)
+      : (row.role === 'provider')
+        ? (row.provider_business_name || null)
+        : null;
+
     return {
       id: row.id,
       email: row.email,
       full_name: row.full_name,
+      business_name: businessName,
       phone: row.phone,
       role: effectiveRole,
       base_role: row.role,

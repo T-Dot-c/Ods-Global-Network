@@ -29,10 +29,15 @@
 
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 const { requireAuth, requireRole, requireVerifiedEmail } = require('../middleware/auth');
 const bookingService = require('../services/bookingService');
+const chapaService = require('../services/chapaService');
+
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
 // Availability query limiter (public)
 const slotLimiter = rateLimit({
@@ -203,6 +208,111 @@ router.post('/bookings/:id/pay-gift', requireAuth, requireVerifiedEmail, async (
     });
   } catch (err) {
     return res.status(err.status || 400).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/bookings/:id/pay-chapa
+ * Customer initiates payment for their pending booking via Chapa.
+ * Amount is strictly retrieved from the booking record, hold expiry is enforced.
+ */
+router.post('/bookings/:id/pay-chapa', requireAuth, requireVerifiedEmail, createBookingLimiter, async (req, res) => {
+  const bookingId = req.params.id;
+  const client = await pool.connect();
+  try {
+    const bRes = await client.query(
+      `SELECT b.id, b.status, b.hold_expires_at, b.price_amount, b.currency, b.customer_user_id,
+              s.title AS service_title, u.email, u.full_name
+       FROM bookings b
+       JOIN services s ON s.id = b.service_id
+       JOIN users u ON u.id = b.customer_user_id
+       WHERE b.id = $1`,
+      [bookingId]
+    );
+
+    if (bRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Booking not found.' });
+    }
+
+    const booking = bRes.rows[0];
+
+    if (booking.customer_user_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to pay for this booking.' });
+    }
+
+    if (booking.status !== 'pending_payment') {
+      return res.status(400).json({
+        success: false,
+        message: `Booking is not awaiting payment (current status: ${booking.status}).`,
+      });
+    }
+
+    if (new Date(booking.hold_expires_at) < new Date()) {
+      return res.status(410).json({
+        success: false,
+        message: 'The 10-minute reservation hold on this booking has expired. Please select a fresh appointment slot.',
+      });
+    }
+
+    const price = parseFloat(booking.price_amount);
+    if (isNaN(price) || price <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid booking price configuration.' });
+    }
+
+    const txRef = `ods-bk-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const cleanCurrency = String(booking.currency || 'ETB').trim().toUpperCase().slice(0, 3);
+    const purpose = 'booking_payment';
+    const metadata = {
+      booking_id: booking.id,
+      service_title: booking.service_title,
+    };
+
+    const insertRes = await client.query(
+      `INSERT INTO transactions (user_id, tx_ref, amount, currency, status, payment_method, purpose, metadata)
+       VALUES ($1, $2, $3, $4, 'pending', 'chapa', $5, $6)
+       RETURNING id, tx_ref, amount, currency, status, created_at`,
+      [req.user.id, txRef, price, cleanCurrency, purpose, JSON.stringify(metadata)]
+    );
+
+    const transaction = insertRes.rows[0];
+    const callbackUrl = `${BACKEND_BASE_URL}/api/payments/webhook/chapa`;
+    const returnUrl = `${FRONTEND_ORIGIN}/payment/success?tx_ref=${encodeURIComponent(txRef)}`;
+
+    const nameParts = (req.user.full_name || 'ODS Customer').trim().split(' ');
+    const firstName = nameParts[0] || 'ODS';
+    const lastName = nameParts.slice(1).join(' ') || 'Customer';
+
+    const chapaRes = await chapaService.initializePayment({
+      amount: price,
+      currency: cleanCurrency,
+      email: req.user.email,
+      firstName,
+      lastName,
+      txRef,
+      callbackUrl,
+      returnUrl,
+      metadata: {
+        userId: req.user.id,
+        purpose,
+        booking_id: booking.id,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      tx_ref: txRef,
+      checkout_url: chapaRes.checkout_url,
+      mode: chapaRes.mode,
+      transaction,
+    });
+  } catch (err) {
+    console.error('[pay-chapa error]:', err.message);
+    return res.status(err.providerStatus || 500).json({
+      success: false,
+      message: err.message || 'Failed to initiate Chapa payment for booking.',
+    });
+  } finally {
+    client.release();
   }
 });
 

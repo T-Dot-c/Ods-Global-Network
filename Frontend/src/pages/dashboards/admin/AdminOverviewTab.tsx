@@ -22,6 +22,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({ onNavigateTa
   const [data, setData] = useState<DashboardMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const loadData = async () => {
     try {
@@ -29,6 +30,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({ onNavigateTa
       setError(null);
       const metrics = await fetchAdminDashboard();
       setData(metrics);
+      setLastUpdated(new Date());
     } catch (err: any) {
       setError(err.message || 'Failed to load dashboard metrics.');
     } finally {
@@ -54,7 +56,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({ onNavigateTa
 
   const cards = [
     {
-      title: 'Active Users (30d)',
+      title: 'Registered Users (30d)',
       value: counters.new_users_30d ?? 0,
       sub: 'Platform registered users',
       icon: <Users size={22} color="var(--color-gold-deep)" />,
@@ -127,26 +129,32 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({ onNavigateTa
             Real-time status counters and administrative intervention queue
           </p>
         </div>
-        <button
-          onClick={loadData}
-          disabled={loading}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            backgroundColor: '#ffffff',
-            border: '1px solid #cbd5e1',
-            borderRadius: '8px',
-            color: 'var(--color-navy-dark)',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          Refresh Metrics
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+            Last updated: {lastUpdated.toLocaleTimeString()}
+          </span>
+          <button
+            onClick={loadData}
+            disabled={loading}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              color: 'var(--color-navy-dark)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Refresh Metrics
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -254,7 +262,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({ onNavigateTa
                       fontWeight: 700,
                     }}
                   >
-                    {item.count} items
+                    {item.count} {item.count === 1 ? 'item' : 'items'}
                   </span>
                 </div>
                 <button
